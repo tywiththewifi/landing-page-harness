@@ -12,11 +12,13 @@
   "dependencies": {
     "@hono/node-server": "^2.1.5",
     "@lph/brief": "workspace:*",
+    "@lph/checks": "workspace:*",
     "@lph/design-md": "workspace:*",
     "@lph/extractor": "workspace:*",
     "@lph/forms": "workspace:*",
     "@lph/kit": "workspace:*",
     "@lph/page": "workspace:*",
+    "@lph/publisher": "workspace:*",
     "@lph/tokens": "workspace:*",
     "hono": "^4.13.13",
     "playwright": "^1.64.1",

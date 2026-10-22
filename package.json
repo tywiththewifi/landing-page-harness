@@ -12,7 +12,8 @@
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
     "extract": "pnpm --filter @lph/extractor exec tsx src/cli.ts",
-    "fixture": "node scripts/serve-fixture.mjs"
+    "fixture": "node scripts/serve-fixture.mjs",
+    "site": "pnpm --filter @lph/publisher exec tsx src/cli.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

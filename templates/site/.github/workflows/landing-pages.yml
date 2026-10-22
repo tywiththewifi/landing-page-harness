@@ -1,0 +1,76 @@
+# Checks every pull request the landing-page-harness publisher opens, and merges the
+# low-risk ones itself.
+#
+# - check: re-runs the publish gate on the changed pages (SEO and answer engines, brand,
+#   accessibility with axe, the performance budget) and decides the risk from the diff
+#   itself, so adding a label by hand can't skip review.
+# - auto-merge: only a copy change to a page that's already live, with every check
+#   passing, and labelled lph:content by the publisher. Everything else waits for a
+#   reviewer.
+#
+# Make "check" a required status check on the default branch, and turn on "Allow
+# auto-merge" in the repo's settings.
+name: Landing pages
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: landing-pages-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      risk: ${{ steps.check.outputs.risk }}
+      verdict: ${{ steps.check.outputs.verdict }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # The harness that runs the checks. Pin ref to a commit SHA you've reviewed.
+      - uses: actions/checkout@v4
+        with:
+          repository: tywiththewifi/landing-page-harness
+          ref: main
+          path: .harness
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: .harness/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install --frozen-lockfile
+        working-directory: .harness
+      - run: pnpm --filter @lph/extractor exec playwright install --with-deps chromium
+        working-directory: .harness
+      - id: check
+        working-directory: .harness
+        run: pnpm site check --repo "$GITHUB_WORKSPACE" --base "origin/$BASE_REF"
+        env:
+          BASE_REF: ${{ github.base_ref }}
+
+  auto-merge:
+    needs: check
+    if: >-
+      needs.check.outputs.risk == 'content' &&
+      needs.check.outputs.verdict == 'ready' &&
+      contains(github.event.pull_request.labels.*.name, 'lph:content') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # With branch protection, --auto merges once every required check passes.
+      # Without it, the PR merges now: this job only runs after the checks passed.
+      - run: gh pr merge "$PR" --squash --auto || gh pr merge "$PR" --squash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}

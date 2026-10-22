@@ -1,6 +1,7 @@
 import { mkdir, readdir, readFile, writeFile, rename } from "node:fs/promises";
 import { join } from "node:path";
 import type { Brief } from "@lph/brief";
+import type { GateReport } from "@lph/checks";
 import type { DeliveryResult, Submission } from "@lph/forms";
 import type { Page } from "@lph/page";
 import type { Brand } from "@lph/tokens";
@@ -82,5 +83,16 @@ export interface StoredSubmission extends Submission {
 export class SubmissionStore extends JsonStore<StoredSubmission> {
   async listFor(pageId: string, limit = 50): Promise<StoredSubmission[]> {
     return (await this.all()).filter((s) => s.pageId === pageId).slice(0, limit);
+  }
+}
+
+/** The latest gate report for each page. */
+export class GateStore extends JsonStore<{ id: string; updatedAt: string; report: GateReport }> {
+  async latest(pageId: string): Promise<GateReport | null> {
+    return (await this.get(pageId))?.report ?? null;
+  }
+  async put(report: GateReport): Promise<GateReport> {
+    await this.save({ id: report.pageId, updatedAt: report.ranAt, report });
+    return report;
   }
 }

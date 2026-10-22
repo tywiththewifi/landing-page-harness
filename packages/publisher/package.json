@@ -1,0 +1,24 @@
+{
+  "name": "@lph/publisher",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./browser": "./src/browser.ts"
+  },
+  "bin": {
+    "lph-site": "./src/cli.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "sync-runtime": "tsx scripts/sync-runtime.ts"
+  },
+  "dependencies": {
+    "@lph/brief": "workspace:*",
+    "@lph/checks": "workspace:*",
+    "@lph/forms": "workspace:*",
+    "@lph/page": "workspace:*",
+    "@lph/tokens": "workspace:*"
+  }
+}

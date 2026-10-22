@@ -7,3 +7,4 @@ export * from "./template.ts";
 export * from "./brand.ts";
 export * from "./check.ts";
 export * from "./render.tsx";
+export * from "./form-script.ts";

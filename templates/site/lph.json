@@ -1,0 +1,6 @@
+{
+  "origin": "https://www.example.com",
+  "publicDir": "site",
+  "sourceDir": ".lph/pages",
+  "functionsDir": "functions"
+}

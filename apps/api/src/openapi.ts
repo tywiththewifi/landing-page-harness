@@ -8,7 +8,7 @@ export const openApi = {
     title: "landing-page-harness API",
     version: "0.1.0",
     description:
-      "Import a website's design system from its rendered CSS, review it, and export tokens, Design.md and starter components. Turn a prompt into a marketing brief grounded in the site's own copy, then the brief into a page built from the component library, with a version per persona and a lead form that posts to HubSpot or a webhook. Values are always measured and claims always sourced, never invented.",
+      "Import a website's design system from its rendered CSS, review it, and export tokens, Design.md and starter components. Turn a prompt into a marketing brief grounded in the site's own copy, then the brief into a page built from the component library, with a version per persona and a lead form that posts to HubSpot or a webhook. Before publishing, a gate checks content, brand, SEO and answer engines, accessibility (axe) and a performance budget; publishing opens a pull request into the company's site repo, which merges itself when it only changes copy. Values are always measured and claims always sourced, never invented.",
   },
   paths: {
     "/api/brands": {
@@ -131,6 +131,25 @@ export const openApi = {
       },
     },
     "/api/pages/{id}/submissions": { get: { summary: "Leads the form received, with how each was delivered", parameters: [brandId], responses: ok("Submissions") } },
+    "/api/pages/{id}/gate": {
+      get: { summary: "The latest publish gate report: verdict (blocked, review, ready), each check's issues, and performance per version", parameters: [brandId], responses: { ...ok("Gate report"), 404: { description: "Not run yet" } } },
+      post: {
+        summary: "Run the publish gate on every version as it will be published: content, brand, SEO/AEO, accessibility (axe, phone and desktop) and the performance budget",
+        parameters: [brandId, { name: "wait", in: "query", schema: { type: "boolean" }, description: "Block until the checks finish and return the report" }],
+        responses: { 202: { description: "Job started" }, 200: { description: "Report (when wait=true)" } },
+      },
+    },
+    "/api/pages/{id}/publish": {
+      get: { summary: "What publishing would do, without doing it: the target repo, the files and how they change, the risk (content or review) and why, and the pull request's title and description", parameters: [brandId], responses: ok("Publish plan") },
+      post: {
+        summary: "Publish as a pull request into the site repo (LPH_GITHUB_REPO). Needs a gate report for this version of the page with no errors. Low-risk copy changes are labelled lph:content and merge themselves once the repo's checks pass; anything else is labelled lph:needs-review",
+        parameters: [brandId],
+        responses: { 201: { description: "Pull request opened" }, 200: { description: "Open pull request updated" }, 400: { description: "No repo connected" }, 409: { description: "Run the checks first, fix their errors, or nothing changed" } },
+      },
+    },
+    "/api/pages/{id}/site.zip": {
+      get: { summary: "The page as a folder for Cloudflare Pages: HTML, _headers with a CSP, and the form endpoint as a Pages Function. The fallback when there's no site repo", parameters: [brandId], responses: { ...ok("Zip", "application/zip"), 409: { description: "Run the checks first, or fix their errors" } } },
+    },
     "/api/forms/{pageId}": {
       post: {
         summary: "A page's lead form posts here. Validates, then sends to the page's connector: HubSpot Forms API v3 or a signed webhook (x-lph-signature)",
