@@ -52,6 +52,8 @@ Setup, once:
 3. Add the two values it prints as repository variables under Settings > Secrets and variables > Actions > Variables: `GCP_WORKLOAD_IDENTITY_PROVIDER` and `GCP_SERVICE_ACCOUNT`.
 4. Run the Import service workflow from the Actions tab.
 
+After each deploy, the Smoke test workflow (`scripts/smoke-import.mjs`) imports two real sites through the live service from GitHub's network, and checks that an internal address is refused.
+
 **Anywhere else.** It's one container:
 
 ```bash
