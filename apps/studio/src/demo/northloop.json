@@ -1,0 +1,859 @@
+{
+  "id": "northloop",
+  "name": "Northloop",
+  "url": "https://northloop.example/",
+  "pages": [
+    "https://northloop.example/",
+    "https://northloop.example/platform.html"
+  ],
+  "createdAt": "2026-10-22T09:00:00.000Z",
+  "updatedAt": "2026-10-22T09:00:00.000Z",
+  "logo": {
+    "kind": "svg",
+    "svg": "<svg width=\"22\" height=\"22\" viewBox=\"0 0 22 22\" aria-hidden=\"true\" color=\"rgb(255, 255, 255)\"><rect x=\"1\" y=\"1\" width=\"9\" height=\"20\" rx=\"2\" fill=\"#c6f29d\"></rect><rect x=\"12\" y=\"1\" width=\"9\" height=\"20\" rx=\"2\" fill=\"#ffffff\"></rect></svg>",
+    "text": "NORTHLOOP",
+    "source": {
+      "page": "https://northloop.example/",
+      "selector": "div.container > a.logo > svg",
+      "count": 1
+    }
+  },
+  "fonts": {
+    "heading": "Archivo",
+    "body": "Plus Jakarta Sans"
+  },
+  "colors": [
+    {
+      "name": "surface-white",
+      "value": "#ffffff",
+      "role": "surface",
+      "usage": [
+        "page background"
+      ],
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "",
+          "count": 1
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "",
+          "count": 1
+        }
+      ],
+      "confidence": 0.95
+    },
+    {
+      "name": "primary-green",
+      "value": "#1a3e35",
+      "role": "brand",
+      "usage": [
+        "navigation",
+        "hero band",
+        "section backgrounds"
+      ],
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "header.nav",
+          "count": 1
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "header.nav",
+          "count": 1
+        }
+      ],
+      "confidence": 0.99
+    },
+    {
+      "name": "accent-lime",
+      "value": "#c6f29d",
+      "role": "accent",
+      "usage": [
+        "calls to action",
+        "highlights",
+        "hero band"
+      ],
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.container > div.actions > a.btn.btn--secondary",
+          "count": 2
+        }
+      ],
+      "confidence": 1
+    },
+    {
+      "name": "ink",
+      "value": "#212526",
+      "role": "ink",
+      "usage": [
+        "body text",
+        "headings",
+        "primary buttons"
+      ],
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "section.section > div.container > h2",
+          "count": 10
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "section.section > div.container > h2",
+          "count": 6
+        }
+      ],
+      "confidence": 0.65
+    },
+    {
+      "name": "neutral-100",
+      "value": "#dfe7e3",
+      "role": "neutral",
+      "usage": [
+        "borders"
+      ],
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.container > div.grid > div.card",
+          "count": 1
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "div.container > div.grid > div.card",
+          "count": 1
+        }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "name": "neutral-300",
+      "value": "#a7b8b0",
+      "role": "neutral",
+      "usage": [
+        "text",
+        "borders"
+      ],
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "footer.footer > div.container > p",
+          "count": 2
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "footer.footer > div.container > p",
+          "count": 1
+        }
+      ],
+      "confidence": 0.8
+    },
+    {
+      "name": "neutral-600",
+      "value": "#5b6b65",
+      "role": "neutral",
+      "usage": [
+        "text"
+      ],
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.grid > div.card > p",
+          "count": 1
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "div.grid > div.card > p",
+          "count": 1
+        }
+      ],
+      "confidence": 0.56
+    },
+    {
+      "name": "neutral-50",
+      "value": "#ecf5f1",
+      "role": "neutral",
+      "usage": [
+        "text",
+        "section backgrounds"
+      ],
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "main > section.section.section--sage",
+          "count": 2
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "section.hero > div.container > p",
+          "count": 1
+        }
+      ],
+      "confidence": 0.49
+    }
+  ],
+  "typography": [
+    {
+      "role": "h1",
+      "fontFamily": "Archivo",
+      "fontSize": 64,
+      "mobileFontSize": 40,
+      "fontWeight": 600,
+      "lineHeight": 68,
+      "letterSpacing": -1.5,
+      "textTransform": "none",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "section.hero > div.container > h1",
+          "count": 1
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "section.hero > div.container > h1",
+          "count": 1
+        }
+      ],
+      "confidence": 0.77
+    },
+    {
+      "role": "h2",
+      "fontFamily": "Archivo",
+      "fontSize": 44,
+      "mobileFontSize": 32,
+      "fontWeight": 600,
+      "lineHeight": 50,
+      "letterSpacing": -0.8,
+      "textTransform": "none",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "section.section > div.container > h2",
+          "count": 3
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "section.section > div.container > h2",
+          "count": 1
+        }
+      ],
+      "confidence": 1
+    },
+    {
+      "role": "h3",
+      "fontFamily": "Archivo",
+      "fontSize": 24,
+      "fontWeight": 600,
+      "lineHeight": 30,
+      "letterSpacing": 0,
+      "textTransform": "none",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.grid > div.card > h3",
+          "count": 3
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "div.grid > div.card > h3",
+          "count": 3
+        }
+      ],
+      "confidence": 1
+    },
+    {
+      "role": "h4",
+      "fontFamily": "Archivo",
+      "fontSize": 18,
+      "fontWeight": 600,
+      "lineHeight": 24,
+      "letterSpacing": 0,
+      "textTransform": "none",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.grid > div.card.card--feature > h4",
+          "count": 3
+        }
+      ],
+      "confidence": 1
+    },
+    {
+      "role": "body",
+      "fontFamily": "Plus Jakarta Sans",
+      "fontSize": 16,
+      "fontWeight": 400,
+      "lineHeight": 25,
+      "letterSpacing": 0,
+      "textTransform": "none",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "nav > ul > li",
+          "count": 13
+        }
+      ],
+      "confidence": 0.95
+    },
+    {
+      "role": "small",
+      "fontFamily": "Plus Jakarta Sans",
+      "fontSize": 14,
+      "fontWeight": 500,
+      "lineHeight": 20,
+      "letterSpacing": 1,
+      "textTransform": "uppercase",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "section.hero > div.container > small.eyebrow",
+          "count": 1
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "section.hero > div.container > small.eyebrow",
+          "count": 1
+        }
+      ],
+      "confidence": 0.77
+    },
+    {
+      "role": "label",
+      "fontFamily": "Plus Jakarta Sans",
+      "fontSize": 16,
+      "fontWeight": 600,
+      "lineHeight": 20,
+      "letterSpacing": 0,
+      "textTransform": "none",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.container > div.actions > a.btn.btn--primary",
+          "count": 2
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "div.container > div.actions > a.btn.btn--primary",
+          "count": 1
+        }
+      ],
+      "confidence": 1
+    }
+  ],
+  "radii": [
+    {
+      "name": "sm",
+      "value": 10,
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.container > form.form > input.input",
+          "count": 1
+        }
+      ],
+      "confidence": 0.5
+    },
+    {
+      "name": "md",
+      "value": 12,
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.container > div.actions > a.btn.btn--primary",
+          "count": 3
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "div.container > div.actions > a.btn.btn--primary",
+          "count": 3
+        }
+      ],
+      "confidence": 0.85
+    },
+    {
+      "name": "lg",
+      "value": 16,
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.container > div.grid > div.card",
+          "count": 2
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "div.container > div.grid > div.card",
+          "count": 1
+        }
+      ],
+      "confidence": 0.85
+    }
+  ],
+  "spacing": [
+    {
+      "name": "2xs",
+      "value": 10,
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "layout padding/gap",
+          "count": 2
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "layout padding/gap",
+          "count": 2
+        }
+      ],
+      "confidence": 0.53
+    },
+    {
+      "name": "xs",
+      "value": 14,
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "button padding",
+          "count": 3
+        }
+      ],
+      "confidence": 0.5
+    },
+    {
+      "name": "sm",
+      "value": 16,
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "layout padding/gap",
+          "count": 4
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "layout padding/gap",
+          "count": 4
+        }
+      ],
+      "confidence": 0.67
+    },
+    {
+      "name": "md",
+      "value": 24,
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "layout padding/gap",
+          "count": 9
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "layout padding/gap",
+          "count": 4
+        }
+      ],
+      "confidence": 0.83
+    },
+    {
+      "name": "lg",
+      "value": 32,
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "layout padding/gap",
+          "count": 10
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "layout padding/gap",
+          "count": 6
+        }
+      ],
+      "confidence": 0.93
+    },
+    {
+      "name": "xl",
+      "value": 64,
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "layout padding/gap",
+          "count": 2
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "layout padding/gap",
+          "count": 2
+        }
+      ],
+      "confidence": 0.53
+    },
+    {
+      "name": "2xl",
+      "value": 96,
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "layout padding/gap",
+          "count": 7
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "layout padding/gap",
+          "count": 3
+        }
+      ],
+      "confidence": 0.73
+    },
+    {
+      "name": "3xl",
+      "value": 120,
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "layout padding/gap",
+          "count": 1
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "layout padding/gap",
+          "count": 1
+        }
+      ],
+      "confidence": 0.47
+    }
+  ],
+  "buttons": [
+    {
+      "name": "primary",
+      "kind": "filled",
+      "background": "#212526",
+      "color": "#ecf5f1",
+      "borderColor": null,
+      "borderWidth": 0,
+      "radius": 12,
+      "paddingX": 24,
+      "paddingY": 14,
+      "fontSize": 16,
+      "fontWeight": 600,
+      "textTransform": "none",
+      "context": "#ffffff",
+      "sampleText": "Start free",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.container > div.actions > a.btn.btn--primary",
+          "count": 2
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "div.container > div.actions > a.btn.btn--primary",
+          "count": 1
+        }
+      ],
+      "confidence": 1
+    },
+    {
+      "name": "secondary",
+      "kind": "filled",
+      "background": "#c6f29d",
+      "color": "#1b2a22",
+      "borderColor": null,
+      "borderWidth": 0,
+      "radius": 12,
+      "paddingX": 24,
+      "paddingY": 14,
+      "fontSize": 16,
+      "fontWeight": 600,
+      "textTransform": "none",
+      "context": "#1a3e35",
+      "sampleText": "Start free",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.container > div.actions > a.btn.btn--secondary",
+          "count": 1
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "div.container > div.actions > a.btn.btn--secondary",
+          "count": 2
+        }
+      ],
+      "confidence": 1
+    },
+    {
+      "name": "tertiary",
+      "kind": "outline",
+      "background": null,
+      "color": "#ffffff",
+      "borderColor": "#c6f29d",
+      "borderWidth": 1,
+      "radius": 12,
+      "paddingX": 24,
+      "paddingY": 14,
+      "fontSize": 15,
+      "fontWeight": 600,
+      "textTransform": "none",
+      "context": "#1a3e35",
+      "sampleText": "Book a demo",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "header.nav > div.container > a.btn.btn--tertiary",
+          "count": 2
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "header.nav > div.container > a.btn.btn--tertiary",
+          "count": 1
+        }
+      ],
+      "confidence": 1
+    },
+    {
+      "name": "link",
+      "kind": "text",
+      "background": null,
+      "color": "#1a3e35",
+      "borderColor": null,
+      "borderWidth": 0,
+      "radius": 0,
+      "paddingX": 0,
+      "paddingY": 0,
+      "fontSize": 16,
+      "fontWeight": 400,
+      "textTransform": "none",
+      "context": "#ffffff",
+      "sampleText": "Learn more",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.grid > div.card > a",
+          "count": 3
+        }
+      ],
+      "confidence": 0.7
+    }
+  ],
+  "cards": [
+    {
+      "name": "default",
+      "background": "#ffffff",
+      "borderColor": "#dfe7e3",
+      "borderWidth": 1,
+      "radius": 16,
+      "shadow": null,
+      "padding": 32,
+      "context": "#ffffff",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.container > div.grid > div.card",
+          "count": 3
+        },
+        {
+          "page": "https://northloop.example/platform.html",
+          "selector": "div.container > div.grid > div.card",
+          "count": 3
+        }
+      ],
+      "confidence": 1
+    },
+    {
+      "name": "elevated",
+      "background": "#ffffff",
+      "borderColor": null,
+      "borderWidth": 0,
+      "radius": 16,
+      "shadow": "rgba(26, 62, 53, 0.08) 0px 8px 24px 0px",
+      "padding": 32,
+      "context": "#ecf5f1",
+      "sources": [
+        {
+          "page": "https://northloop.example/",
+          "selector": "div.container > div.grid > div.card.card--feature",
+          "count": 3
+        }
+      ],
+      "confidence": 0.75
+    }
+  ],
+  "input": {
+    "background": "#ffffff",
+    "color": "#212526",
+    "borderColor": "#a7b8b0",
+    "borderWidth": 1,
+    "radius": 10,
+    "paddingX": 16,
+    "paddingY": 12,
+    "fontSize": 16,
+    "sources": [
+      {
+        "page": "https://northloop.example/",
+        "selector": "div.container > form.form > input.input",
+        "count": 2
+      }
+    ],
+    "confidence": 0.7
+  },
+  "conflicts": [
+    {
+      "id": "fonts.body",
+      "field": "fonts.body",
+      "message": "Body text uses more than one font: Plus Jakarta Sans (54%, on home) vs Inter (46%, on /platform.html). Pick the one that should be canonical.",
+      "options": [
+        {
+          "value": "Plus Jakarta Sans",
+          "sources": [
+            {
+              "page": "https://northloop.example/",
+              "selector": "nav > ul > li",
+              "count": 14
+            }
+          ],
+          "share": 0.54
+        },
+        {
+          "value": "Inter",
+          "sources": [
+            {
+              "page": "https://northloop.example/platform.html",
+              "selector": "nav > ul > li",
+              "count": 12
+            }
+          ],
+          "share": 0.46
+        }
+      ],
+      "resolved": "Plus Jakarta Sans"
+    }
+  ],
+  "warnings": [],
+  "declaredVariables": {
+    "--nl-forest": "#1a3e35",
+    "--nl-lime": "#c6f29d",
+    "--nl-ink": "#212526",
+    "--nl-sage-50": "#ecf5f1",
+    "--nl-sage-300": "#a7b8b0",
+    "--nl-sage-600": "#5b6b65",
+    "--nl-line": "#dfe7e3"
+  },
+  "fontSources": {
+    "faces": [],
+    "stylesheets": [
+      "https://fonts.googleapis.com/css2?family=Archivo:wght@400..700&family=Plus+Jakarta+Sans:wght@400..700&family=Inter:wght@400..700&display=swap"
+    ]
+  },
+  "content": [
+    {
+      "url": "https://northloop.example/",
+      "title": "Northloop | Workflow automation for ops teams",
+      "description": "Northloop connects your CRM, billing and support tools so ops teams ship workflows in days, not quarters.",
+      "lang": "en",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Automate the work between your tools"
+        },
+        {
+          "level": 2,
+          "text": "Built for teams without an automation engineer"
+        },
+        {
+          "level": 3,
+          "text": "Lead routing"
+        },
+        {
+          "level": 3,
+          "text": "Billing sync"
+        },
+        {
+          "level": 3,
+          "text": "Support triage"
+        },
+        {
+          "level": 2,
+          "text": "Trusted by 400 ops teams"
+        },
+        {
+          "level": 4,
+          "text": "SOC 2 Type II"
+        },
+        {
+          "level": 4,
+          "text": "99.95% uptime"
+        },
+        {
+          "level": 4,
+          "text": "300+ connectors"
+        },
+        {
+          "level": 2,
+          "text": "Talk to us"
+        }
+      ],
+      "paragraphs": [
+        "Northloop connects your CRM, billing and support tools so ops teams ship workflows in days, not quarters.",
+        "Templates for the workflows every revenue team rebuilds from scratch.",
+        "Send every new lead to the right owner in seconds, with enrichment on the way.",
+        "Keep Stripe and your CRM in step, with no spreadsheets in the middle.",
+        "Tag, prioritise and route tickets before anyone opens the queue."
+      ],
+      "ctas": [
+        "Book a demo",
+        "Start free"
+      ]
+    },
+    {
+      "url": "https://northloop.example/platform.html",
+      "title": "Platform | Northloop",
+      "description": "",
+      "lang": "en",
+      "headings": [
+        {
+          "level": 1,
+          "text": "One canvas for every workflow"
+        },
+        {
+          "level": 2,
+          "text": "How it works"
+        },
+        {
+          "level": 3,
+          "text": "Connect"
+        },
+        {
+          "level": 3,
+          "text": "Build"
+        },
+        {
+          "level": 3,
+          "text": "Monitor"
+        }
+      ],
+      "paragraphs": [
+        "Design, test and monitor automations across 300 tools from a single place.",
+        "Authorise your tools once. Northloop handles tokens and rate limits.",
+        "Drag steps onto the canvas or start from a template.",
+        "Every run is logged, replayable and alertable."
+      ],
+      "ctas": [
+        "Book a demo",
+        "Start free"
+      ]
+    }
+  ],
+  "usageRules": [
+    "Buttons use 12px rounded corners, never a pill, with sentence-case labels, never uppercase.",
+    "The outline button (\"tertiary\") is used on #1a3e35 backgrounds.",
+    "Headings use Archivo at weight 600 with tight negative tracking; body text uses Plus Jakarta Sans at 16px/25px.",
+    "Small labels (eyebrows) are uppercase, 14px, with 1px letter spacing.",
+    "Use primary-green (#1a3e35) for navigation, hero band, section backgrounds.",
+    "Reserve accent-lime (#c6f29d) for calls to action and highlights.",
+    "There are no warm colours (reds, oranges, yellows) in the palette.",
+    "Cards use 16px corners and 32px padding, with a 1px #dfe7e3 border and no shadow."
+  ],
+  "summary": "Northloop's visual system: a green-led palette (#1a3e35) with a lime accent (#c6f29d), Archivo for headings and Plus Jakarta Sans for body text, and 12px rounded buttons."
+}

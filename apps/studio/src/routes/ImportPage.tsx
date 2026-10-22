@@ -1,13 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
-import { api, waitForJob } from "../api.ts";
+import { api, DEMO, waitForJob } from "../api.ts";
 import styles from "./ImportPage.module.scss";
 
 const STEPS = ["Reading the home page", "Reading the product page", "Checking mobile type sizes", "Building the design system"];
 
 export function ImportPage() {
   const navigate = useNavigate();
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(DEMO ? "northloop.example" : "");
   const [productUrl, setProductUrl] = useState("");
   const [chooseProduct, setChooseProduct] = useState(false);
   const [step, setStep] = useState<string | null>(null);
@@ -42,6 +42,13 @@ export function ImportPage() {
         Share your website. We'll read your home page and main product page, measure the CSS they actually render, and turn it into a
         design system you can review before anything is generated.
       </p>
+
+      {DEMO ? (
+        <p className={styles.demo}>
+          The demo can't open other websites from your browser, so whatever you enter, it imports Northloop, a fictional B2B site built for
+          the tests. The values are from a real extraction of it.
+        </p>
+      ) : null}
 
       <form className={styles.form} onSubmit={submit}>
         <label className="ui-label" htmlFor="url">

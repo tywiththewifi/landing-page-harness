@@ -17,6 +17,12 @@ export interface SeoProviderInfo {
   description: string;
 }
 
+/**
+ * True in the in-browser demo build (`vite build --mode demo`), where src/demo/api.ts
+ * answers these calls instead of the server.
+ */
+export const DEMO = import.meta.env.MODE === "demo";
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
@@ -43,6 +49,7 @@ export const api = {
   designMd: (id: string) => request<string>(`/api/brands/${id}/design.md`),
   contrast: (id: string) => request<ContrastCheck[]>(`/api/brands/${id}/contrast`),
   confirm: (id: string) => request<{ dir: string; files: string[] }>(`/api/brands/${id}/confirm`, { method: "POST" }),
+  previewHtml: (id: string) => request<string>(`/api/brands/${id}/preview.html`),
 
   seoProviders: () => request<SeoProviderInfo[]>("/api/seo/providers"),
   generator: () => request<{ name: string; model: string | null }>("/api/generator"),

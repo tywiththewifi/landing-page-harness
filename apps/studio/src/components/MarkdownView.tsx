@@ -1,6 +1,7 @@
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { useEffect, useState, type ReactNode } from "react";
+import { DEMO } from "../api.ts";
 import styles from "./MarkdownView.module.scss";
 
 /**
@@ -19,7 +20,13 @@ export function MarkdownView({ load, version, rawHref, notice }: { load: () => P
 
   async function copy() {
     if (!md) return;
-    await navigator.clipboard.writeText(md);
+    try {
+      await navigator.clipboard.writeText(md);
+    } catch {
+      // Clipboard access can be blocked (for example inside a frame); show the text to copy by hand.
+      setRaw(true);
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }
@@ -43,9 +50,11 @@ export function MarkdownView({ load, version, rawHref, notice }: { load: () => P
           </button>
         </div>
         <div className={styles.links}>
-          <a href={rawHref} target="_blank" rel="noreferrer">
-            Open raw
-          </a>
+          {DEMO ? null : (
+            <a href={rawHref} target="_blank" rel="noreferrer">
+              Open raw
+            </a>
+          )}
           <button className="ui-button ui-button--small" onClick={copy}>
             {copied ? "Copied" : "Copy"}
           </button>

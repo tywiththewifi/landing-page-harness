@@ -1,13 +1,14 @@
 import { Link } from "react-router";
 import type { Brand } from "@lph/tokens";
+import { DEMO } from "../api.ts";
 import styles from "./ConfirmPanel.module.scss";
 
 export function ConfirmPanel({ brand, result, onClose }: { brand: Brand; result: { dir: string; files: string[] }; onClose: () => void }) {
-  const base = `${location.origin}/api/brands/${brand.id}`;
+  const base = `${DEMO ? "http://localhost:8787" : location.origin}/api/brands/${brand.id}`;
   return (
     <div className={styles.panel} role="status">
       <div className={styles.head}>
-        <strong>Brand confirmed. {result.files.length} files written.</strong>
+        <strong>{DEMO ? `Brand confirmed. With the server running, this writes ${result.files.length} files.` : `Brand confirmed. ${result.files.length} files written.`}</strong>
         <button className="ui-button ui-button--ghost ui-button--small" onClick={onClose} aria-label="Dismiss">
           ✕
         </button>
@@ -36,7 +37,7 @@ export function ConfirmPanel({ brand, result, onClose }: { brand: Brand; result:
               <code>GET {base}/tokens.json</code>
             </li>
             <li>
-              <a href="/api/openapi.json" target="_blank" rel="noreferrer">
+              <a href={DEMO ? "https://github.com/tywiththewifi/landing-page-harness#for-agents" : "/api/openapi.json"} target="_blank" rel="noreferrer">
                 OpenAPI description
               </a>
             </li>
