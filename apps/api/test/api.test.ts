@@ -20,7 +20,7 @@ describe("assertPublicUrl", () => {
 });
 
 describe("API", () => {
-  let site: { url: string; close: () => Promise<void> };
+  let site: Awaited<ReturnType<typeof serveFixture>>;
   let dir: string;
   let app: ReturnType<typeof createApp>;
   let brand: Brand;
@@ -185,6 +185,33 @@ describe("API", () => {
       const res = await withTool.request(`/api/brands/${brand.id}/briefs?wait=true`, json({ prompt }));
       expect(res.status).toBe(201);
       expect((await res.json()).insights.notes[0]).toMatch(/Semrush couldn't be reached \(timeout\)/);
+    });
+
+    it("connects the site's MCP server and grounds briefs in it", async () => {
+      expect((await app.request(`/api/brands/${brand.id}/site-mcp`, json({ url: `${site.url}nothing-here` }))).status).toBe(502);
+
+      const res = await app.request(`/api/brands/${brand.id}/site-mcp`, json({ url: `${site.url}mcp` }));
+      expect(res.status).toBe(200);
+      const connected: Brand = await res.json();
+      expect(connected.siteMcp).toMatchObject({ name: "Northloop", url: `${site.url}mcp` });
+      expect(connected.siteMcp!.tools.filter((t) => t.use).map((t) => t.name)).toEqual(["list_plans", "search_help_center"]);
+
+      site.mcpCalls.length = 0;
+      const written: Brief = await (await app.request(`/api/brands/${brand.id}/briefs?wait=true`, json({ prompt }))).json();
+      expect(site.mcpCalls.map((c) => c.name)).toEqual(["list_plans", "search_help_center"]);
+      expect(site.mcpCalls[1]!.arguments).toEqual({ query: "HubSpot integration" });
+      expect(written.siteData?.facts).toHaveLength(3);
+      expect(written.proofPoints.filter((p) => p.source === "data")).toHaveLength(2);
+      expect(await (await app.request(`/api/briefs/${written.id}/brief.md`)).text()).toContain("**Site data:** Northloop (3 answers)");
+
+      const patched: Brand = await (await app.request(`/api/brands/${brand.id}/site-mcp`, { ...json({ allowed: ["latest_releases"] }), method: "PATCH" })).json();
+      expect(patched.siteMcp!.tools.filter((t) => t.use).map((t) => t.name)).toEqual(["list_plans", "search_help_center", "latest_releases"]);
+
+      const without: Brief = await (await app.request(`/api/brands/${brand.id}/briefs?wait=true`, json({ prompt, useSiteData: false }))).json();
+      expect(without.siteData).toBeUndefined();
+
+      const off: Brand = await (await app.request(`/api/brands/${brand.id}/site-mcp`, { method: "DELETE" })).json();
+      expect(off.siteMcp).toBeUndefined();
     });
   });
 

@@ -49,6 +49,35 @@ export const openApi = {
     "/api/brands/{id}/contrast": { get: { summary: "WCAG contrast checks", parameters: [brandId], responses: ok("Checks") } },
     "/api/brands/{id}/preview.html": { get: { summary: "Starter components rendered with the brand", parameters: [brandId], responses: ok("HTML", "text/html") } },
     "/api/brands/{id}/confirm": { post: { summary: "Write the brand kit to the output directory", parameters: [brandId], responses: ok("Written files") } },
+    "/api/brands/{id}/site-mcp": {
+      post: {
+        summary: "Connect the site's own MCP server. Lists its tools and which read-only ones briefs will call",
+        parameters: [brandId],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["url"],
+                properties: {
+                  url: { type: "string", format: "uri" },
+                  allowed: { type: "array", items: { type: "string" }, description: "Tools to call although the server doesn't mark them read-only" },
+                },
+              },
+            },
+          },
+        },
+        responses: ok("Brand, with siteMcp"),
+      },
+      patch: {
+        summary: "Change which tools not marked read-only may be called",
+        parameters: [brandId],
+        requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["allowed"], properties: { allowed: { type: "array", items: { type: "string" } } } } } } },
+        responses: ok("Brand, with siteMcp"),
+      },
+      delete: { summary: "Disconnect the site's MCP server", parameters: [brandId], responses: ok("Brand") },
+    },
     "/api/seo/providers": { get: { summary: "SEO/AEO data sources: best practices, plus any connected tool", responses: ok("Providers") } },
     "/api/generator": { get: { summary: "Which brief writer the server uses (Claude or the offline template)", responses: ok("Generator") } },
     "/api/brands/{id}/briefs": {
@@ -66,6 +95,7 @@ export const openApi = {
                 properties: {
                   prompt: { type: "string", description: "The page or campaign, e.g. 'Landing page for our HubSpot integration for ops managers'" },
                   seoProvider: { type: "string", description: "An id from /api/seo/providers. Defaults to the connected tool, else best practices" },
+                  useSiteData: { type: "boolean", description: "Read the site's MCP server first (default true when one is connected)" },
                 },
               },
             },

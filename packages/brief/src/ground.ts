@@ -1,4 +1,5 @@
 import type { Brand } from "@lph/tokens";
+import type { SiteData } from "./schema.ts";
 
 /** Marks text a generator could not know. The consistency check reports every one. */
 export const PLACEHOLDER = "[To write]";
@@ -6,6 +7,11 @@ export const PLACEHOLDER = "[To write]";
 /** Everything the site says, as plain strings: titles, descriptions, headings, copy and buttons. */
 export function siteText(brand: Brand): string[] {
   return (brand.content ?? []).flatMap((p) => [p.title, p.description, ...p.headings.map((h) => h.text), ...p.paragraphs, ...p.ctas]).filter(Boolean);
+}
+
+/** Text from the site's MCP server, which counts as a source like the pages do. */
+export function dataText(siteData: SiteData | undefined): string[] {
+  return (siteData?.facts ?? []).flatMap((f) => f.text.split(/\n+/)).filter(Boolean);
 }
 
 const NUMBER = /(?:[$€£]\s?)?\d[\d,.]*(?:\s?(?:%|x|\+|k|m|bn)\b|%|\+)?/gi;
