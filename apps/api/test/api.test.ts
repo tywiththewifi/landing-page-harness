@@ -2,11 +2,14 @@ import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createServer, type IncomingMessage } from "node:http";
 import { GenerationError, templateGenerator, type Brief, type BriefIssue, type SeoProvider } from "@lph/brief";
+import { verifyWebhook } from "@lph/forms";
+import { templatePageGenerator, type Page, type PageIssue } from "@lph/page";
 import type { Brand } from "@lph/tokens";
 import { serveFixture } from "../../../scripts/serve-fixture.mjs";
 import { createApp } from "../src/app.ts";
-import { BrandStore, BriefStore } from "../src/store.ts";
+import { BrandStore, BriefStore, PageStore, SubmissionStore } from "../src/store.ts";
 import { assertPublicUrl } from "../src/url-guard.ts";
 
 describe("assertPublicUrl", () => {
@@ -31,7 +34,11 @@ describe("API", () => {
     app = createApp({
       store: new BrandStore(join(dir, "brands")),
       briefs: new BriefStore(join(dir, "briefs")),
+      pages: new PageStore(join(dir, "pages")),
+      submissions: new SubmissionStore(join(dir, "submissions")),
       generator: templateGenerator(),
+      pageGenerator: templatePageGenerator(),
+      formSecrets: { webhookSecret: "test-secret" },
       outputDir: join(dir, "out"),
       allowPrivateUrls: true,
     });
@@ -107,7 +114,7 @@ describe("API", () => {
 
     it("lists the SEO providers and the brief writer", async () => {
       expect(await (await app.request("/api/seo/providers")).json()).toEqual([expect.objectContaining({ id: "best-practices" })]);
-      expect(await (await app.request("/api/generator")).json()).toEqual({ name: "template", model: null });
+      expect(await (await app.request("/api/generator")).json()).toEqual({ name: "template", model: null, page: { name: "template", model: null } });
     });
 
     it("writes a brief grounded in the imported site", async () => {
@@ -165,6 +172,8 @@ describe("API", () => {
       const failing = createApp({
         store: new BrandStore(join(dir, "brands")),
         briefs: new BriefStore(join(dir, "briefs")),
+        pages: new PageStore(join(dir, "pages")),
+        submissions: new SubmissionStore(join(dir, "submissions")),
         outputDir: join(dir, "out"),
         generator: { name: "broken", generate: async () => { throw new GenerationError("The model declined to write this brief."); } },
       });
@@ -178,6 +187,8 @@ describe("API", () => {
       const withTool = createApp({
         store: new BrandStore(join(dir, "brands")),
         briefs: new BriefStore(join(dir, "briefs")),
+        pages: new PageStore(join(dir, "pages")),
+        submissions: new SubmissionStore(join(dir, "submissions")),
         outputDir: join(dir, "out"),
         generator: templateGenerator(),
         seoProviders: [down],
@@ -212,6 +223,136 @@ describe("API", () => {
 
       const off: Brand = await (await app.request(`/api/brands/${brand.id}/site-mcp`, { method: "DELETE" })).json();
       expect(off.siteMcp).toBeUndefined();
+    });
+  });
+
+  describe("pages", () => {
+    let page: Page;
+    let briefId: string;
+    const received: { body: string; headers: IncomingMessage["headers"] }[] = [];
+    const hook = createServer((req, res) => {
+      let body = "";
+      req.on("data", (c) => (body += c));
+      req.on("end", () => {
+        received.push({ body, headers: req.headers });
+        res.writeHead(req.url === "/fail" ? 500 : 204).end();
+      });
+    });
+    let hookUrl = "";
+    beforeAll(async () => {
+      await new Promise<void>((r) => hook.listen(0, "127.0.0.1", r));
+      hookUrl = `http://127.0.0.1:${(hook.address() as { port: number }).port}`;
+    });
+    afterAll(() => new Promise<void>((r) => hook.close(() => r())));
+
+    const put = (p: Page) => app.request(`/api/pages/${p.id}`, { ...json(p), method: "PUT" });
+    const submit = (body: unknown, type = "application/json") =>
+      app.request(`/api/forms/${page.id}`, { method: "POST", headers: { "content-type": type }, body: typeof body === "string" ? body : JSON.stringify(body) });
+
+    it("builds a page from a brief, with a version per persona", async () => {
+      const brief: Brief = await (await app.request(`/api/brands/${brand.id}/briefs?wait=true`, json({ prompt: "Landing page for our HubSpot integration for ops managers" }))).json();
+      briefId = brief.id;
+      const res = await app.request(`/api/briefs/${brief.id}/pages?wait=true`, { method: "POST" });
+      expect(res.status).toBe(201);
+      page = await res.json();
+      expect(page).toMatchObject({ briefId: brief.id, brandId: brand.id, slug: brief.seo.slug, generator: { name: "template" } });
+      expect(page.blocks[0]!.type).toBe("hero");
+      expect(page.variants.map((v) => v.slug)).toEqual(brief.personas.map((p) => p.id));
+      expect(await (await app.request(`/api/briefs/${brief.id}/pages`)).json()).toEqual([expect.objectContaining({ id: page.id, versions: page.variants.length })]);
+    });
+
+    it("won't build from a brief with must-fix issues", async () => {
+      const brief: Brief = await (await app.request(`/api/briefs/${briefId}`)).json();
+      const broken = await app.request(`/api/briefs/${briefId}`, { ...json({ ...brief, outline: brief.outline.filter((s) => s.type !== "hero") }), method: "PUT" });
+      expect(broken.status).toBe(200);
+      const res = await app.request(`/api/briefs/${briefId}/pages?wait=true`, { method: "POST" });
+      expect(res.status).toBe(409);
+      expect((await res.json()).issues[0].id).toBe("outline.hero-first");
+      await app.request(`/api/briefs/${briefId}`, { ...json(brief), method: "PUT" });
+    });
+
+    it("saves edits, keeps ids, and drops overrides that point at nothing", async () => {
+      const edited: Page = structuredClone(page);
+      const hero = edited.blocks[0]!;
+      if (hero.type !== "hero") throw new Error("no hero");
+      hero.heading = "Sync HubSpot without engineers";
+      edited.variants[0]!.overrides = { "hero.lead": "For you", "removed.heading": "x" };
+      const res = await put({ ...edited, id: "other", briefId: "other" } as Page);
+      expect(res.status).toBe(404);
+      const saved: Page = await (await put(edited)).json();
+      expect(saved).toMatchObject({ id: page.id, briefId });
+      expect(saved.blocks[0]).toMatchObject({ heading: "Sync HubSpot without engineers" });
+      expect(saved.variants[0]!.overrides).toEqual({ "hero.lead": "For you" });
+      page = saved;
+
+      const bad = await put({ ...saved, blocks: [{ ...saved.blocks[0]!, type: "carousel" }] } as unknown as Page);
+      expect(bad.status).toBe(400);
+    });
+
+    it("checks the page and renders each version", async () => {
+      const issues: PageIssue[] = await (await app.request(`/api/pages/${page.id}/check`)).json();
+      expect(issues.map((i) => i.id)).toEqual(expect.arrayContaining(["form.connector", "testimonial.placeholders"]));
+      const general = await (await app.request(`/api/pages/${page.id}/page.html`)).text();
+      expect(general).toContain("<h1 class=\"lph-h1\">Sync HubSpot without engineers</h1>");
+      expect(general).toContain(`action="http://localhost/api/forms/${page.id}"`);
+      expect(general).toContain("noindex");
+      const v = page.variants[0]!;
+      expect(await (await app.request(`/api/pages/${page.id}/page.html?version=${v.slug}`)).text()).toContain(">For you<");
+      expect((await app.request(`/api/pages/${page.id}/page.html?version=nope`)).status).toBe(404);
+    });
+
+    it("keeps leads for testing when no connector is set, and explains bad fields", async () => {
+      const bad = await submit({ fields: { email: "nope" } });
+      expect(bad.status).toBe(422);
+      expect((await bad.json()).errors).toMatchObject({ email: expect.stringMatching(/valid/), firstname: expect.stringMatching(/required/) });
+
+      const ok = await submit({ fields: { email: "ada@example.com", firstname: "Ada" }, context: { variant: page.variants[0]!.slug, utm: { utm_source: "newsletter" } } });
+      expect(ok.status).toBe(200);
+      expect((await ok.json()).ok).toBe(true);
+      // A plain form post works too.
+      expect((await submit("email=grace%40example.com&firstname=Grace", "application/x-www-form-urlencoded")).status).toBe(200);
+      // Bots are told it worked; nothing is kept.
+      expect((await submit({ fields: { email: "bot@example.com", firstname: "Bot" }, _hp: "x" })).status).toBe(200);
+
+      const list = await (await app.request(`/api/pages/${page.id}/submissions`)).json();
+      expect(list.map((s: { values: { email: string } }) => s.values.email).sort()).toEqual(["ada@example.com", "grace@example.com"]);
+      expect(list.find((s: { values: { email: string } }) => s.values.email === "ada@example.com")).toMatchObject({
+        delivery: { status: "stored", connector: "none" },
+        context: { variant: page.variants[0]!.slug, utm: { utm_source: "newsletter" } },
+      });
+    });
+
+    it("sends leads to a signed webhook and reports a failing one", async () => {
+      page = await (await put({ ...page, form: { ...page.form, connector: "webhook", webhookUrl: `${hookUrl}/lead` } })).json();
+      const res = await submit({ fields: { email: "ada@example.com", firstname: "Ada" } });
+      expect(res.status).toBe(200);
+      const hit = received.at(-1)!;
+      expect(JSON.parse(hit.body)).toMatchObject({ type: "lead", pageId: page.id, fields: { email: "ada@example.com", firstname: "Ada" } });
+      expect(await verifyWebhook(hit.body, hit.headers["x-lph-signature"] as string, "test-secret")).toBe(true);
+
+      page = await (await put({ ...page, form: { ...page.form, webhookUrl: `${hookUrl}/fail` } })).json();
+      const failed = await submit({ fields: { email: "ada@example.com", firstname: "Ada" } });
+      expect(failed.status).toBe(502);
+      expect((await failed.json()).message).toMatch(/didn't go through/);
+      const list = await (await app.request(`/api/pages/${page.id}/submissions`)).json();
+      expect(list.some((s: { delivery: { status: string; detail?: string } }) => s.delivery.status === "failed" && s.delivery.detail === "The webhook answered 500.")).toBe(true);
+    });
+
+    it("refuses webhooks on private addresses when private URLs aren't allowed", async () => {
+      const strict = createApp({
+        store: new BrandStore(join(dir, "brands")),
+        briefs: new BriefStore(join(dir, "briefs")),
+        pages: new PageStore(join(dir, "pages")),
+        submissions: new SubmissionStore(join(dir, "submissions")),
+        generator: templateGenerator(),
+        pageGenerator: templatePageGenerator(),
+        outputDir: join(dir, "out"),
+      });
+      const before = received.length;
+      const res = await strict.request(`/api/forms/${page.id}`, json({ fields: { email: "ada@example.com", firstname: "Ada" } }));
+      expect(res.status).toBe(502);
+      expect(received.length).toBe(before);
+      expect((await strict.request("/api/forms/nope", json({}))).status).toBe(404);
     });
   });
 

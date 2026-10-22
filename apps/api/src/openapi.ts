@@ -8,7 +8,7 @@ export const openApi = {
     title: "landing-page-harness API",
     version: "0.1.0",
     description:
-      "Import a website's design system from its rendered CSS, review it, and export tokens, Design.md and starter components. Then turn a prompt into a marketing brief grounded in the site's own copy. Values are always measured and claims always sourced, never invented.",
+      "Import a website's design system from its rendered CSS, review it, and export tokens, Design.md and starter components. Turn a prompt into a marketing brief grounded in the site's own copy, then the brief into a page built from the component library, with a version per persona and a lead form that posts to HubSpot or a webhook. Values are always measured and claims always sourced, never invented.",
   },
   paths: {
     "/api/brands": {
@@ -79,7 +79,7 @@ export const openApi = {
       delete: { summary: "Disconnect the site's MCP server", parameters: [brandId], responses: ok("Brand") },
     },
     "/api/seo/providers": { get: { summary: "SEO/AEO data sources: best practices, plus any connected tool", responses: ok("Providers") } },
-    "/api/generator": { get: { summary: "Which brief writer the server uses (Claude or the offline template)", responses: ok("Generator") } },
+    "/api/generator": { get: { summary: "Which brief and page writers the server uses (Claude or the offline template)", responses: ok("Generators") } },
     "/api/brands/{id}/briefs": {
       get: { summary: "Briefs written for this brand", parameters: [brandId], responses: ok("Brief summaries") },
       post: {
@@ -110,5 +110,48 @@ export const openApi = {
     },
     "/api/briefs/{id}/check": { get: { summary: "Consistency check against the site, the funnel and SEO/AEO rules", parameters: [brandId], responses: ok("Issues") } },
     "/api/briefs/{id}/brief.md": { get: { summary: "The brief as Markdown", parameters: [brandId], responses: ok("Markdown", "text/markdown") } },
+    "/api/briefs/{id}/pages": {
+      get: { summary: "Pages built from this brief", parameters: [brandId], responses: ok("Page summaries") },
+      post: {
+        summary: "Build the page from the brief: one block per outline section, a version per persona. Refused (409) while the brief has must-fix issues",
+        parameters: [brandId, { name: "wait", in: "query", schema: { type: "boolean" }, description: "Block until the page is written and return it" }],
+        responses: { 202: { description: "Job started" }, 201: { description: "Page (when wait=true)" }, 409: { description: "The brief has must-fix issues" } },
+      },
+    },
+    "/api/pages/{id}": {
+      get: { summary: "Full page: blocks, persona versions (copy overrides), SEO and form settings", parameters: [brandId], responses: ok("Page") },
+      put: { summary: "Save edits. Blocks must be component library sections; versions may override copy only", parameters: [brandId], responses: ok("Page") },
+    },
+    "/api/pages/{id}/check": { get: { summary: "Pre-publish checks: structure, unsourced claims, links, the form, SEO/AEO and each version", parameters: [brandId], responses: ok("Issues") } },
+    "/api/pages/{id}/page.html": {
+      get: {
+        summary: "The page rendered as it will be published (noindex preview)",
+        parameters: [brandId, { name: "version", in: "query", schema: { type: "string" }, description: "A persona version's slug. Omit for the general page" }],
+        responses: ok("HTML", "text/html"),
+      },
+    },
+    "/api/pages/{id}/submissions": { get: { summary: "Leads the form received, with how each was delivered", parameters: [brandId], responses: ok("Submissions") } },
+    "/api/forms/{pageId}": {
+      post: {
+        summary: "A page's lead form posts here. Validates, then sends to the page's connector: HubSpot Forms API v3 or a signed webhook (x-lph-signature)",
+        parameters: [{ name: "pageId", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  fields: { type: "object", additionalProperties: { type: "string" }, description: "Field values by HubSpot property name (email, firstname, ...)" },
+                  context: { type: "object", description: "pageUri, pageName, variant, hutk, utm, referrer" },
+                },
+              },
+            },
+            "application/x-www-form-urlencoded": {},
+          },
+        },
+        responses: { 200: { description: "Received" }, 422: { description: "Field errors" }, 502: { description: "The connector refused or couldn't be reached" } },
+      },
+    },
   },
 } as const;

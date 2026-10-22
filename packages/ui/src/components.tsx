@@ -40,6 +40,7 @@ export function Card({ variant = "default", title, children }: CardProps) {
 }
 
 export interface HeroProps {
+  id?: string;
   eyebrow?: ReactNode;
   title: ReactNode;
   lead?: ReactNode;
@@ -48,9 +49,9 @@ export interface HeroProps {
   aside?: ReactNode;
 }
 
-export function Hero({ eyebrow, title, lead, actions, aside }: HeroProps) {
+export function Hero({ id, eyebrow, title, lead, actions, aside }: HeroProps) {
   return (
-    <section className={cx("lph-hero", aside && "lph-hero--split")}>
+    <section id={id} className={cx("lph-hero", aside && "lph-hero--split")}>
       <div className="lph-container lph-hero__inner">
         <div>
           {eyebrow ? <span className="lph-eyebrow">{eyebrow}</span> : null}
@@ -65,16 +66,19 @@ export function Hero({ eyebrow, title, lead, actions, aside }: HeroProps) {
 }
 
 export interface SectionProps {
+  /** Also the anchor buttons link to, e.g. "form" for #form. */
+  id?: string;
   tone?: "default" | "subtle" | "brand";
+  align?: "start" | "center";
   eyebrow?: ReactNode;
   title?: ReactNode;
   intro?: ReactNode;
   children?: ReactNode;
 }
 
-export function Section({ tone = "default", eyebrow, title, intro, children }: SectionProps) {
+export function Section({ id, tone = "default", align = "start", eyebrow, title, intro, children }: SectionProps) {
   return (
-    <section className={cx("lph-section", tone !== "default" && `lph-section--${tone}`)}>
+    <section id={id} className={cx("lph-section", tone !== "default" && `lph-section--${tone}`, align === "center" && "lph-section--center")}>
       <div className="lph-container">
         {title || intro ? (
           <div className="lph-section__intro">
@@ -134,9 +138,10 @@ export function Footer({ children }: { children: ReactNode }) {
 export interface FormField {
   name: string;
   label: string;
-  type?: "text" | "email" | "tel" | "textarea";
+  type?: "text" | "email" | "tel" | "url" | "textarea";
   placeholder?: string;
   required?: boolean;
+  autocomplete?: string;
 }
 
 export interface LeadFormProps {
@@ -146,26 +151,44 @@ export interface LeadFormProps {
   /** Where submissions are posted (the forms webhook). */
   action?: string;
   variant?: string;
+  /** What the details are used for, under the button. */
+  consent?: ReactNode;
+  /** Shown in place of the form once a submission goes through (the page's form script swaps it in). */
+  successMessage?: string;
+  /** Adds a hidden field that only bots fill in. */
+  honeypot?: string;
 }
 
-export function LeadForm({ title, fields, submitLabel, action, variant = "primary" }: LeadFormProps) {
+export function LeadForm({ title, fields, submitLabel, action, variant = "primary", consent, successMessage, honeypot }: LeadFormProps) {
   return (
     <div className="lph-card lph-card--default">
       {title ? <h3 className="lph-h3">{title}</h3> : null}
-      <form className="lph-form" method="post" action={action}>
+      <form className="lph-form" method="post" action={action} data-success={successMessage}>
         {fields.map((f) => (
           <label className="lph-field" key={f.name}>
-            <span className="lph-field__label">{f.label}</span>
+            <span className="lph-field__label">
+              {f.label}
+              {f.required ? null : <span className="lph-field__optional"> (optional)</span>}
+            </span>
             {f.type === "textarea" ? (
-              <textarea className="lph-input" name={f.name} placeholder={f.placeholder} required={f.required} />
+              <textarea className="lph-input" name={f.name} placeholder={f.placeholder} required={f.required} autoComplete={f.autocomplete} />
             ) : (
-              <input className="lph-input" name={f.name} type={f.type ?? "text"} placeholder={f.placeholder} required={f.required} />
+              <input className="lph-input" name={f.name} type={f.type ?? "text"} placeholder={f.placeholder} required={f.required} autoComplete={f.autocomplete} />
             )}
+            <span className="lph-field__error" data-error-for={f.name} />
           </label>
         ))}
+        {honeypot ? (
+          <label className="lph-hp" aria-hidden="true">
+            Leave this empty
+            <input name={honeypot} tabIndex={-1} autoComplete="off" />
+          </label>
+        ) : null}
         <Button variant={variant} type="submit">
           {submitLabel}
         </Button>
+        {consent ? <p className="lph-form__note">{consent}</p> : null}
+        <p className="lph-form__status" role="status" aria-live="polite" />
       </form>
     </div>
   );

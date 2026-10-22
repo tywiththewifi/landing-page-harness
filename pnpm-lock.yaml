@@ -41,9 +41,15 @@ importers:
       '@lph/extractor':
         specifier: workspace:*
         version: link:../../packages/extractor
+      '@lph/forms':
+        specifier: workspace:*
+        version: link:../../packages/forms
       '@lph/kit':
         specifier: workspace:*
         version: link:../../packages/kit
+      '@lph/page':
+        specifier: workspace:*
+        version: link:../../packages/page
       '@lph/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens
@@ -137,6 +143,8 @@ importers:
         specifier: workspace:*
         version: link:../design-md
 
+  packages/forms: {}
+
   packages/kit:
     dependencies:
       '@lph/design-md':
@@ -154,6 +162,33 @@ importers:
       react-dom:
         specifier: ^19.3.1
         version: 19.3.1(react@19.3.1)
+
+  packages/page:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^1.1.0
+        version: 1.1.0(zod@4.6.7)
+      '@lph/brief':
+        specifier: workspace:*
+        version: link:../brief
+      '@lph/forms':
+        specifier: workspace:*
+        version: link:../forms
+      '@lph/tokens':
+        specifier: workspace:*
+        version: link:../tokens
+      '@lph/ui':
+        specifier: workspace:*
+        version: link:../ui
+      react:
+        specifier: ^19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: ^19.3.1
+        version: 19.3.1(react@19.3.1)
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/tokens: {}
 
