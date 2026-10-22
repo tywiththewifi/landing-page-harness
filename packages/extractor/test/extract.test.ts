@@ -88,6 +88,18 @@ describe("extractBrand (fixture site)", () => {
     expect(brand.logo?.svg).not.toMatch(/<script|onload=/i);
   });
 
+  it("ignores cookie banners", () => {
+    const values = brand.colors.map((c) => c.value);
+    expect(values).not.toContain("#ff00aa");
+    expect(values).not.toContain("#ffd400");
+    expect(brand.buttons.map((b) => b.sampleText)).not.toContain("Accept all");
+  });
+
+  it("unhashes build-tool font names and drops their local() fallbacks", () => {
+    expect(brand.fontSources.faces.some((f) => f.includes('font-family: "Archivo"'))).toBe(true);
+    expect(brand.fontSources.faces.join("\n")).not.toMatch(/3f9a1c2b7d|fallback/);
+  });
+
   it("records provenance for every token", () => {
     for (const t of [...brand.colors, ...brand.typography, ...brand.buttons, ...brand.cards]) {
       expect(t.sources.length).toBeGreaterThan(0);

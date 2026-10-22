@@ -97,11 +97,13 @@ export interface NavProps {
   logo: ReactNode;
   links?: { label: string; href: string }[];
   cta?: ReactNode;
+  /** "surface" for sites whose header sits on the page background rather than a brand band. */
+  tone?: "brand" | "surface";
 }
 
-export function Nav({ logo, links = [], cta }: NavProps) {
+export function Nav({ logo, links = [], cta, tone = "brand" }: NavProps) {
   return (
-    <header className="lph-nav">
+    <header className={tone === "surface" ? "lph-nav lph-nav--surface" : "lph-nav"}>
       <div className="lph-container lph-nav__inner">
         <a className="lph-nav__logo" href="/">
           {logo}

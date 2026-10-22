@@ -24,11 +24,24 @@ export function semanticColors(brand: Brand) {
   const brandColor = firstColor(brand, "brand")?.value ?? ink;
   const accent = firstColor(brand, "accent")?.value ?? brandColor;
   const n = neutrals(brand);
+  // Neutrals ordered from closest to the surface to furthest, so this works on dark sites too.
+  const byContrast = [...n].sort((a, b) => contrastRatio(a.value, surface) - contrastRatio(b.value, surface));
   const border =
-    brand.cards.find((c) => c.borderColor)?.borderColor ?? n[0]?.value ?? "#e5e7eb";
-  const muted = n.find((c) => contrastRatio(c.value, surface) >= 4.5)?.value ?? ink;
-  const subtle = n[0]?.value ?? surface;
-  const onBrand = contrastRatio("#ffffff", brandColor) >= contrastRatio(ink, brandColor) ? "#ffffff" : ink;
+    brand.cards.find((c) => c.borderColor)?.borderColor ??
+    byContrast.find((c) => contrastRatio(c.value, surface) > 1.05)?.value ??
+    "#e5e7eb";
+  // Muted text: readable, but softer than ink. Colours seen on text win over ones that aren't.
+  const inkContrast = contrastRatio(ink, surface);
+  const mutedCandidates = byContrast.filter((c) => {
+    const ratio = contrastRatio(c.value, surface);
+    return ratio >= 4.5 && ratio < inkContrast;
+  });
+  const muted = (mutedCandidates.find((c) => c.usage.includes("text")) ?? mutedCandidates[0])?.value ?? ink;
+  const subtle = byContrast.find((c) => contrastRatio(c.value, surface) > 1.05)?.value ?? surface;
+  // What the site actually puts on its brand colour wins; otherwise the more readable of white and ink.
+  const measuredOnBrand = brand.buttons.find((b) => b.kind === "filled" && b.background === brandColor)?.color;
+  const onBrand =
+    measuredOnBrand ?? (contrastRatio("#ffffff", brandColor) >= contrastRatio(ink, brandColor) ? "#ffffff" : ink);
   return { surface, ink, brand: brandColor, accent, border, muted, subtle, onBrand };
 }
 

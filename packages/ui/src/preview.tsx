@@ -26,11 +26,14 @@ export function BrandPreview({ brand }: { brand: Brand }) {
   const onBrand = filled.filter((b) => b.context === brand.colors.find((c) => c.role === "brand")?.value);
   const onSurface = filled.filter((b) => !onBrand.includes(b));
   const heroCtas = onBrand.length ? onBrand : filled.slice(0, 2);
+  // Match where the site puts its header: a logo drawn in the brand colour vanishes on a brand band.
+  const navOnBrand = brand.colors.find((c) => c.role === "brand")?.usage.includes("navigation") ?? false;
   const card = (i: number) => brand.cards[i % Math.max(1, brand.cards.length)]?.name ?? "default";
 
   return (
     <div className="lph">
       <Nav
+        tone={navOnBrand ? "brand" : "surface"}
         logo={<Logo brand={brand} />}
         links={[
           { label: "Product", href: "#product" },

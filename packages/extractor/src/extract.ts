@@ -1,7 +1,7 @@
 import { chromium, type Browser, type Page } from "playwright";
 import type { Brand } from "@lph/tokens";
 import { analyze, type PageCapture } from "./analyze.ts";
-import { collectPage, type PageSample } from "./collect.ts";
+import { collectPage, removeOverlays, type PageSample } from "./collect.ts";
 
 export interface ExtractOptions {
   url: string;
@@ -50,14 +50,19 @@ async function capture(page: Page, url: string, timeoutMs: number): Promise<Page
   await page.goto(url, { waitUntil: "load", timeout: timeoutMs });
   await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
   await page.evaluate(() => document.fonts?.ready).catch(() => {});
+  await page.evaluate(removeOverlays).catch(() => 0);
   // Trigger lazy-loaded sections, then return to the top.
+  // "instant" overrides `scroll-behavior: smooth`, which would otherwise leave the page
+  // part-way down when sampling starts (and the header measured off-screen).
   await page.evaluate(async () => {
     for (let y = 0; y < document.body.scrollHeight; y += window.innerHeight) {
-      window.scrollTo(0, y);
+      window.scrollTo({ top: y, behavior: "instant" });
       await new Promise((r) => setTimeout(r, 60));
     }
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   });
+  // Consent banners can appear after a delay or on scroll.
+  await page.evaluate(removeOverlays).catch(() => 0);
   return page.evaluate(collectPage);
 }
 
