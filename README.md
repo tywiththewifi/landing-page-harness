@@ -77,6 +77,8 @@ curl localhost:8787/api/brands/<id>/tokens.css
 
 An MCP server over the same API is planned (M5), so Claude, Codex, Cursor or any other MCP client can read a brand directly.
 
+For sites that have no MCP server of their own, [`packages/site-mcp`](packages/site-mcp) is a prototype that crawls a site's public pages and serves them, with the brand kit, over MCP.
+
 ## Repository layout
 
 ```
@@ -89,6 +91,7 @@ packages/
   design-md/    DESIGN.md generator
   ui/           Starter components: framework-agnostic CSS classes plus React wrappers
   kit/          Writes the brand kit and renders preview.html
+  site-mcp/     Prototype: crawl any public site and serve it as an MCP server
 fixtures/
   northloop/    A fictional B2B site used by the tests
 ```
