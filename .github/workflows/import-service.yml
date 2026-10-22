@@ -4,7 +4,7 @@ name: Import service
 # Hugging Face Space. Needs an HF_TOKEN secret: a Hugging Face token with write access.
 on:
   push:
-    branches: [main]
+    branches: [main, space-deploy-check]
     paths:
       - apps/api/**
       - packages/**
