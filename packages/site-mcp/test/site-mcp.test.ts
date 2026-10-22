@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { classify, crawlSite, createSiteServer, extractPage, parseRobots, SiteIndex, type Snapshot } from "../src/index.ts";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { classify, crawlSite, createSiteServer, extractPage, parseRobots, serveHttp, SiteIndex, type Snapshot } from "../src/index.ts";
 
 const ORIGIN = "https://acme.test";
 
@@ -98,6 +99,7 @@ describe("crawlSite + MCP server", () => {
 
     const tools = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(tools).toEqual(["get_page", "list_case_studies", "list_pages", "search_site", "site_overview"]);
+    expect((await client.listTools()).tools.every((t) => t.annotations?.readOnlyHint === true)).toBe(true);
 
     const call = async (name: string, args: Record<string, unknown> = {}) => {
       const res = await client.callTool({ name, arguments: args });
@@ -111,5 +113,14 @@ describe("crawlSite + MCP server", () => {
     expect(await call("get_page", { page: "https://evil.test/platform" })).toContain("No page");
 
     await client.close();
+
+    // Same server by URL, over streamable HTTP.
+    const http = await serveHttp({ snapshot }, { port: 0 });
+    const remote = new Client({ name: "test-http", version: "0" });
+    await remote.connect(new StreamableHTTPClientTransport(new URL(http.url)));
+    const res = await remote.callTool({ name: "search_site", arguments: { query: "grid flexibility" } });
+    expect(JSON.parse((res.content as { text: string }[])[0]!.text)[0].path).toBe("/blog/grid-flex");
+    await remote.close();
+    await new Promise((done) => http.server.close(done));
   });
 });

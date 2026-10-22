@@ -13,11 +13,16 @@ pnpm extract https://www.kraken.tech --out brands/kraken
 
 # 2. Serve it over stdio
 pnpm site-mcp serve sites/kraken.json --brand brands/kraken
+
+# ...or by URL, over streamable HTTP at http://127.0.0.1:8788/mcp
+pnpm site-mcp serve sites/kraken.json --brand brands/kraken --http 8788
 ```
 
 Claude Code: `claude mcp add kraken -- pnpm --dir /path/to/landing-page-harness site-mcp serve sites/kraken.json --brand brands/kraken`
 
 ## Tools
+
+Every tool is annotated `readOnlyHint: true`, so clients that only call read-only tools (like the harness's own site MCP client) can use them.
 
 | Tool | Returns |
 |---|---|

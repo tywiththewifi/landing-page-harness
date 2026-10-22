@@ -6,6 +6,9 @@ import { normalizePath } from "./extract.ts";
 import { SiteIndex } from "./search.ts";
 import type { Page, PageType, Snapshot } from "./types.ts";
 
+// Every tool only reads the snapshot; clients may call them without asking.
+const READ_ONLY = { readOnlyHint: true, openWorldHint: false } as const;
+
 const PAGE_TYPES = ["home", "case-study", "article", "press", "event", "product", "integration", "careers", "legal", "contact", "page"] as const;
 
 export interface ServerOptions {
@@ -21,7 +24,7 @@ export interface ServerOptions {
 export function createSiteServer({ snapshot, brandDir }: ServerOptions): McpServer {
   const host = new URL(snapshot.origin).hostname;
   const server = new McpServer({ name: `site-mcp:${host}`, version: "0.1.0" });
-  const index = new SiteIndex(snapshot.pages);
+  const index = indexFor(snapshot);
   const byPath = new Map(snapshot.pages.map((p) => [p.path, p]));
 
   const json = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] });
@@ -33,6 +36,7 @@ export function createSiteServer({ snapshot, brandDir }: ServerOptions): McpServ
     "site_overview",
     {
       title: `About ${snapshot.name}`,
+      annotations: READ_ONLY,
       description: `What this server knows about ${snapshot.origin}: page counts by type and language, when it was crawled, what was skipped, and whether a brand kit is available. Call this first.`,
       inputSchema: {},
     },
@@ -58,6 +62,7 @@ export function createSiteServer({ snapshot, brandDir }: ServerOptions): McpServ
     "search_site",
     {
       title: "Search the site",
+      annotations: READ_ONLY,
       description: "Keyword search across every crawled page. Returns ranked pages with a matching snippet; use get_page to read one.",
       inputSchema: {
         query: z.string().min(1),
@@ -73,6 +78,7 @@ export function createSiteServer({ snapshot, brandDir }: ServerOptions): McpServ
     "list_pages",
     {
       title: "List pages",
+      annotations: READ_ONLY,
       description: "List crawled pages, optionally filtered by type, language or a path prefix.",
       inputSchema: {
         type: z.enum(PAGE_TYPES).optional(),
@@ -94,6 +100,7 @@ export function createSiteServer({ snapshot, brandDir }: ServerOptions): McpServ
     "get_page",
     {
       title: "Read a page",
+      annotations: READ_ONLY,
       description: "Read one page as Markdown (main content only, no navigation or footer), with its title, description, key figures and last-modified date.",
       inputSchema: {
         page: z.string().describe("A full URL on this site or a path like /case-studies/acme"),
@@ -119,6 +126,7 @@ export function createSiteServer({ snapshot, brandDir }: ServerOptions): McpServ
     "list_case_studies",
     {
       title: "Customer case studies",
+      annotations: READ_ONLY,
       description: "Customer stories with the customer's name, summary and headline figures, for proof points in briefs and landing pages.",
       inputSchema: { lang: z.string().optional() },
     },
@@ -135,6 +143,7 @@ export function createSiteServer({ snapshot, brandDir }: ServerOptions): McpServ
       "get_brand",
       {
         title: "Brand kit",
+        annotations: READ_ONLY,
         description: "The site's measured design system from the brand import: DESIGN.md (values and usage rules for agents), tokens.css or tokens.json (W3C design tokens).",
         inputSchema: { format: z.enum(["design_md", "tokens_css", "tokens_json"]).optional() },
       },
@@ -162,6 +171,14 @@ export function createSiteServer({ snapshot, brandDir }: ServerOptions): McpServ
   }
 
   return server;
+}
+
+// The HTTP transport builds a server per request; index each snapshot once.
+const indexes = new WeakMap<Snapshot, SiteIndex>();
+function indexFor(snapshot: Snapshot): SiteIndex {
+  let index = indexes.get(snapshot);
+  if (!index) indexes.set(snapshot, (index = new SiteIndex(snapshot.pages)));
+  return index;
 }
 
 function customerName(p: Page): string {
