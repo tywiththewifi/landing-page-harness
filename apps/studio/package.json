@@ -10,6 +10,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@lph/brief": "workspace:*",
     "@lph/tokens": "workspace:*",
     "dompurify": "^3.4.17",
     "marked": "^18.1.1",

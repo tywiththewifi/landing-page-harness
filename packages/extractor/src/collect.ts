@@ -66,6 +66,13 @@ export interface PageSample {
   /** Hosted font stylesheets (Google Fonts, Adobe Fonts, ...). */
   fontStylesheets: string[];
   navLinks: { href: string; text: string }[];
+  content: {
+    description: string;
+    lang: string;
+    headings: { level: number; text: string }[];
+    paragraphs: string[];
+    ctas: string[];
+  };
 }
 
 export function collectPage(): PageSample {
@@ -114,8 +121,15 @@ export function collectPage(): PageSample {
     return "rgb(255, 255, 255)";
   };
 
+  // Build tools hash family names to scope them: next/font gives "__Inter_d65c78",
+  // Astro gives "Plus Jakarta Sans-f9527f4ba30f9f35". Keep the name people know.
+  const cleanFamily = (f: string) =>
+    f
+      .replace(/^__(.+?)_(?:Fallback_)?[0-9a-f]{5,}$/i, (_m, n: string) => n.replace(/_/g, " "))
+      .replace(/^(.+?)-[0-9a-f]{8,}$/i, "$1");
+
   const firstFamily = (f: string) =>
-    f.split(",")[0]!.trim().replace(/^["']|["']$/g, "").replace(/[<>{};"'\\]/g, "");
+    cleanFamily(f.split(",")[0]!.trim().replace(/^["']|["']$/g, "").replace(/[<>{};"'\\]/g, ""));
 
   const lineHeight = (cs: CSSStyleDeclaration) =>
     cs.lineHeight === "normal" ? px(cs.fontSize) * 1.2 : px(cs.lineHeight);
@@ -148,7 +162,11 @@ export function collectPage(): PageSample {
     for (const rule of [...rules]) {
       if (rule instanceof CSSFontFaceRule && fontFaces.length < 40) {
         const base = sheet.href ?? location.href;
-        fontFaces.push(rule.cssText.replace(/url\((["']?)([^"')]+)\1\)/g, (_m, _q, u) => {
+        const family = rule.style.getPropertyValue("font-family").trim().replace(/^["']|["']$/g, "");
+        // Metric-matched local() fallbacks (next/font, Astro) would shadow the real face once renamed.
+        if (/fallback/i.test(family)) continue;
+        const renamed = rule.cssText.replace(/font-family:\s*[^;]+;/, `font-family: "${cleanFamily(family).replace(/["\\]/g, "")}";`);
+        fontFaces.push(renamed.replace(/url\((["']?)([^"')]+)\1\)/g, (_m, _q, u) => {
           try {
             return `url("${new URL(u, base).href}")`;
           } catch {
@@ -296,23 +314,57 @@ export function collectPage(): PageSample {
   }
 
   // --- Logo and navigation ---------------------------------------------------------------
-  const header = document.querySelector("header, [role=banner], nav");
+  // The site header is the bar at the top of the page, whatever it's built from: <header>,
+  // <nav>, a Webflow "navbar" div or a custom element. The first <header>/<nav> in the DOM
+  // is often in the footer or deep in a product demo.
+  const linkCount = (el: Element) => el.querySelectorAll("a[href]").length;
+  const topBars = all.filter((el) => {
+    const isBarLike =
+      el.matches("header, [role=banner], nav, [class*=nav], [class*=header], [id*=nav], [id*=header]") ||
+      ["fixed", "sticky"].includes(getComputedStyle(el).position);
+    if (!isBarLike || !visible(el)) return false;
+    const r = el.getBoundingClientRect();
+    return r.top + window.scrollY < 160 && r.width >= vw * 0.6 && r.height <= 260 && linkCount(el) >= 2;
+  });
+  const header =
+    topBars.sort((a, b) => linkCount(b) - linkCount(a))[0] ?? document.querySelector("header, [role=banner], nav");
+
+  const isHomeHref = (href: string) => {
+    try {
+      const u = new URL(href, location.href);
+      return u.origin === location.origin && /^\/((home(page)?|index(\.html?)?|[a-z]{2}(-[a-z]{2})?)\/?)?$/i.test(u.pathname);
+    } catch {
+      return false;
+    }
+  };
   let logo: PageSample["logo"] = null;
+  let logoLink: HTMLAnchorElement | null = null;
   if (header) {
-    const home = [...header.querySelectorAll("a")].find((a) => {
-      try {
-        const u = new URL(a.href, location.href);
-        return u.origin === location.origin && (u.pathname === "/" || u.pathname === "");
-      } catch {
-        return false;
-      }
-    });
-    const scope = home ?? header;
+    const anchors = [...header.querySelectorAll("a")].filter((a) => visible(a));
+    const graphic = (a: Element) => a.querySelector("svg, img");
+    const left = (a: Element) => a.getBoundingClientRect().left;
+    // Prefer a home link with a graphic, then the left-most link with a graphic, then any home link.
+    logoLink =
+      anchors.find((a) => isHomeHref(a.href) && graphic(a)) ??
+      anchors.filter((a) => graphic(a) && left(a) < vw * 0.3).sort((a, b) => left(a) - left(b))[0] ??
+      anchors.find((a) => isHomeHref(a.href) && ownText(a).length > 0) ??
+      null;
+    const scope = logoLink ?? header;
     const svg = scope.querySelector("svg");
     const img = scope.querySelector("img");
     if (svg && svg.outerHTML.length < 30000) {
       // Sanitise with the DOM while we have one: the markup is later rendered inline.
       const clean = svg.cloneNode(true) as SVGElement;
+      // Site CSS often colours the paths (class rules, which don't travel with the markup),
+      // so bake the rendered fill and stroke into each shape.
+      const originals = [svg, ...svg.querySelectorAll("*")];
+      [clean, ...clean.querySelectorAll("*")].forEach((node, i) => {
+        const orig = originals[i];
+        if (!orig || !node.matches("path, rect, circle, ellipse, polygon, polyline, line, text, use")) return;
+        const cs = getComputedStyle(orig);
+        if (!node.getAttribute("fill") && !/^url\(/.test(cs.fill)) node.setAttribute("fill", cs.fill);
+        if (!node.getAttribute("stroke") && cs.stroke !== "none" && !/^url\(/.test(cs.stroke)) node.setAttribute("stroke", cs.stroke);
+      });
       clean.querySelectorAll("script, foreignObject, iframe, style").forEach((n) => n.remove());
       for (const node of [clean, ...clean.querySelectorAll("*")]) {
         for (const attr of [...node.attributes]) {
@@ -323,20 +375,62 @@ export function collectPage(): PageSample {
         }
       }
       if (!clean.getAttribute("fill") && !clean.querySelector("[fill]")) clean.setAttribute("fill", "currentColor");
-      logo = { kind: "svg", svg: clean.outerHTML, text: ownText(scope) || undefined, selector: path(svg) };
+      // currentColor came from the site's CSS (often a brand colour); keep it once the logo leaves the page.
+      if (!clean.getAttribute("color")) clean.setAttribute("color", getComputedStyle(svg).color);
+      // Only text shown next to the mark (a wordmark), not the SVG's own <title>/<text>.
+      let label = "";
+      if (logoLink) {
+        const walker = document.createTreeWalker(logoLink, NodeFilter.SHOW_TEXT);
+        for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+          const parent = n.parentElement;
+          if (parent && !parent.closest("svg") && visible(parent)) label += ` ${n.textContent ?? ""}`;
+        }
+        label = label.replace(/\s+/g, " ");
+      }
+      logo = { kind: "svg", svg: clean.outerHTML, text: label.trim() || undefined, selector: path(svg) };
     } else if (img) {
       logo = { kind: "img", src: (img as HTMLImageElement).currentSrc || (img as HTMLImageElement).src, selector: path(img) };
-    } else if (home && ownText(home)) {
-      logo = { kind: "text", text: ownText(home), selector: path(home) };
+    } else if (logoLink && ownText(logoLink)) {
+      logo = { kind: "text", text: ownText(logoLink), selector: path(logoLink) };
     }
   }
 
+  // The logo usually links home (sometimes to /homepage), so it is never the product page.
   const navLinks = header
     ? [...header.querySelectorAll("a")]
+        .filter((a) => a !== logoLink && !isHomeHref(a.href))
         .map((a) => ({ href: a.href, text: ownText(a) }))
         .filter((l) => l.href.startsWith("http"))
         .slice(0, 40)
     : [];
+
+  // --- Copy (for grounding briefs, not for styling) ------------------------------
+  const fullText = (el: Element) => (el.textContent ?? "").replace(/\s+/g, " ").trim();
+  const headings: { level: number; text: string }[] = [];
+  for (const el of document.body.querySelectorAll("h1, h2, h3, h4")) {
+    const text = fullText(el);
+    if (text.length > 1 && text.length < 200 && visible(el) && !el.closest("footer")) {
+      headings.push({ level: Number(el.tagName[1]), text });
+    }
+  }
+  const paragraphs: string[] = [];
+  for (const el of document.body.querySelectorAll("p, li, blockquote")) {
+    if (el.closest("nav, footer, header") || el.querySelector("p, li")) continue;
+    const text = fullText(el);
+    if (text.length >= 40 && text.length <= 500 && visible(el) && !paragraphs.includes(text)) paragraphs.push(text);
+  }
+  const ctaCount = new Map<string, number>();
+  for (const b of buttons) if (b.text && b.text.length <= 40) ctaCount.set(b.text, (ctaCount.get(b.text) ?? 0) + 1);
+  const content = {
+    description:
+      document.querySelector("meta[name='description']")?.getAttribute("content") ??
+      document.querySelector("meta[property='og:description']")?.getAttribute("content") ??
+      "",
+    lang: document.documentElement.lang || "en",
+    headings: headings.slice(0, 40),
+    paragraphs: paragraphs.slice(0, 30),
+    ctas: [...ctaCount.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t).slice(0, 12),
+  };
 
   const bodyCs = getComputedStyle(document.body);
   const htmlBg = getComputedStyle(document.documentElement).backgroundColor;
@@ -363,5 +457,67 @@ export function collectPage(): PageSample {
     navLinks,
     fontFaces,
     fontStylesheets,
+    content,
   };
+}
+
+/**
+ * Runs inside the page before collectPage. Removes cookie and consent banners (and their
+ * backdrops) so their buttons and colours aren't mistaken for the brand's. Nothing is
+ * accepted on the visitor's behalf: the elements are just taken out of the DOM.
+ * Returns how many elements were removed.
+ */
+export function removeOverlays(): number {
+  const CONSENT = /cookie|consent|gdpr|ccpa|privacy (settings|preferences|choices)/i;
+  const KNOWN = [
+    "#onetrust-consent-sdk",
+    "#CybotCookiebotDialog",
+    "#usercentrics-root",
+    "#usercentrics-cmp-ui",
+    "#didomi-host",
+    "#truste-consent-track",
+    "#hs-eu-cookie-confirmation",
+    "#cmplz-cookiebanner-container",
+    "#cookiescript_injected",
+    "#qc-cmp2-container",
+    "[id^=sp_message_container]",
+    ".cky-consent-container",
+    ".cky-overlay",
+    ".cc-window",
+    ".osano-cm-window",
+    "[class*=fs-cc-banner]",
+    "[class*=fs-cc-prefs]",
+    "[fs-cc=banner]",
+    "[fs-cc=preferences]",
+  ].join(", ");
+  let removed = 0;
+  const drop = (el: Element) => {
+    if (!el.isConnected) return;
+    el.remove();
+    removed++;
+  };
+  document.querySelectorAll(KNOWN).forEach(drop);
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  for (const el of [...document.body.querySelectorAll("*")]) {
+    if (!el.isConnected) continue;
+    const cs = getComputedStyle(el);
+    const overlay = cs.position === "fixed" || cs.position === "sticky" || el.matches("dialog[open], [role=dialog], [aria-modal=true]");
+    if (!overlay) continue;
+    const text = (el.textContent ?? "").replace(/\s+/g, " ").trim();
+    if (text.length > 0 && text.length < 2000 && CONSENT.test(text) && el.querySelectorAll("a[href]").length < 15) {
+      drop(el);
+      continue;
+    }
+    // An empty fixed layer over most of the screen is a modal backdrop.
+    const r = el.getBoundingClientRect();
+    if (cs.position === "fixed" && !text && !el.querySelector("img, svg, video, canvas") && r.width >= vw * 0.9 && r.height >= vh * 0.9) {
+      drop(el);
+    }
+  }
+  // Banners often lock scrolling; lazy sections only load if we can scroll.
+  for (const el of [document.documentElement, document.body]) {
+    if (getComputedStyle(el).overflowY === "hidden") el.style.setProperty("overflow", "visible", "important");
+  }
+  return removed;
 }

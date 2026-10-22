@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import type { Brand } from "@lph/tokens";
 import styles from "./ConfirmPanel.module.scss";
 
@@ -42,7 +43,12 @@ export function ConfirmPanel({ brand, result, onClose }: { brand: Brand; result:
           </ul>
         </div>
       </div>
-      <p className={styles.next}>Next step: describe the page or campaign you want, and we'll write the brief.</p>
+      <div className={styles.next}>
+        <span>Next: describe the page or campaign you want, and we'll write the brief.</span>
+        <Link className="ui-button ui-button--primary" to={`/brands/${brand.id}/briefs/new`}>
+          Plan a page →
+        </Link>
+      </div>
     </div>
   );
 }

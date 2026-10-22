@@ -3,12 +3,25 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { join } from "node:path";
 import { z } from "zod";
+import {
+  bestPractices,
+  briefEdit,
+  briefToMarkdown,
+  checkBrief,
+  defaultGenerator,
+  GenerationError,
+  toBrief,
+  type Brief,
+  type BriefGenerator,
+  type SeoInsights,
+  type SeoProvider,
+} from "@lph/brief";
 import { generateDesignMd } from "@lph/design-md";
 import { extractBrand, type ExtractOptions } from "@lph/extractor";
 import { previewHtml, writeBrandKit } from "@lph/kit";
 import { checkContrast, resolveConflict, toCss, toDtcg, type Brand } from "@lph/tokens";
 import { openApi } from "./openapi.ts";
-import type { BrandStore } from "./store.ts";
+import type { BrandStore, BriefStore } from "./store.ts";
 import { assertPublicUrl, UrlRejected } from "./url-guard.ts";
 
 export interface Job {
@@ -16,11 +29,17 @@ export interface Job {
   status: "running" | "done" | "failed";
   step: string;
   brandId?: string;
+  briefId?: string;
   error?: string;
 }
 
 export interface AppOptions {
   store: BrandStore;
+  briefs: BriefStore;
+  /** Writes briefs. Defaults to Claude when credentials are set, the offline template otherwise. */
+  generator?: BriefGenerator;
+  /** SEO/AEO sources to choose from. Best practices is always available. */
+  seoProviders?: SeoProvider[];
   /** Where confirmed brand kits are written. */
   outputDir: string;
   extract?: (opts: ExtractOptions) => Promise<Brand>;
@@ -57,11 +76,18 @@ const brandEdit = z.object({
   usageRules: z.array(z.string().max(500)),
 });
 
+const briefRequest = z.object({
+  prompt: z.string().trim().min(3, "Describe the page or campaign").max(2000),
+  seoProvider: z.string().optional(),
+});
+
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "brand";
 
 export function createApp(opts: AppOptions) {
-  const { store } = opts;
+  const { store, briefs } = opts;
   const extract = opts.extract ?? extractBrand;
+  const generator = opts.generator ?? defaultGenerator();
+  const providers = opts.seoProviders?.length ? opts.seoProviders : [bestPractices];
   const jobs = new Map<string, Job>();
   const app = new Hono();
 
@@ -70,6 +96,7 @@ export function createApp(opts: AppOptions) {
   app.onError((err, c) => {
     if (err instanceof HTTPException) return c.json({ error: err.message }, err.status);
     if (err instanceof UrlRejected) return c.json({ error: err.message }, 400);
+    if (err instanceof GenerationError) return c.json({ error: err.message }, 502);
     if (err instanceof z.ZodError) return c.json({ error: "Invalid request", issues: err.issues }, 400);
     console.error(err);
     return c.json({ error: "Something went wrong" }, 500);
@@ -81,16 +108,19 @@ export function createApp(opts: AppOptions) {
     return brand;
   };
 
-  /** Runs an extraction in the background and tracks it as a job. */
-  const startJob = (input: ExtractOptions, keepId?: string) => {
+  const mustGetBrief = async (id: string) => {
+    const brief = await briefs.get(id).catch(() => null);
+    if (!brief) throw new HTTPException(404, { message: "Brief not found" });
+    return brief;
+  };
+
+  /** Runs work in the background and tracks it as a job that clients poll. */
+  const runJob = (work: (job: Job) => Promise<Partial<Job>>) => {
     const job: Job = { id: crypto.randomUUID(), status: "running", step: "Starting" };
     jobs.set(job.id, job);
     const done = (async () => {
       try {
-        const brand = await extract({ ...input, onProgress: (step) => (job.step = step) });
-        if (keepId) brand.id = keepId;
-        await store.save(brand);
-        Object.assign(job, { status: "done", step: "Done", brandId: brand.id });
+        Object.assign(job, { status: "done", step: "Done", ...(await work(job)) });
       } catch (err) {
         Object.assign(job, { status: "failed", error: err instanceof Error ? err.message : String(err) });
       }
@@ -99,10 +129,41 @@ export function createApp(opts: AppOptions) {
     return { job, done };
   };
 
+  /** Extracts a brand from its pages. */
+  const startJob = (input: ExtractOptions, keepId?: string) =>
+    runJob(async (job) => {
+      const brand = await extract({ ...input, onProgress: (step) => (job.step = step) });
+      if (keepId) brand.id = keepId;
+      await store.save(brand);
+      return { brandId: brand.id };
+    });
+
+  /** Researches keywords, then writes the brief. A failing SEO tool falls back to best practices. */
+  const research = async (provider: SeoProvider, input: Parameters<SeoProvider["research"]>[0]): Promise<SeoInsights> => {
+    try {
+      return await provider.research(input);
+    } catch (err) {
+      const fallback = await bestPractices.research(input);
+      return { ...fallback, notes: [`${provider.name} couldn't be reached (${(err as Error).message}), so best practices were used.`, ...fallback.notes] };
+    }
+  };
+  const startBrief = (brand: Brand, prompt: string, provider: SeoProvider) =>
+    runJob(async (job) => {
+      job.step = `Researching keywords with ${provider.name}`;
+      const insights = await research(provider, { topic: prompt, siteUrl: brand.url, lang: brand.content?.[0]?.lang ?? "en" });
+      job.step = "Writing the brief";
+      const content = await generator.generate({ prompt, brand, insights });
+      const brief = toBrief(content, { id: crypto.randomUUID(), brandId: brand.id, prompt, generator, insights });
+      await briefs.save(brief);
+      return { brandId: brand.id, briefId: brief.id };
+    });
+
   app.get("/api/health", (c) => c.json({ ok: true }));
   app.get("/api/openapi.json", (c) => c.json(openApi));
 
   app.get("/api/brands", async (c) => c.json(await store.list()));
+  app.get("/api/seo/providers", (c) => c.json(providers.map(({ id, name, description }) => ({ id, name, description }))));
+  app.get("/api/generator", (c) => c.json({ name: generator.name, model: generator.model ?? null }));
 
   // Import a brand from a URL. Returns a job; pass ?wait=true to block until it finishes.
   app.post("/api/brands", async (c) => {
@@ -156,6 +217,40 @@ export function createApp(opts: AppOptions) {
     const brand = await mustGet(c.req.param("id"));
     const { job } = startJob({ url: brand.pages[0]!, productUrl: brand.pages[1] }, brand.id);
     return c.json(job, 202);
+  });
+
+  // Phase 2: a prompt becomes a marketing brief grounded in the brand's site.
+  app.post("/api/brands/:id/briefs", async (c) => {
+    const brand = await mustGet(c.req.param("id"));
+    const body = briefRequest.parse(await c.req.json());
+    // A connected tool, when there is one, is the default over best practices.
+    const provider = providers.find((p) => p.id === (body.seoProvider ?? providers.at(-1)!.id));
+    if (!provider) throw new HTTPException(400, { message: `Unknown SEO provider "${body.seoProvider}"` });
+    const { job, done } = startBrief(brand, body.prompt, provider);
+    if (c.req.query("wait") === "true") {
+      const finished = await done;
+      if (finished.status === "failed") return c.json(finished, 502);
+      return c.json(await mustGetBrief(finished.briefId!), 201);
+    }
+    return c.json(job, 202);
+  });
+  app.get("/api/brands/:id/briefs", async (c) => c.json(await briefs.listFor((await mustGet(c.req.param("id"))).id)));
+
+  app.get("/api/briefs/:id", async (c) => c.json(await mustGetBrief(c.req.param("id"))));
+  // Save edits. The prompt, ids for the brand and brief, and keyword data stay as stored.
+  app.put("/api/briefs/:id", async (c) => {
+    const current = await mustGetBrief(c.req.param("id"));
+    const edit = briefEdit.parse(await c.req.json());
+    const next: Brief = { ...current, ...edit, updatedAt: new Date().toISOString() };
+    return c.json(await briefs.save(next));
+  });
+  app.get("/api/briefs/:id/check", async (c) => {
+    const brief = await mustGetBrief(c.req.param("id"));
+    return c.json(checkBrief(brief, await mustGet(brief.brandId)));
+  });
+  app.get("/api/briefs/:id/brief.md", async (c) => {
+    c.header("content-type", "text/markdown; charset=utf-8");
+    return c.body(briefToMarkdown(await mustGetBrief(c.req.param("id"))));
   });
 
   app.get("/api/brands/:id/tokens.css", async (c) => {

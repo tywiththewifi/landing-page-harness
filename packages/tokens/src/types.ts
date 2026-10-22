@@ -119,6 +119,21 @@ export interface Conflict {
   reviewed?: boolean;
 }
 
+/**
+ * Copy read from a sampled page. Briefs are grounded in it: a claim or number
+ * in a brief has to come from here or from the person's prompt.
+ */
+export interface PageContent {
+  url: string;
+  title: string;
+  description: string;
+  lang: string;
+  headings: { level: number; text: string }[];
+  paragraphs: string[];
+  /** Button and call-to-action labels, most used first. */
+  ctas: string[];
+}
+
 export interface Brand {
   id: string;
   name: string;
@@ -144,4 +159,6 @@ export interface Brand {
   declaredVariables: Record<string, string>;
   /** How to load the brand's web fonts: @font-face rules and hosted stylesheet URLs. */
   fontSources: { faces: string[]; stylesheets: string[] };
+  /** Copy from the sampled pages. Optional because brands imported before phase 2 don't have it. */
+  content?: PageContent[];
 }

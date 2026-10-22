@@ -13,3 +13,12 @@
   :global(.ui-input) { padding-right: 30px; }
 }
 .unit { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--ui-faint); font-size: 11px; pointer-events: none; }
+.labelRow { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.count { font-size: 11px; color: var(--ui-faint); font-variant-numeric: tabular-nums; }
+.countOff { color: var(--ui-warn); font-weight: 600; }
+.prefixed {
+  position: relative; display: block;
+  :global(.ui-input) { padding-left: 22px; }
+}
+.prefix { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--ui-faint); pointer-events: none; }
+.textarea { min-height: 0 !important; line-height: 1.5; }

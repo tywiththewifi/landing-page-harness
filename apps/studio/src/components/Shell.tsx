@@ -1,7 +1,11 @@
-import { Link, Outlet } from "react-router";
+import { Link, Outlet, useLocation } from "react-router";
 import styles from "./Shell.module.scss";
 
+const STEPS = ["Brand", "Brief", "Page", "Publish"];
+
 export function Shell() {
+  const { pathname } = useLocation();
+  const step = pathname.startsWith("/briefs/") || pathname.endsWith("/briefs/new") ? 1 : 0;
   return (
     <div className={styles.shell}>
       <header className={styles.bar}>
@@ -13,10 +17,11 @@ export function Shell() {
           landing-page-harness
         </Link>
         <nav className={styles.steps} aria-label="Steps">
-          <span className={styles.current}>1 Brand</span>
-          <span>2 Brief</span>
-          <span>3 Page</span>
-          <span>4 Publish</span>
+          {STEPS.map((s, i) => (
+            <span key={s} className={i === step ? styles.current : i < step ? styles.past : undefined} aria-current={i === step ? "step" : undefined}>
+              {i + 1} {s}
+            </span>
+          ))}
         </nav>
       </header>
       <main className={styles.main}>

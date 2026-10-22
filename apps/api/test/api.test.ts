@@ -2,10 +2,11 @@ import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { GenerationError, templateGenerator, type Brief, type BriefIssue, type SeoProvider } from "@lph/brief";
 import type { Brand } from "@lph/tokens";
 import { serveFixture } from "../../../scripts/serve-fixture.mjs";
 import { createApp } from "../src/app.ts";
-import { BrandStore } from "../src/store.ts";
+import { BrandStore, BriefStore } from "../src/store.ts";
 import { assertPublicUrl } from "../src/url-guard.ts";
 
 describe("assertPublicUrl", () => {
@@ -27,7 +28,13 @@ describe("API", () => {
   beforeAll(async () => {
     site = await serveFixture();
     dir = await mkdtemp(join(tmpdir(), "lph-api-"));
-    app = createApp({ store: new BrandStore(join(dir, "data")), outputDir: join(dir, "out"), allowPrivateUrls: true });
+    app = createApp({
+      store: new BrandStore(join(dir, "brands")),
+      briefs: new BriefStore(join(dir, "briefs")),
+      generator: templateGenerator(),
+      outputDir: join(dir, "out"),
+      allowPrivateUrls: true,
+    });
   });
   afterAll(async () => {
     await site.close();
@@ -92,6 +99,93 @@ describe("API", () => {
     const res = await app.request(`/api/brands/${brand.id}/confirm`, { method: "POST" });
     const { dir: out } = await res.json();
     expect((await readdir(out)).sort()).toEqual(["DESIGN.md", "brand.json", "logo.svg", "preview.html", "tokens.css", "tokens.json"]);
+  });
+
+  describe("briefs", () => {
+    let brief: Brief;
+    const prompt = "Landing page for our new HubSpot integration for ops managers";
+
+    it("lists the SEO providers and the brief writer", async () => {
+      expect(await (await app.request("/api/seo/providers")).json()).toEqual([expect.objectContaining({ id: "best-practices" })]);
+      expect(await (await app.request("/api/generator")).json()).toEqual({ name: "template", model: null });
+    });
+
+    it("writes a brief grounded in the imported site", async () => {
+      const res = await app.request(`/api/brands/${brand.id}/briefs?wait=true`, json({ prompt }));
+      expect(res.status).toBe(201);
+      brief = await res.json();
+      expect(brief).toMatchObject({ brandId: brand.id, prompt, funnelStage: "consideration", generator: { name: "template" } });
+      expect(brief.personas[0]!.id).toBe("ops-managers");
+      expect(brief.outline[0]!.type).toBe("hero");
+      // The site's own button and proof, read during import.
+      expect(brief.offer.primaryCta).toMatch(/Book a demo|Start free/);
+      expect(brief.proofPoints.filter((p) => p.source === "site").map((p) => p.claim)).toContain("Trusted by 400 ops teams");
+      expect(brief.insights.provider).toBe("best-practices");
+    });
+
+    it("runs as a job and lists briefs per brand", async () => {
+      const job = await (await app.request(`/api/brands/${brand.id}/briefs`, json({ prompt: "Northloop vs Zapier comparison" }))).json();
+      let status = job;
+      for (let i = 0; i < 50 && status.status === "running"; i++) {
+        await new Promise((r) => setTimeout(r, 20));
+        status = await (await app.request(`/api/jobs/${job.id}`)).json();
+      }
+      expect(status).toMatchObject({ status: "done", brandId: brand.id });
+      const list = await (await app.request(`/api/brands/${brand.id}/briefs`)).json();
+      expect(list.map((b: Brief) => b.id)).toEqual(expect.arrayContaining([brief.id, status.briefId]));
+    });
+
+    it("saves edits but keeps the prompt, ids and keyword data", async () => {
+      const edited = { ...structuredClone(brief), title: "HubSpot sync", prompt: "changed", brandId: "other", objective: { ...brief.objective, kpi: { ...brief.objective.kpi, target: "40 demos a month" } } };
+      const res = await app.request(`/api/briefs/${brief.id}`, { ...json(edited), method: "PUT" });
+      expect(res.status).toBe(200);
+      const saved: Brief = await res.json();
+      expect(saved).toMatchObject({ title: "HubSpot sync", prompt, brandId: brand.id });
+      expect(saved.insights).toEqual(brief.insights);
+
+      const bad = await app.request(`/api/briefs/${brief.id}`, { ...json({ ...edited, funnelStage: "viral" }), method: "PUT" });
+      expect(bad.status).toBe(400);
+    });
+
+    it("checks the brief and exports it as Markdown", async () => {
+      const issues: BriefIssue[] = await (await app.request(`/api/briefs/${brief.id}/check`)).json();
+      expect(issues.some((i) => i.severity === "error")).toBe(false);
+      expect(issues.map((i) => i.id)).not.toContain("objective.kpi-target");
+      expect(issues.map((i) => i.id)).toContain("personas.placeholders");
+      const md = await (await app.request(`/api/briefs/${brief.id}/brief.md`)).text();
+      expect(md).toContain("# HubSpot sync");
+      expect(md).toContain("**Target:** 40 demos a month");
+    });
+
+    it("rejects bad requests and reports failures", async () => {
+      expect((await app.request(`/api/brands/${brand.id}/briefs?wait=true`, json({ prompt: " " }))).status).toBe(400);
+      expect((await app.request(`/api/brands/${brand.id}/briefs?wait=true`, json({ prompt, seoProvider: "nope" }))).status).toBe(400);
+      expect((await app.request("/api/briefs/nope")).status).toBe(404);
+
+      const failing = createApp({
+        store: new BrandStore(join(dir, "brands")),
+        briefs: new BriefStore(join(dir, "briefs")),
+        outputDir: join(dir, "out"),
+        generator: { name: "broken", generate: async () => { throw new GenerationError("The model declined to write this brief."); } },
+      });
+      const res = await failing.request(`/api/brands/${brand.id}/briefs?wait=true`, json({ prompt }));
+      expect(res.status).toBe(502);
+      expect((await res.json()).error).toMatch(/declined/);
+    });
+
+    it("falls back to best practices when the SEO tool is down", async () => {
+      const down: SeoProvider = { id: "connected", name: "Semrush", description: "", research: async () => { throw new Error("timeout"); } };
+      const withTool = createApp({
+        store: new BrandStore(join(dir, "brands")),
+        briefs: new BriefStore(join(dir, "briefs")),
+        outputDir: join(dir, "out"),
+        generator: templateGenerator(),
+        seoProviders: [down],
+      });
+      const res = await withTool.request(`/api/brands/${brand.id}/briefs?wait=true`, json({ prompt }));
+      expect(res.status).toBe(201);
+      expect((await res.json()).insights.notes[0]).toMatch(/Semrush couldn't be reached \(timeout\)/);
+    });
   });
 
   it("returns 404 for unknown brands and refuses path tricks", async () => {
