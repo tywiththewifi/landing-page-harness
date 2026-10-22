@@ -62,9 +62,18 @@ importers:
       '@lph/brief':
         specifier: workspace:*
         version: link:../../packages/brief
+      '@lph/design-md':
+        specifier: workspace:*
+        version: link:../../packages/design-md
+      '@lph/kit':
+        specifier: workspace:*
+        version: link:../../packages/kit
       '@lph/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens
+      '@lph/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       dompurify:
         specifier: ^3.4.17
         version: 3.4.17

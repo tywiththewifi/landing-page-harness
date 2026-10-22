@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import type { Brand } from "@lph/tokens";
-import { api, waitForJob, type BriefSummary, type SeoProviderInfo } from "../api.ts";
+import { api, DEMO, waitForJob, type BriefSummary, type SeoProviderInfo } from "../api.ts";
 import styles from "./NewBriefPage.module.scss";
 
 const EXAMPLES = [
@@ -114,7 +114,11 @@ export function NewBriefPage() {
               {generator?.name === "claude" ? `Claude (${generator.model})` : generator ? "Offline template" : "…"}
             </span>
             {generator?.name === "template" ? (
-              <span className={styles.hint}>Set ANTHROPIC_API_KEY on the server for a brief tailored to your request. The template reuses your site's copy and marks the gaps.</span>
+              <span className={styles.hint}>
+                {DEMO
+                  ? "The demo has no server, so the offline template writes the brief: it reuses the site's copy and marks the gaps. With an API key on the server, Claude writes it."
+                  : "Set ANTHROPIC_API_KEY on the server for a brief tailored to your request. The template reuses your site's copy and marks the gaps."}
+              </span>
             ) : null}
           </div>
         </div>

@@ -1,0 +1,16 @@
+.banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap;
+  padding: 8px 20px;
+  background: #18181b; color: #e4e4e7;
+  font-size: 13px;
+  strong { color: #fff; font-weight: 600; }
+  @media (max-width: 640px) { padding: 8px 16px; }
+}
+.actions {
+  display: inline-flex; align-items: center; gap: 16px; white-space: nowrap;
+  a { color: #fff; }
+  button {
+    padding: 0; border: 0; background: none; cursor: pointer;
+    color: #fff; text-decoration: underline; text-underline-offset: 2px;
+  }
+}

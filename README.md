@@ -13,6 +13,8 @@ It works on any website because it reads the CSS a site actually renders, not a 
 
 See [docs/spec.md](docs/spec.md) for the full plan.
 
+**Try it:** the [live demo](https://tywiththewifi.github.io/landing-page-harness/) runs the studio in your browser on Northloop, a fictional sample site. It has no server, so imports replay a real extraction of the sample and briefs come from the offline writer; everything else (conflicts, contrast, Design.md, the preview, brief editing and checks) runs the same code as the app.
+
 ## Phase 1: brand import
 
 ![Review screen](docs/screenshots/2-review-overview.png)
@@ -111,7 +113,7 @@ An MCP server over the same API is planned (M5), so Claude, Codex, Cursor or any
 ```
 apps/
   api/          Hono API: import and brief jobs, edits, conflict resolution, checks, exports
-  studio/       React Router + Vite + SCSS Modules review UI
+  studio/       React Router + Vite + SCSS Modules review UI (src/demo: the serverless demo build)
 packages/
   extractor/    Playwright sampling (collect.ts runs in the page) and analysis (analyze.ts)
   brief/        Brief schema, Claude and offline writers, SEO/AEO providers, consistency check
@@ -134,6 +136,7 @@ fixtures/
 ```bash
 pnpm typecheck
 pnpm test        # unit tests plus real-browser extraction against the fixture
+pnpm --filter @lph/studio build:demo   # the static demo, in apps/studio/dist-demo
 ```
 
-CI runs typecheck, tests and the studio build on every pull request.
+CI runs typecheck, tests and both studio builds on every pull request. Pushes to `main` publish the demo to GitHub Pages.
