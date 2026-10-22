@@ -1,6 +1,6 @@
 """The demo's import service on a Hugging Face Space (see Dockerfile and apps/api/src/public.ts).
 
-    python scripts/hf-space.py url      prints the Space's address
+    python scripts/hf-space.py url      prints the Space's address, or nothing if there's no Space yet
     python scripts/hf-space.py deploy   uploads the repo to the Space and waits until it answers
 
 Needs HF_TOKEN (a write token). SPACE_NAME defaults to landing-page-harness.
@@ -40,15 +40,12 @@ Deployed from GitHub by `.github/workflows/import-service.yml`; changes made her
 """
 
 
-def url() -> str:
+def url() -> str | None:
     try:
-        host = api.space_info(repo_id).host
-        if host:
-            return host
+        return api.space_info(repo_id).host
     except Exception:
-        pass
-    # Before the first deploy: Hugging Face's own rule for Space subdomains.
-    return f"https://{re.sub(r'[^a-z0-9]+', '-', repo_id.lower().replace('/', '-'))}.hf.space"
+        # No Space yet. The demo then replays the sample rather than call a service that isn't there.
+        return None
 
 
 def deploy() -> None:
@@ -63,7 +60,8 @@ def deploy() -> None:
         # delete_patterns removes files that are gone from the repo; unchanged files aren't re-sent.
         api.upload_folder(folder_path=tmp, repo_id=repo_id, repo_type="space", commit_message=f"Deploy {sha}", delete_patterns=["*"])
 
-    address = url()
+    # Hugging Face's own rule for Space subdomains, in case the host isn't listed yet.
+    address = url() or f"https://{re.sub(r'[^a-z0-9]+', '-', repo_id.lower().replace('/', '-'))}.hf.space"
     print(f"Uploaded to https://huggingface.co/spaces/{repo_id}, waiting for {address} to build")
     start = time.time()
     built = False
@@ -88,7 +86,7 @@ def deploy() -> None:
 if __name__ == "__main__":
     command = sys.argv[1] if len(sys.argv) > 1 else ""
     if command == "url":
-        print(url())
+        print(url() or "")
     elif command == "deploy":
         deploy()
     else:
