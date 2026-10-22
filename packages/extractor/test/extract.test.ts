@@ -100,6 +100,16 @@ describe("extractBrand (fixture site)", () => {
     expect(brand.fontSources.faces.join("\n")).not.toMatch(/3f9a1c2b7d|fallback/);
   });
 
+  it("captures the site's copy for grounding briefs, without the cookie banner", () => {
+    const home = brand.content![0]!;
+    expect(home.description).toContain("ship workflows in days");
+    expect(home.headings[0]).toEqual({ level: 1, text: "Automate the work between your tools" });
+    expect(home.headings.map((h) => h.text)).toContain("99.95% uptime");
+    expect(home.paragraphs.join(" ")).not.toMatch(/cookies/i);
+    expect(home.ctas.slice(0, 2).sort()).toEqual(["Book a demo", "Start free"]);
+    expect(brand.content).toHaveLength(2);
+  });
+
   it("records provenance for every token", () => {
     for (const t of [...brand.colors, ...brand.typography, ...brand.buttons, ...brand.cards]) {
       expect(t.sources.length).toBeGreaterThan(0);

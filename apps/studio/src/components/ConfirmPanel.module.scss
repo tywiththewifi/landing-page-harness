@@ -6,4 +6,4 @@
   ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
   code { word-break: break-all; }
 }
-.next { margin: 12px 0 0; color: var(--ui-muted); }
+.next { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid #bbf7d0; color: var(--ui-muted); }

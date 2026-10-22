@@ -12,5 +12,6 @@
   span { padding: 4px 10px; border-radius: 999px; }
   @media (max-width: 640px) { display: none; }
 }
+.past { color: var(--ui-muted); }
 .current { background: var(--ui-accent-soft); color: var(--ui-accent); font-weight: 500; }
 .main { flex: 1; }

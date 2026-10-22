@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.5",
+    "@lph/brief": "workspace:*",
     "@lph/design-md": "workspace:*",
     "@lph/extractor": "workspace:*",
     "@lph/kit": "workspace:*",

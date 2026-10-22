@@ -68,11 +68,97 @@ export function NumberField({
   );
 }
 
-export function TextField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+/** Shows a character count, coloured when outside the recommended range. */
+function Count({ value, range }: { value: string; range?: [number, number] }) {
+  if (!range) return null;
+  const n = value.length;
+  const off = n < range[0] || n > range[1];
+  return (
+    <span className={`${styles.count} ${off ? styles.countOff : ""}`} title={`Aim for ${range[0]} to ${range[1]} characters`}>
+      {n}/{range[1]}
+    </span>
+  );
+}
+
+export function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  range,
+  prefix,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  range?: [number, number];
+  prefix?: string;
+}) {
+  return (
+    <label className={styles.field}>
+      <span className={styles.labelRow}>
+        <span className="ui-label">{label}</span>
+        <Count value={value} range={range} />
+      </span>
+      <span className={prefix ? styles.prefixed : undefined}>
+        {prefix ? <span className={styles.prefix}>{prefix}</span> : null}
+        <input className="ui-input" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+      </span>
+    </label>
+  );
+}
+
+export function TextAreaField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  range,
+  rows = 3,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  range?: [number, number];
+  rows?: number;
+}) {
+  return (
+    <label className={styles.field}>
+      <span className={styles.labelRow}>
+        <span className="ui-label">{label}</span>
+        <Count value={value} range={range} />
+      </span>
+      <textarea className={`ui-input ${styles.textarea}`} rows={rows} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+    </label>
+  );
+}
+
+export function SelectField<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: readonly (T | [T, string])[];
+  onChange: (v: T) => void;
+}) {
   return (
     <label className={styles.field}>
       <span className="ui-label">{label}</span>
-      <input className="ui-input" value={value} onChange={(e) => onChange(e.target.value)} />
+      <select className="ui-input" value={value} onChange={(e) => onChange(e.target.value as T)}>
+        {options.map((o) => {
+          const [v, text] = Array.isArray(o) ? o : [o, o];
+          return (
+            <option key={v} value={v}>
+              {text}
+            </option>
+          );
+        })}
+      </select>
     </label>
   );
 }

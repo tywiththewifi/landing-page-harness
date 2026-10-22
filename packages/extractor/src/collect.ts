@@ -66,6 +66,13 @@ export interface PageSample {
   /** Hosted font stylesheets (Google Fonts, Adobe Fonts, ...). */
   fontStylesheets: string[];
   navLinks: { href: string; text: string }[];
+  content: {
+    description: string;
+    lang: string;
+    headings: { level: number; text: string }[];
+    paragraphs: string[];
+    ctas: string[];
+  };
 }
 
 export function collectPage(): PageSample {
@@ -397,6 +404,34 @@ export function collectPage(): PageSample {
         .slice(0, 40)
     : [];
 
+  // --- Copy (for grounding briefs, not for styling) ------------------------------
+  const fullText = (el: Element) => (el.textContent ?? "").replace(/\s+/g, " ").trim();
+  const headings: { level: number; text: string }[] = [];
+  for (const el of document.body.querySelectorAll("h1, h2, h3, h4")) {
+    const text = fullText(el);
+    if (text.length > 1 && text.length < 200 && visible(el) && !el.closest("footer")) {
+      headings.push({ level: Number(el.tagName[1]), text });
+    }
+  }
+  const paragraphs: string[] = [];
+  for (const el of document.body.querySelectorAll("p, li, blockquote")) {
+    if (el.closest("nav, footer, header") || el.querySelector("p, li")) continue;
+    const text = fullText(el);
+    if (text.length >= 40 && text.length <= 500 && visible(el) && !paragraphs.includes(text)) paragraphs.push(text);
+  }
+  const ctaCount = new Map<string, number>();
+  for (const b of buttons) if (b.text && b.text.length <= 40) ctaCount.set(b.text, (ctaCount.get(b.text) ?? 0) + 1);
+  const content = {
+    description:
+      document.querySelector("meta[name='description']")?.getAttribute("content") ??
+      document.querySelector("meta[property='og:description']")?.getAttribute("content") ??
+      "",
+    lang: document.documentElement.lang || "en",
+    headings: headings.slice(0, 40),
+    paragraphs: paragraphs.slice(0, 30),
+    ctas: [...ctaCount.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t).slice(0, 12),
+  };
+
   const bodyCs = getComputedStyle(document.body);
   const htmlBg = getComputedStyle(document.documentElement).backgroundColor;
 
@@ -422,6 +457,7 @@ export function collectPage(): PageSample {
     navLinks,
     fontFaces,
     fontStylesheets,
+    content,
   };
 }
 

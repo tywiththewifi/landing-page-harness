@@ -1,3 +1,4 @@
+import type { Brief } from "@lph/brief/schema";
 import type { Brand, ContrastCheck } from "@lph/tokens";
 
 export interface Job {
@@ -5,7 +6,15 @@ export interface Job {
   status: "running" | "done" | "failed";
   step: string;
   brandId?: string;
+  briefId?: string;
   error?: string;
+}
+
+export type BriefSummary = Pick<Brief, "id" | "title" | "prompt" | "funnelStage" | "updatedAt">;
+export interface SeoProviderInfo {
+  id: string;
+  name: string;
+  description: string;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -34,6 +43,15 @@ export const api = {
   designMd: (id: string) => request<string>(`/api/brands/${id}/design.md`),
   contrast: (id: string) => request<ContrastCheck[]>(`/api/brands/${id}/contrast`),
   confirm: (id: string) => request<{ dir: string; files: string[] }>(`/api/brands/${id}/confirm`, { method: "POST" }),
+
+  seoProviders: () => request<SeoProviderInfo[]>("/api/seo/providers"),
+  generator: () => request<{ name: string; model: string | null }>("/api/generator"),
+  createBrief: (brandId: string, prompt: string, seoProvider?: string) =>
+    request<Job>(`/api/brands/${brandId}/briefs`, { method: "POST", body: JSON.stringify({ prompt, seoProvider }) }),
+  listBriefs: (brandId: string) => request<BriefSummary[]>(`/api/brands/${brandId}/briefs`),
+  brief: (id: string) => request<Brief>(`/api/briefs/${id}`),
+  saveBrief: (brief: Brief) => request<Brief>(`/api/briefs/${brief.id}`, { method: "PUT", body: JSON.stringify(brief) }),
+  briefMd: (id: string) => request<string>(`/api/briefs/${id}/brief.md`),
 };
 
 /** Polls a job until it finishes, reporting each step. */
@@ -44,6 +62,6 @@ export async function waitForJob(job: Job, onStep: (step: string) => void): Prom
     await new Promise((r) => setTimeout(r, 400));
     current = await api.job(job.id);
   }
-  if (current.status === "failed") throw new Error(current.error ?? "Import failed");
+  if (current.status === "failed") throw new Error(current.error ?? "Something went wrong");
   return current;
 }

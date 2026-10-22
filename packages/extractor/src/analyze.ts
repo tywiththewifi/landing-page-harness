@@ -723,6 +723,7 @@ export function analyze(pages: PageCapture[], opts: { id: string; now?: Date }):
       faces: [...new Set(pages.flatMap((p) => p.desktop.fontFaces ?? []))],
       stylesheets: [...new Set(pages.flatMap((p) => p.desktop.fontStylesheets ?? []))],
     },
+    content: pages.map(({ desktop: p }) => ({ url: p.url, title: p.title, ...p.content })),
   };
   return { ...draft, usageRules: usageRules(draft), summary: summarize(draft) };
 }

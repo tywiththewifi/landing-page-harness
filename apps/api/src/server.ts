@@ -2,28 +2,36 @@ import { serve } from "@hono/node-server";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Browser } from "playwright";
+import { defaultGenerator, providersFromEnv } from "@lph/brief";
 import { extractBrand, launchBrowser } from "@lph/extractor";
 import { createApp } from "./app.ts";
-import { BrandStore } from "./store.ts";
+import { BrandStore, BriefStore } from "./store.ts";
 
 const port = Number(process.env.PORT ?? 8787);
 // Paths default to the repo root, whichever directory the server is started from.
 const root = fileURLToPath(new URL("../../../", import.meta.url));
-const dataDir = resolve(root, process.env.LPH_DATA_DIR ?? "data/brands");
+const dataDir = resolve(root, process.env.LPH_DATA_DIR ?? "data");
 const outputDir = resolve(root, process.env.LPH_OUTPUT_DIR ?? "brands");
 
 // One browser for the life of the server; a new context per import.
 let browser: Promise<Browser> | null = null;
 const getBrowser = () => (browser ??= launchBrowser());
 
+const generator = defaultGenerator();
+const seoProviders = providersFromEnv();
+
 const app = createApp({
-  store: new BrandStore(dataDir),
+  store: new BrandStore(resolve(dataDir, "brands")),
+  briefs: new BriefStore(resolve(dataDir, "briefs")),
+  generator,
+  seoProviders,
   outputDir,
   extract: async (opts) => extractBrand({ ...opts, browser: await getBrowser() }),
 });
 
 serve({ fetch: app.fetch, port }, () => {
   console.log(`API on http://localhost:${port} (data: ${dataDir}, output: ${outputDir})`);
+  console.log(`Briefs: ${generator.name}${generator.model ? ` (${generator.model})` : ""}. SEO: ${seoProviders.map((p) => p.name).join(", ")}.`);
 });
 
 const shutdown = async () => {
