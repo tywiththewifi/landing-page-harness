@@ -24,3 +24,4 @@
 .tabOn { background: #fff !important; color: var(--ui-text) !important; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
 .badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--ui-warn); color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
 .request { margin: 0; padding: 12px 20px; border-bottom: 1px solid var(--ui-line); background: #fcfcfb; color: var(--ui-text); :global(.ui-label) { margin-bottom: 2px; } }
+.error { margin: -8px 0 16px; padding: 10px 14px; border-radius: 10px; background: var(--ui-bad-soft); color: var(--ui-bad); }

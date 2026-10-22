@@ -1,4 +1,6 @@
 import type { Brief } from "@lph/brief/schema";
+import type { Submission } from "@lph/forms";
+import type { Page } from "@lph/page/browser";
 import type { Brand, ContrastCheck } from "@lph/tokens";
 
 export interface Job {
@@ -7,10 +9,23 @@ export interface Job {
   step: string;
   brandId?: string;
   briefId?: string;
+  pageId?: string;
   error?: string;
 }
 
 export type BriefSummary = Pick<Brief, "id" | "title" | "prompt" | "funnelStage" | "updatedAt">;
+export type PageSummary = Pick<Page, "id" | "title" | "slug" | "updatedAt"> & { versions: number };
+export interface Generators {
+  name: string;
+  model: string | null;
+  page?: { name: string; model: string | null };
+}
+/** A lead the API's form endpoint received, and what happened when it was sent on. */
+export interface Lead extends Submission {
+  id: string;
+  receivedAt: string;
+  delivery: { status: "sent" | "stored" | "failed"; connector: string; detail?: string };
+}
 export interface SeoProviderInfo {
   id: string;
   name: string;
@@ -61,13 +76,19 @@ export const api = {
   disconnectSiteMcp: (id: string) => request<Brand>(`/api/brands/${id}/site-mcp`, { method: "DELETE" }),
 
   seoProviders: () => request<SeoProviderInfo[]>("/api/seo/providers"),
-  generator: () => request<{ name: string; model: string | null }>("/api/generator"),
+  generator: () => request<Generators>("/api/generator"),
   createBrief: (brandId: string, prompt: string, seoProvider?: string, useSiteData = true) =>
     request<Job>(`/api/brands/${brandId}/briefs`, { method: "POST", body: JSON.stringify({ prompt, seoProvider, useSiteData }) }),
   listBriefs: (brandId: string) => request<BriefSummary[]>(`/api/brands/${brandId}/briefs`),
   brief: (id: string) => request<Brief>(`/api/briefs/${id}`),
   saveBrief: (brief: Brief) => request<Brief>(`/api/briefs/${brief.id}`, { method: "PUT", body: JSON.stringify(brief) }),
   briefMd: (id: string) => request<string>(`/api/briefs/${id}/brief.md`),
+
+  createPage: (briefId: string) => request<Job>(`/api/briefs/${briefId}/pages`, { method: "POST" }),
+  listPages: (briefId: string) => request<PageSummary[]>(`/api/briefs/${briefId}/pages`),
+  page: (id: string) => request<Page>(`/api/pages/${id}`),
+  savePage: (page: Page) => request<Page>(`/api/pages/${page.id}`, { method: "PUT", body: JSON.stringify(page) }),
+  leads: (pageId: string) => request<Lead[]>(`/api/pages/${pageId}/submissions`),
 };
 
 /** Polls a job until it finishes, reporting each step. */

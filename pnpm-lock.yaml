@@ -71,9 +71,15 @@ importers:
       '@lph/design-md':
         specifier: workspace:*
         version: link:../../packages/design-md
+      '@lph/forms':
+        specifier: workspace:*
+        version: link:../../packages/forms
       '@lph/kit':
         specifier: workspace:*
         version: link:../../packages/kit
+      '@lph/page':
+        specifier: workspace:*
+        version: link:../../packages/page
       '@lph/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens

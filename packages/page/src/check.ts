@@ -9,7 +9,7 @@ export interface PageIssue {
   id: string;
   /** error: blocks publishing. warning: needs a reviewer's eye. info: worth a look. */
   severity: "error" | "warning" | "info";
-  /** A block id, or "page", "seo", "form" or "versions". The editor jumps there. */
+  /** A block id, or "page", "seo", "leads" (where the form sends leads) or "versions". The editor jumps there. */
   area: string;
   /** The version the issue is in. Absent for the general page. */
   variant?: string;
@@ -92,7 +92,8 @@ export function checkPage(page: Page, brief: Brief, brand: Brand): PageIssue[] {
     for (const [where, list] of unwritten) {
       const block = view.blocks.find((b) => b.id === where);
       const label = where === "seo" ? "SEO" : block ? name(block) : where;
-      add("error", where, "placeholders", `${who}${label}: ${list.length === 1 ? `${keyLabel(view, list[0]!)} still needs` : `${list.length} fields still need`} writing (marked ${PLACEHOLDER}).`, { ...v, path: list[0] });
+      const what = list.length === 1 ? `${keyLabel(view, list[0]!)} still needs` : `${label}: ${list.length} fields still need`;
+      add("error", where, "placeholders", `${who}${what} writing (marked ${PLACEHOLDER}).`, { ...v, path: list[0] });
     }
 
     for (const b of view.blocks) {
@@ -158,13 +159,13 @@ export function checkPage(page: Page, brief: Brief, brand: Brand): PageIssue[] {
   }
   const { form } = page;
   if (forms.length) {
-    if (form.connector === "none") add("warning", "form", "connector", "Leads aren't sent anywhere yet. Connect HubSpot or a webhook.");
+    if (form.connector === "none") add("warning", "leads", "connector", "Leads aren't sent anywhere yet. Connect HubSpot or a webhook.");
     if (form.connector === "hubspot") {
-      if (!/^\d+$/.test(form.hubspotPortalId.trim())) add("error", "form", "hubspot-portal", "Add your HubSpot portal ID (a number, shown in HubSpot's account menu).");
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(form.hubspotFormId.trim())) add("error", "form", "hubspot-form", "Add the HubSpot form's ID (the GUID in the form editor's URL).");
+      if (!/^\d+$/.test(form.hubspotPortalId.trim())) add("error", "leads", "hubspot-portal", "Add your HubSpot portal ID (a number, shown in HubSpot's account menu).");
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(form.hubspotFormId.trim())) add("error", "leads", "hubspot-form", "Add the HubSpot form's ID (the GUID in the form editor's URL).");
     }
-    if (form.connector === "webhook" && !/^https:\/\/\S+$/.test(form.webhookUrl.trim())) add("error", "form", "webhook", "The webhook needs an https URL.");
-  } else if (form.connector !== "none") add("info", "form", "unused", "A form connector is set up, but the page has no form block.");
+    if (form.connector === "webhook" && !/^https:\/\/\S+$/.test(form.webhookUrl.trim())) add("error", "leads", "webhook", "The webhook needs an https URL.");
+  } else if (form.connector !== "none") add("info", "leads", "unused", "A form connector is set up, but the page has no form block.");
 
   // Search and answer engines.
   const kw = brief.seo.primaryKeyword.trim().toLowerCase();

@@ -376,7 +376,7 @@ export function createApp(opts: AppOptions) {
     return { kind: "none" };
   };
 
-  // A page's form posts here: JSON from the page's script, or a plain form post with scripts off.
+  // A page's form posts here, urlencoded from the page's script or a plain form post, or JSON from other clients.
   app.post("/api/forms/:pageId", async (c) => {
     const page = await pages.get(c.req.param("pageId")).catch(() => null);
     const form = page?.blocks.find((b) => b.type === "form");

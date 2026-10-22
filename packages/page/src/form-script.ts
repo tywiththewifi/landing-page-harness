@@ -1,14 +1,19 @@
 /**
  * The one script a published page runs. It checks the form in the browser, adds where
- * the lead came from (page, version, UTMs, HubSpot's tracking cookie) and posts JSON to
- * the form's action. A form with no action is a preview: it shows the thank-you message
+ * the lead came from (page, version, UTMs, HubSpot's tracking cookie) and posts it to the
+ * form's action. It posts urlencoded, like a plain form, so a cross-origin endpoint needs
+ * no CORS preflight. A form with no action is a preview: it shows the thank-you message
  * and sends nothing. Plain ES2017 with no dependencies, so it ships inline.
  */
 export const FORM_SCRIPT = `(function () {
   var UTM = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
   function cookie(name) {
-    var m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
-    return m ? decodeURIComponent(m[1]) : "";
+    try {
+      var m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+      return m ? decodeURIComponent(m[1]) : "";
+    } catch (e) {
+      return ""; // Cookies blocked, or a sandboxed preview.
+    }
   }
   function setError(form, name, message) {
     var input = form.elements[name];
@@ -52,24 +57,21 @@ export const FORM_SCRIPT = `(function () {
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (!check(form)) return;
-      var fields = {};
-      new FormData(form).forEach(function (value, key) { fields[key] = String(value); });
-      var hp = fields._hp || "";
-      delete fields._hp;
+      var body = new URLSearchParams();
+      new FormData(form).forEach(function (value, key) { body.append(key, String(value)); });
       var params = new URLSearchParams(location.search);
-      var utm = {};
-      UTM.forEach(function (k) { if (params.get(k)) utm[k] = params.get(k); });
-      var body = {
-        fields: fields,
-        _hp: hp,
-        context: { pageUri: location.href, pageName: document.title, variant: document.body.getAttribute("data-variant") || null, hutk: cookie("hubspotutk"), utm: utm, referrer: document.referrer }
-      };
+      UTM.forEach(function (k) { if (params.get(k)) body.append(k, params.get(k)); });
+      body.append("pageUri", location.href);
+      body.append("pageName", document.title);
+      body.append("variant", document.body.getAttribute("data-variant") || "");
+      body.append("hutk", cookie("hubspotutk"));
+      body.append("referrer", document.referrer);
       var action = form.getAttribute("action");
       if (!action) return done(" (Preview: nothing was sent.)");
       button.disabled = true;
       status.removeAttribute("data-state");
       status.textContent = "Sending…";
-      fetch(action, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
+      fetch(action, { method: "POST", headers: { accept: "application/json" }, body: body })
         .then(function (res) {
           return res.json().catch(function () { return {}; }).then(function (data) {
             if (res.ok) return done();

@@ -291,7 +291,7 @@ describe("API", () => {
 
     it("checks the page and renders each version", async () => {
       const issues: PageIssue[] = await (await app.request(`/api/pages/${page.id}/check`)).json();
-      expect(issues.map((i) => i.id)).toEqual(expect.arrayContaining(["form.connector", "testimonial.placeholders"]));
+      expect(issues.map((i) => i.id)).toEqual(expect.arrayContaining(["leads.connector", "testimonial.placeholders"]));
       const general = await (await app.request(`/api/pages/${page.id}/page.html`)).text();
       expect(general).toContain("<h1 class=\"lph-h1\">Sync HubSpot without engineers</h1>");
       expect(general).toContain(`action="http://localhost/api/forms/${page.id}"`);

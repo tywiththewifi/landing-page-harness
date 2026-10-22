@@ -13,7 +13,9 @@
   "dependencies": {
     "@lph/brief": "workspace:*",
     "@lph/design-md": "workspace:*",
+    "@lph/forms": "workspace:*",
     "@lph/kit": "workspace:*",
+    "@lph/page": "workspace:*",
     "@lph/tokens": "workspace:*",
     "@lph/ui": "workspace:*",
     "dompurify": "^3.4.17",

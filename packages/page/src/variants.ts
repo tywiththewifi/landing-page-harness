@@ -44,6 +44,18 @@ export function baseValue(page: Pick<PageEdit, "blocks" | "seo">, key: string): 
   return typeof value === "string" ? value : undefined;
 }
 
+/** Sets the general page's text at an override key, in place. False if the key points at nothing editable. */
+export function writeText(page: Pick<PageEdit, "blocks" | "seo">, key: string, text: string): boolean {
+  const { head, rest } = split(key);
+  if (head === "seo") {
+    if (rest.length !== 1 || (rest[0] !== "title" && rest[0] !== "metaDescription")) return false;
+    page.seo[rest[0]] = text;
+    return true;
+  }
+  if (!rest.length || isShared(rest)) return false;
+  return setAt(page.blocks.find((b) => b.id === head), rest, text);
+}
+
 /** The text a version shows at a key: its override, or the general page's. */
 export function valueIn(page: Pick<PageEdit, "blocks" | "seo">, variant: Variant | null | undefined, key: string): string | undefined {
   return variant?.overrides[key] ?? baseValue(page, key);

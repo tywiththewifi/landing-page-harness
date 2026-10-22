@@ -49,8 +49,8 @@ function invalid(name: FieldName, value: string): boolean {
 }
 
 /**
- * Reads a form post: JSON from the page's script ({ fields, context }), or the flat
- * urlencoded body a browser sends with scripts off. Only the fields the form asks for
+ * Reads a form post: the flat urlencoded body the page's script (or a browser with
+ * scripts off) sends, or JSON as { fields, context }. Only the fields the form asks for
  * are kept. A filled honeypot marks the post as spam, which callers accept and drop
  * so bots learn nothing.
  */

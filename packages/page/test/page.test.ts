@@ -145,7 +145,7 @@ describe("checkPage", () => {
     if (form?.type === "form") form.fields = form.fields.filter((f) => f.name !== "email");
     page.form.hubspotFormId = "nope";
     const ids = checkPage(page, brief, brand).filter((i) => i.severity === "error").map((i) => i.id);
-    expect(ids).toEqual(expect.arrayContaining(["logos.hero-first", "hero.primaryCta-href", "hero.secondaryCta-href", "form.contact", "form.hubspot-form"]));
+    expect(ids).toEqual(expect.arrayContaining(["logos.hero-first", "hero.primaryCta-href", "hero.secondaryCta-href", "form.contact", "leads.hubspot-form"]));
   });
 
   it("flags numbers and quotes nobody sourced", async () => {
@@ -176,9 +176,9 @@ describe("checkPage", () => {
   it("asks where leads go", async () => {
     const { page, brief } = await finishedPage();
     page.form.connector = "none";
-    expect(checkPage(page, brief, brand).find((i) => i.id === "form.connector")?.severity).toBe("warning");
+    expect(checkPage(page, brief, brand).find((i) => i.id === "leads.connector")?.severity).toBe("warning");
     page.form = { connector: "webhook", webhookUrl: "http://hooks.example", hubspotPortalId: "", hubspotFormId: "" };
-    expect(checkPage(page, brief, brand).find((i) => i.id === "form.webhook")?.severity).toBe("error");
+    expect(checkPage(page, brief, brand).find((i) => i.id === "leads.webhook")?.severity).toBe("error");
   });
 });
 
