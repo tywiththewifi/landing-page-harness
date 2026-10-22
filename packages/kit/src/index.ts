@@ -15,6 +15,9 @@ export async function uiCss(): Promise<string> {
 
 const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
+/** Site-derived strings end up inside <style>; make sure they can't close it. */
+const cssSafe = (css: string) => css.replace(/<\/(style)/gi, "<\\/$1").replace(/<!--/g, "");
+
 export function fontLinks(brand: Brand): string {
   return brand.fontSources.stylesheets.map((href) => `<link rel="stylesheet" href="${escapeAttr(href)}">`).join("\n");
 }
@@ -30,10 +33,10 @@ export async function previewHtml(brand: Brand): Promise<string> {
 <title>${brand.name} brand preview</title>
 ${fontLinks(brand)}
 <style>
-body { margin: 0; }
+${cssSafe(`body { margin: 0; }
 ${brand.fontSources.faces.join("\n")}
 ${toCss(brand)}
-${await uiCss()}
+${await uiCss()}`)}
 </style>
 </head>
 <body>

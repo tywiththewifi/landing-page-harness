@@ -114,7 +114,8 @@ export function collectPage(): PageSample {
     return "rgb(255, 255, 255)";
   };
 
-  const firstFamily = (f: string) => f.split(",")[0]!.trim().replace(/^["']|["']$/g, "");
+  const firstFamily = (f: string) =>
+    f.split(",")[0]!.trim().replace(/^["']|["']$/g, "").replace(/[<>{};"'\\]/g, "");
 
   const lineHeight = (cs: CSSStyleDeclaration) =>
     cs.lineHeight === "normal" ? px(cs.fontSize) * 1.2 : px(cs.lineHeight);

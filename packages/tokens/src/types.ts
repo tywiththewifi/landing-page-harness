@@ -115,6 +115,8 @@ export interface Conflict {
   message: string;
   options: { value: string; sources: Source[]; share: number }[];
   resolved?: string;
+  /** True once a person has picked an option (the default pick is the most common value). */
+  reviewed?: boolean;
 }
 
 export interface Brand {

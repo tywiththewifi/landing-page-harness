@@ -1,0 +1,16 @@
+.shell { min-height: 100vh; display: flex; flex-direction: column; }
+.bar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  height: 56px; padding: 0 20px;
+  background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--ui-line);
+}
+.brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ui-text); text-decoration: none; }
+.steps {
+  display: flex; gap: 4px; font-size: 13px; color: var(--ui-faint);
+  span { padding: 4px 10px; border-radius: 999px; }
+  @media (max-width: 640px) { display: none; }
+}
+.current { background: var(--ui-accent-soft); color: var(--ui-accent); font-weight: 500; }
+.main { flex: 1; }

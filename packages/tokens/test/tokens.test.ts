@@ -29,3 +29,23 @@ describe("colour utilities", () => {
     expect(hueName("#c6f29d")).toBe("lime");
   });
 });
+
+describe("replaceColor", async () => {
+  const { replaceColor } = await import("../src/edit.ts");
+  it("updates every component and rule that used the old value", () => {
+    const brand = {
+      colors: [{ name: "accent-lime", value: "#c6f29d" }],
+      buttons: [{ background: "#c6f29d", color: "#111111", borderColor: null, context: "#ffffff" }],
+      cards: [],
+      input: null,
+      summary: "A lime accent (#C6F29D).",
+      usageRules: ["Reserve accent-lime (#c6f29d) for calls to action."],
+    } as never;
+    const next = replaceColor(brand, "#c6f29d", "#b8f07a") as typeof brand & Record<string, any>;
+    expect(next.colors[0].value).toBe("#b8f07a");
+    expect(next.buttons[0].background).toBe("#b8f07a");
+    expect(next.buttons[0].color).toBe("#111111");
+    expect(next.summary).toBe("A lime accent (#b8f07a).");
+    expect(next.usageRules[0]).toContain("#b8f07a");
+  });
+});

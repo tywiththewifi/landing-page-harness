@@ -1,13 +1,16 @@
 import { serve } from "@hono/node-server";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Browser } from "playwright";
 import { extractBrand, launchBrowser } from "@lph/extractor";
 import { createApp } from "./app.ts";
 import { BrandStore } from "./store.ts";
 
 const port = Number(process.env.PORT ?? 8787);
-const dataDir = resolve(process.env.LPH_DATA_DIR ?? "data/brands");
-const outputDir = resolve(process.env.LPH_OUTPUT_DIR ?? "brands");
+// Paths default to the repo root, whichever directory the server is started from.
+const root = fileURLToPath(new URL("../../../", import.meta.url));
+const dataDir = resolve(root, process.env.LPH_DATA_DIR ?? "data/brands");
+const outputDir = resolve(root, process.env.LPH_OUTPUT_DIR ?? "brands");
 
 // One browser for the life of the server; a new context per import.
 let browser: Promise<Browser> | null = null;

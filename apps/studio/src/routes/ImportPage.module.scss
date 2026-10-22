@@ -1,0 +1,31 @@
+.page { max-width: 640px; margin: 0 auto; padding: 88px 20px 64px; }
+.title { font-size: 32px; font-weight: 650; letter-spacing: -0.02em; }
+.lead { color: var(--ui-muted); font-size: 16px; margin: 12px 0 36px; }
+.form { display: grid; gap: 12px; }
+.inputWrap { position: relative; }
+.icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ui-faint); }
+.inputWrap .urlInput { height: 44px; padding-left: 36px; font-size: 15px; }
+.toggle { display: flex; align-items: flex-start; gap: 8px; color: var(--ui-muted); font-size: 13px; cursor: pointer; input { margin-top: 3px; } }
+.submit { justify-self: start; height: 40px; margin-top: 8px; }
+.progress {
+  list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 10px; color: var(--ui-faint);
+  li { display: flex; align-items: center; gap: 10px; }
+  .active { color: var(--ui-text); font-weight: 500; }
+  .done { color: var(--ui-muted); }
+}
+.dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--ui-line-strong); flex: none;
+  .active & { background: var(--ui-accent); box-shadow: 0 0 0 4px var(--ui-accent-soft); animation: pulse 1.2s ease-in-out infinite; }
+  .done & { background: var(--ui-ok); }
+}
+@keyframes pulse { 50% { box-shadow: 0 0 0 7px var(--ui-accent-soft); } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none !important; } }
+.error { margin-top: 20px; padding: 10px 12px; border-radius: 8px; background: var(--ui-bad-soft); color: var(--ui-bad); }
+.recent {
+  margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--ui-line);
+  h2 { font-size: 13px; font-weight: 600; color: var(--ui-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--ui-line); }
+  a { font-weight: 500; text-decoration: none; }
+  span { color: var(--ui-faint); }
+}
