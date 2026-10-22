@@ -1,9 +1,9 @@
 name: Demo
 
 # Publishes the in-browser demo (apps/studio, `build:demo`) to GitHub Pages.
-# Needs Settings > Pages > Source set to "GitHub Actions". With a GCP_SA_KEY secret, the
-# demo imports any site through the import service on Cloud Run (import-service.yml);
-# an IMPORT_API variable points it at a service hosted elsewhere.
+# Needs Settings > Pages > Source set to "GitHub Actions". Once the import service is set
+# up on Cloud Run (import-service.yml), the demo imports any site through it; an
+# IMPORT_API variable points it at a service hosted elsewhere.
 on:
   push:
     branches: [main]
@@ -41,20 +41,23 @@ jobs:
       - name: Check for the import service
         id: service
         env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
           IMPORT_API: ${{ vars.IMPORT_API }}
+          SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
         run: |
           if [ -n "$IMPORT_API" ]; then echo "VITE_IMPORT_API=$IMPORT_API" >> "$GITHUB_ENV"
-          elif [ -n "$GCP_SA_KEY" ]; then echo "cloud_run=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "$SERVICE_ACCOUNT" ]; then
+            echo "project=$(echo "$SERVICE_ACCOUNT" | sed -E 's/.*@([^.]+)\.iam\.gserviceaccount\.com$/\1/')" >> "$GITHUB_OUTPUT"
           else echo "No import service, so imports replay the sample."; fi
       - uses: google-github-actions/auth@v2
-        if: steps.service.outputs.cloud_run
+        if: steps.service.outputs.project
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ steps.service.outputs.project }}
       - uses: google-github-actions/setup-gcloud@v2
-        if: steps.service.outputs.cloud_run
+        if: steps.service.outputs.project
       - name: Find it on Cloud Run
-        if: steps.service.outputs.cloud_run
+        if: steps.service.outputs.project
         run: |
           URL=$(gcloud run services describe lph-import --region europe-west1 --format 'value(status.url)' 2> /dev/null || true)
           echo "Import service: ${URL:-not deployed yet, so imports replay the sample}"

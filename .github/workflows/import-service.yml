@@ -1,8 +1,8 @@
 name: Import service
 
 # Deploys the demo's import service (Dockerfile, apps/api/src/public.ts) to Cloud Run.
-# Needs a GCP_SA_KEY secret: a JSON key for a service account with the Cloud Run Admin,
-# Artifact Registry Administrator and Service Account User roles (docs/import-service.md).
+# Signs in to Google Cloud with GitHub's own token, so no key is stored: run
+# scripts/gcp-setup.sh once and add the two variables it prints (docs/import-service.md).
 on:
   push:
     branches: [main]
@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: import-service
@@ -34,20 +35,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check for the key
-        id: key
+      - name: Check the setup
+        id: gcp
         env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
         run: |
-          if [ -n "$GCP_SA_KEY" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "::notice::Add a GCP_SA_KEY secret to deploy the import service."; fi
+          if [ -n "$SERVICE_ACCOUNT" ] && [ -n "$PROVIDER" ]; then
+            echo "project=$(echo "$SERVICE_ACCOUNT" | sed -E 's/.*@([^.]+)\.iam\.gserviceaccount\.com$/\1/')" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Run scripts/gcp-setup.sh and add the two variables it prints to deploy the import service."
+          fi
       - uses: google-github-actions/auth@v2
-        if: steps.key.outputs.ok
+        if: steps.gcp.outputs.project
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ steps.gcp.outputs.project }}
       - uses: google-github-actions/setup-gcloud@v2
-        if: steps.key.outputs.ok
+        if: steps.gcp.outputs.project
       - name: Build and push the image
-        if: steps.key.outputs.ok
+        if: steps.gcp.outputs.project
+        env:
+          GCP_PROJECT: ${{ steps.gcp.outputs.project }}
         run: |
           REGISTRY="$REGION-docker.pkg.dev/$GCP_PROJECT/lph"
           gcloud artifacts repositories describe lph --location "$REGION" > /dev/null 2>&1 ||
@@ -58,10 +68,11 @@ jobs:
           echo "IMAGE=$REGISTRY/import:$GITHUB_SHA" >> "$GITHUB_ENV"
       # One instance at most: jobs live in its memory, so every poll must reach it.
       # CPU stays on between requests, because imports run after the request that starts them.
+      # Public without an allUsers grant, which organisation policies often forbid.
       - name: Deploy
-        if: steps.key.outputs.ok
+        if: steps.gcp.outputs.project
         run: |
-          gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$REGION" --allow-unauthenticated \
+          gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$REGION" --no-invoker-iam-check \
             --port 7860 --cpu 2 --memory 2Gi --no-cpu-throttling --execution-environment gen2 \
             --min-instances 0 --max-instances 1 --concurrency 80 --timeout 300
           URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format 'value(status.url)')

@@ -36,13 +36,21 @@ It keeps nothing. A finished import is handed back once and then forgotten, and 
 
 The service runs on 2 CPUs and 2 GB, with at most one instance, because jobs live in its memory. It scales to zero when idle and takes 10 to 30 seconds to start again. CPU stays on while an instance is up, since imports run after the request that starts them. Demo traffic should stay within Cloud Run's free tier.
 
+GitHub Actions signs in to Google Cloud with GitHub's own short-lived token (workload identity federation), so there's no service account key to create or leak. Many Google Cloud organisations block keys outright. The service is made public with `--no-invoker-iam-check`, so organisation policies that forbid `allUsers` grants don't stop it.
+
 Setup, once:
 
-1. In the [Google Cloud console](https://console.cloud.google.com/), create a project. It needs a billing account; set a budget alert of a few euros under Billing > Budgets.
-2. Enable the [Cloud Run Admin API](https://console.cloud.google.com/apis/library/run.googleapis.com) and the [Artifact Registry API](https://console.cloud.google.com/apis/library/artifactregistry.googleapis.com).
-3. Under IAM > Service accounts, create a service account (`github-deploy`) with the roles **Cloud Run Admin**, **Artifact Registry Administrator** and **Service Account User**.
-4. On that account, open Keys > Add key > JSON. Paste the downloaded file into a GitHub Actions secret named `GCP_SA_KEY`, then delete the file.
-5. Run the Import service workflow from the Actions tab.
+1. In the [Google Cloud console](https://console.cloud.google.com/), create a project. It needs a billing account. Set a budget alert of a few euros under Billing > Budgets.
+2. Open Cloud Shell (the terminal icon at the top of the console) and run:
+
+   ```bash
+   curl -fsSLO https://raw.githubusercontent.com/tywiththewifi/landing-page-harness/main/scripts/gcp-setup.sh
+   bash gcp-setup.sh your-project-id
+   ```
+
+   [`scripts/gcp-setup.sh`](../scripts/gcp-setup.sh) enables the APIs and creates a `github-deploy` service account with the Cloud Run Admin, Artifact Registry Administrator and Service Account User roles. It also lets this repository's workflows, and only them, sign in as that account. It's safe to run again.
+3. Add the two values it prints as repository variables under Settings > Secrets and variables > Actions > Variables: `GCP_WORKLOAD_IDENTITY_PROVIDER` and `GCP_SERVICE_ACCOUNT`.
+4. Run the Import service workflow from the Actions tab.
 
 **Anywhere else.** It's one container:
 
