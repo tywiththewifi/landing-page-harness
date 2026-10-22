@@ -8,13 +8,17 @@ import {
   briefEdit,
   briefToMarkdown,
   checkBrief,
+  collectSiteData,
   defaultGenerator,
   GenerationError,
+  inspectMcp,
+  parsePrompt,
   toBrief,
   type Brief,
   type BriefGenerator,
   type SeoInsights,
   type SeoProvider,
+  type SiteData,
 } from "@lph/brief";
 import { generateDesignMd } from "@lph/design-md";
 import { extractBrand, type ExtractOptions } from "@lph/extractor";
@@ -79,6 +83,8 @@ const brandEdit = z.object({
 const briefRequest = z.object({
   prompt: z.string().trim().min(3, "Describe the page or campaign").max(2000),
   seoProvider: z.string().optional(),
+  /** Read the site's MCP server first. Defaults to true when one is connected. */
+  useSiteData: z.boolean().optional(),
 });
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "brand";
@@ -147,13 +153,27 @@ export function createApp(opts: AppOptions) {
       return { ...fallback, notes: [`${provider.name} couldn't be reached (${(err as Error).message}), so best practices were used.`, ...fallback.notes] };
     }
   };
-  const startBrief = (brand: Brand, prompt: string, provider: SeoProvider) =>
+  /** Asks the site's MCP server about the topic. If it can't be reached, the brief uses the site copy only. */
+  const readSiteData = async ({ url, name, allowed }: NonNullable<Brand["siteMcp"]>, prompt: string): Promise<SiteData> => {
+    try {
+      await assertPublicUrl(url, opts.allowPrivateUrls);
+      return await collectSiteData(url, parsePrompt(prompt).topic, { allowed });
+    } catch (err) {
+      return { server: { name, url }, facts: [], notes: [`${name} couldn't be reached (${(err as Error).message}), so the brief uses the site copy only.`] };
+    }
+  };
+  const startBrief = (brand: Brand, prompt: string, provider: SeoProvider, useSiteData: boolean) =>
     runJob(async (job) => {
+      let siteData: SiteData | undefined;
+      if (useSiteData && brand.siteMcp) {
+        job.step = `Reading site data from ${brand.siteMcp.name}`;
+        siteData = await readSiteData(brand.siteMcp, prompt);
+      }
       job.step = `Researching keywords with ${provider.name}`;
       const insights = await research(provider, { topic: prompt, siteUrl: brand.url, lang: brand.content?.[0]?.lang ?? "en" });
       job.step = "Writing the brief";
-      const content = await generator.generate({ prompt, brand, insights });
-      const brief = toBrief(content, { id: crypto.randomUUID(), brandId: brand.id, prompt, generator, insights });
+      const content = await generator.generate({ prompt, brand, insights, siteData });
+      const brief = toBrief(content, { id: crypto.randomUUID(), brandId: brand.id, prompt, generator, insights, siteData });
       await briefs.save(brief);
       return { brandId: brand.id, briefId: brief.id };
     });
@@ -219,6 +239,32 @@ export function createApp(opts: AppOptions) {
     return c.json(job, 202);
   });
 
+  // The site's own MCP server, if it has one. Only read-only tools are called, plus any a person allows.
+  const connectSiteMcp = async (brand: Brand, raw: string, allowed: string[]) => {
+    const url = await assertPublicUrl(raw, opts.allowPrivateUrls);
+    try {
+      return await store.save({ ...brand, siteMcp: await inspectMcp(url.href, { allowed }) });
+    } catch (err) {
+      throw new HTTPException(502, { message: `Couldn't connect to an MCP server at ${url.href} (${(err as Error).message}).` });
+    }
+  };
+  app.post("/api/brands/:id/site-mcp", async (c) => {
+    const brand = await mustGet(c.req.param("id"));
+    const body = z.object({ url: z.string().min(1), allowed: z.array(z.string()).default([]) }).parse(await c.req.json());
+    return c.json(await connectSiteMcp(brand, body.url, body.allowed));
+  });
+  // Change which tools a person allows. Re-reads the server so the list is current.
+  app.patch("/api/brands/:id/site-mcp", async (c) => {
+    const brand = await mustGet(c.req.param("id"));
+    if (!brand.siteMcp) throw new HTTPException(404, { message: "No MCP server is connected" });
+    const { allowed } = z.object({ allowed: z.array(z.string()) }).parse(await c.req.json());
+    return c.json(await connectSiteMcp(brand, brand.siteMcp.url, allowed));
+  });
+  app.delete("/api/brands/:id/site-mcp", async (c) => {
+    const { siteMcp: _, ...brand } = await mustGet(c.req.param("id"));
+    return c.json(await store.save(brand));
+  });
+
   // Phase 2: a prompt becomes a marketing brief grounded in the brand's site.
   app.post("/api/brands/:id/briefs", async (c) => {
     const brand = await mustGet(c.req.param("id"));
@@ -226,7 +272,7 @@ export function createApp(opts: AppOptions) {
     // A connected tool, when there is one, is the default over best practices.
     const provider = providers.find((p) => p.id === (body.seoProvider ?? providers.at(-1)!.id));
     if (!provider) throw new HTTPException(400, { message: `Unknown SEO provider "${body.seoProvider}"` });
-    const { job, done } = startBrief(brand, body.prompt, provider);
+    const { job, done } = startBrief(brand, body.prompt, provider, body.useSiteData ?? true);
     if (c.req.query("wait") === "true") {
       const finished = await done;
       if (finished.status === "failed") return c.json(finished, 502);

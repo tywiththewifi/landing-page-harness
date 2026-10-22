@@ -1,0 +1,23 @@
+.panel { display: grid; gap: 6px; margin-top: 12px; }
+.connect { display: flex; gap: 8px; input { flex: 1; min-width: 0; } }
+.hint { color: var(--ui-muted); font-size: 12.5px; line-height: 1.45; }
+.error { color: var(--ui-bad); font-size: 13px; }
+.card { border: 1px solid var(--ui-line); border-radius: var(--ui-radius); background: var(--ui-panel); padding: 12px 14px; display: grid; gap: 8px; }
+.head {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  code { color: var(--ui-muted); font-size: 12px; overflow-wrap: anywhere; }
+  button { margin-left: auto; }
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ui-ok); flex: none; }
+.use { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.summary { justify-self: start; padding: 0; border: 0; background: none; color: var(--ui-accent); font-size: 13px; cursor: pointer; }
+.tools {
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 13px;
+  li { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; align-items: start; padding: 6px 0; border-top: 1px solid var(--ui-line); color: var(--ui-muted); }
+  li.on { color: var(--ui-text); }
+  strong { font-weight: 600; }
+  code { font-size: 11.5px; color: var(--ui-faint); }
+  span:not(.mark) { display: block; color: var(--ui-muted); font-size: 12.5px; }
+}
+.mark { text-align: center; .on & { color: var(--ui-ok); } }
+.allow { display: flex; align-items: center; gap: 4px; font-size: 12.5px; cursor: pointer; white-space: nowrap; }

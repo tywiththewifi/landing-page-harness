@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import type { Brand } from "@lph/tokens";
 import { api, DEMO, waitForJob, type BriefSummary, type SeoProviderInfo } from "../api.ts";
+import { SiteDataPanel } from "../components/SiteDataPanel.tsx";
 import styles from "./NewBriefPage.module.scss";
 
 const EXAMPLES = [
@@ -11,7 +12,6 @@ const EXAMPLES = [
   "Page announcing our launch in Germany",
 ];
 
-const STEPS = ["Researching keywords", "Writing the brief"];
 
 export function NewBriefPage() {
   const { id } = useParams();
@@ -22,6 +22,7 @@ export function NewBriefPage() {
   const [generator, setGenerator] = useState<{ name: string; model: string | null } | null>(null);
   const [prompt, setPrompt] = useState("");
   const [provider, setProvider] = useState<string>("");
+  const [useSiteData, setUseSiteData] = useState(true);
   const [step, setStep] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +43,7 @@ export function NewBriefPage() {
     setError(null);
     try {
       setStep("Starting");
-      const done = await waitForJob(await api.createBrief(id, prompt, provider || undefined), setStep);
+      const done = await waitForJob(await api.createBrief(id, prompt, provider || undefined, useSiteData), setStep);
       navigate(`/briefs/${done.briefId}`);
     } catch (err) {
       setError((err as Error).message);
@@ -50,7 +51,8 @@ export function NewBriefPage() {
     }
   }
 
-  const activeIndex = step ? STEPS.findIndex((s) => step.startsWith(s)) : -1;
+  const steps = [...(brand?.siteMcp && useSiteData ? ["Reading site data"] : []), "Researching keywords", "Writing the brief"];
+  const activeIndex = step ? steps.findIndex((s) => step.startsWith(s)) : -1;
   const current = providers.find((p) => p.id === provider);
 
   return (
@@ -86,6 +88,8 @@ export function NewBriefPage() {
             </button>
           ))}
         </div>
+
+        {brand ? <SiteDataPanel brand={brand} onBrand={setBrand} use={useSiteData} onUse={setUseSiteData} disabled={!!step} /> : null}
 
         <div className={styles.options}>
           <label className={styles.option}>
@@ -133,7 +137,7 @@ export function NewBriefPage() {
 
       {step ? (
         <ol className={styles.progress} aria-live="polite">
-          {STEPS.map((s, i) => (
+          {steps.map((s, i) => (
             <li key={s} className={i < activeIndex ? styles.done : i === activeIndex ? styles.active : undefined}>
               <span className={styles.dot} aria-hidden="true" />
               {i === activeIndex ? step : s}

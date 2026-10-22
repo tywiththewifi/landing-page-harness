@@ -134,6 +134,33 @@ export interface PageContent {
   ctas: string[];
 }
 
+/** A tool on the site's MCP server, and whether the harness will call it. */
+export interface SiteMcpTool {
+  name: string;
+  title: string;
+  description: string;
+  /** "auto": called with no arguments. "query": called with the page's topic in `arg`. null: never called. */
+  use: "auto" | "query" | null;
+  arg?: string;
+  reason: string;
+  /** False when the server doesn't mark it read-only. Such a tool is only called if a person allows it. */
+  readOnly: boolean;
+  /** Whether the harness can fill its inputs, so allowing it would make a difference. */
+  fillable: boolean;
+}
+
+/** The site's own MCP server, as it looked when it was connected. */
+export interface SiteMcp {
+  url: string;
+  name: string;
+  version: string | null;
+  tools: SiteMcpTool[];
+  resources: { uri: string; name: string }[];
+  /** Tools a person allowed although the server doesn't mark them read-only. */
+  allowed: string[];
+  checkedAt: string;
+}
+
 export interface Brand {
   id: string;
   name: string;
@@ -161,4 +188,6 @@ export interface Brand {
   fontSources: { faces: string[]; stylesheets: string[] };
   /** Copy from the sampled pages. Optional because brands imported before phase 2 don't have it. */
   content?: PageContent[];
+  /** The site's MCP server, when one is connected. Briefs read plans, prices and help articles from it. */
+  siteMcp?: SiteMcp;
 }

@@ -44,8 +44,11 @@ const SECTION_TYPES = Object.keys(SECTIONS) as [SectionType, ...SectionType[]];
 export const SEARCH_INTENTS = ["informational", "commercial", "transactional", "navigational"] as const;
 export const SCHEMA_TYPES = ["FAQPage", "Product", "SoftwareApplication", "Service", "Organization", "HowTo", "Event", "Article"] as const;
 
-/** Where a claim comes from. "needed" means nobody has evidence yet, so it can't ship as is. */
-export const PROOF_SOURCES = ["site", "prompt", "needed"] as const;
+/**
+ * Where a claim comes from: the site's pages, the marketer's request, or the site's own
+ * data (its MCP server). "needed" means nobody has evidence yet, so it can't ship as is.
+ */
+export const PROOF_SOURCES = ["site", "data", "prompt", "needed"] as const;
 
 export const persona = z.object({
   name: z.string().describe("A short label for the segment, e.g. 'Ops lead at a 50-person agency'."),
@@ -59,7 +62,7 @@ export const persona = z.object({
 export const proofPoint = z.object({
   claim: z.string(),
   source: z.enum(PROOF_SOURCES),
-  evidence: z.string().describe("The exact text from the site or prompt that backs the claim, or, when source is 'needed', what evidence would."),
+  evidence: z.string().describe("The exact text from the site copy, site data or prompt that backs the claim, or, when source is 'needed', what evidence would."),
 });
 
 export const outlineSection = z.object({
@@ -124,6 +127,21 @@ export interface SeoInsights {
   notes: string[];
 }
 
+/** One answer from the site's MCP server: a read-only tool's output or a resource. */
+export interface SiteFact {
+  /** "tool:<name>" or "resource:<uri>". */
+  source: string;
+  label: string;
+  text: string;
+}
+
+/** What the site's own data said about the topic, collected before the brief is written. */
+export interface SiteData {
+  server: { name: string; url: string } | null;
+  facts: SiteFact[];
+  notes: string[];
+}
+
 export interface Brief extends Omit<BriefContent, "personas"> {
   id: string;
   brandId: string;
@@ -133,6 +151,8 @@ export interface Brief extends Omit<BriefContent, "personas"> {
   updatedAt: string;
   generator: { name: string; model?: string };
   insights: SeoInsights;
+  /** Absent on briefs written without a connected MCP server. */
+  siteData?: SiteData;
 }
 
 /** The parts of a brief a person may edit. Ids, prompt and provenance stay as stored. */

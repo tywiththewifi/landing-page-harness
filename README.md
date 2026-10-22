@@ -49,11 +49,11 @@ See [docs/spec.md](docs/spec.md) for the full plan.
 ![Brief editor with live checks](docs/screenshots/9-brief-checks.png)
 
 1. **Prompt.** The marketer describes the page or campaign: "Landing page for our new HubSpot integration for ops managers".
-2. **Research.** Keyword and question data comes from whichever SEO/AEO tool is connected ([how to connect one](docs/seo-providers.md)). With none connected, the brief follows search and answer-engine best practice and says the keywords need validating.
+2. **Research.** Keyword and question data comes from whichever SEO/AEO tool is connected ([how to connect one](docs/seo-providers.md)). With none connected, the brief follows search and answer-engine best practice and says the keywords need validating. If the site has its own MCP server, its read-only tools are asked about the topic too, so plans, prices and help articles can back the brief ([site data](docs/site-data.md)).
 3. **Write.** Claude writes the standard brief: objective and KPI, personas, funnel stage, channels, key messages, offer and CTA, proof points, page outline, and SEO/AEO targets (keyword, title, meta description, slug, questions with direct answers, structured data). Without an API key, an offline template writes the structure from the site's own copy and marks the gaps.
 4. **Edit.** Every field is editable. The outline can only use blocks the component library has, so whatever is planned can be built in phase 3. Each persona becomes its own page variant with its own URL.
 5. **Check.** A consistency check runs as you type, with no model involved:
-   - Every number in the brief must appear on the site or in the request. Proof points carry their evidence, and "needs evidence" items block publishing.
+   - Every number in the brief must appear on the site, in the site's MCP answers or in the request. Proof points carry their evidence, and "needs evidence" items block publishing.
    - The call to action has to fit the funnel stage, and a CTA that asks for details needs a form.
    - Title and meta lengths, keyword placement, slug, FAQ questions and FAQPage markup are checked against search and answer-engine practice.
    - Headings are compared with the casing the site uses.

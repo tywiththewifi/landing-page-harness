@@ -1,5 +1,5 @@
 import type { Brand } from "@lph/tokens";
-import { PLACEHOLDER, casingOf, numberIsSourced, numbersIn, siteCasing, siteText, textIsSourced } from "./ground.ts";
+import { PLACEHOLDER, casingOf, dataText, numberIsSourced, numbersIn, siteCasing, siteText, textIsSourced } from "./ground.ts";
 import type { Brief } from "./schema.ts";
 
 export interface BriefIssue {
@@ -59,14 +59,16 @@ export function checkBrief(brief: Brief, brand: Brand): BriefIssue[] {
 
   // Grounding: claims need evidence, numbers need a source.
   const site = siteText(brand);
+  const data = dataText(brief.siteData);
   const prompt = [brief.prompt];
   for (const [i, p] of brief.proofPoints.entries()) {
     const n = i + 1;
     if (p.source === "needed") add("warning", "proof", `needed-${n}`, `"${p.claim}" needs evidence before it can go on the page: ${p.evidence}`);
     else if (p.source === "site" && !textIsSourced(p.evidence, site)) add("warning", "proof", `site-${n}`, `The evidence for "${p.claim}" wasn't found on the sampled pages.`);
+    else if (p.source === "data" && !textIsSourced(p.evidence, data)) add("warning", "proof", `data-${n}`, `The evidence for "${p.claim}" isn't in the site data${brief.siteData?.server ? ` from ${brief.siteData.server.name}` : ""}.`);
     else if (p.source === "prompt" && !textIsSourced(p.evidence, prompt)) add("warning", "proof", `prompt-${n}`, `The evidence for "${p.claim}" isn't in your request.`);
   }
-  const sourced = [...site, ...prompt, ...brief.proofPoints.filter((p) => p.source !== "needed").map((p) => p.evidence)];
+  const sourced = [...site, ...data, ...prompt, ...brief.proofPoints.filter((p) => p.source !== "needed").map((p) => p.evidence)];
   const claims: [BriefIssue["section"], string][] = [
     ...brief.keyMessages.flatMap((m): [BriefIssue["section"], string][] => [["messages", m.message], ["messages", m.support]]),
     ["offer", brief.offer.offer],
@@ -81,7 +83,7 @@ export function checkBrief(brief: Brief, brand: Brand): BriefIssue[] {
     for (const num of numbersIn(text)) {
       if (flagged.has(num) || numberIsSourced(num, sourced)) continue;
       flagged.add(num);
-      add("warning", section, `number-${flagged.size}`, `"${num}" isn't on the site or in your request. Add a source or remove it.`);
+      add("warning", section, `number-${flagged.size}`, `"${num}" isn't on the site${brief.siteData?.facts.length ? ", in the site data" : ""} or in your request. Add a source or remove it.`);
     }
   }
 

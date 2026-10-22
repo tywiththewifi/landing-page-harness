@@ -1,4 +1,4 @@
-import { PLACEHOLDER, numbersIn, siteCasing, slugify } from "./ground.ts";
+import { PLACEHOLDER, dataText, numbersIn, siteCasing, slugify } from "./ground.ts";
 import type { BriefGenerator } from "./generator.ts";
 import { SECTIONS, type BriefContent, type FunnelStage, type OutlineSection, type SectionType } from "./schema.ts";
 
@@ -47,7 +47,7 @@ export function parsePrompt(prompt: string) {
 export function templateGenerator(): BriefGenerator {
   return {
     name: "template",
-    async generate({ prompt, brand, insights }) {
+    async generate({ prompt, brand, insights, siteData }) {
       const { topic, audience } = parsePrompt(prompt);
       const stage = STAGE_HINTS.find(([, re]) => re.test(prompt))?.[0] ?? "consideration";
       const pages = brand.content ?? [];
@@ -59,7 +59,18 @@ export function templateGenerator(): BriefGenerator {
       const keyword = (insights.keywords[0]?.term ?? topic).toLowerCase();
 
       const withNumbers = [...headings.map((h) => h.text), ...paragraphs].filter((t) => numbersIn(t).length);
-      const proofPoints: BriefContent["proofPoints"] = withNumbers.slice(0, 3).map((t) => ({ claim: t, source: "site", evidence: t }));
+      // Site data first when it talks about the topic: it's usually the most specific proof there is.
+      // Short lines (a plan, a fact) stay whole; long ones are split into sentences.
+      const topicWords = topic.toLowerCase().split(/\W+/).filter((w) => w.length > 3);
+      const relevance = (t: string) => topicWords.filter((w) => t.toLowerCase().includes(w)).length;
+      const dataProof = dataText(siteData)
+        .flatMap((line) => (line.length > 160 ? line.split(/(?<=[.!?])\s+/) : [line]))
+        .filter((t) => relevance(t) > 0)
+        .sort((a, b) => relevance(b) - relevance(a));
+      const proofPoints: BriefContent["proofPoints"] = [
+        ...dataProof.slice(0, 2).map((t) => ({ claim: t, source: "data" as const, evidence: t })),
+        ...withNumbers.slice(0, 3).map((t) => ({ claim: t, source: "site" as const, evidence: t })),
+      ];
       proofPoints.push({
         claim: `A customer result from using ${topic}`,
         source: "needed",

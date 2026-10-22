@@ -1,0 +1,127 @@
+{
+  "server": {
+    "name": "northloop-mcp",
+    "title": "Northloop",
+    "version": "1.0.0"
+  },
+  "tools": [
+    {
+      "name": "list_plans",
+      "title": "Plans and pricing",
+      "description": "Northloop's current plans, prices and what each one includes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "text": "Starter: $49 a month. Up to 5 active workflows and 2,000 runs a month, with email support.\nGrowth: $199 a month. Unlimited workflows, 25,000 runs a month, two-way HubSpot and Salesforce sync, and priority support.\nEnterprise: custom pricing. SSO, an audit log, a 99.95% uptime SLA and a named success manager.\nEvery plan starts with a 14-day free trial."
+    },
+    {
+      "name": "search_help_center",
+      "title": "Search the help center",
+      "description": "Searches Northloop's help center and returns matching articles.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "What to search for"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "articles": [
+        {
+          "title": "Connect HubSpot",
+          "text": "The HubSpot integration syncs contacts, companies and deals both ways every 5 minutes. Setup takes about 10 minutes and needs a HubSpot Super Admin. It's available on the Growth and Enterprise plans."
+        },
+        {
+          "title": "Workflow templates",
+          "text": "Start from 60 templates for lead routing, renewals, invoicing and support escalations, then edit any step."
+        },
+        {
+          "title": "Security",
+          "text": "Northloop is SOC 2 Type II audited. Data is encrypted at rest and in transit, and hosted in the EU or the US."
+        }
+      ]
+    },
+    {
+      "name": "latest_releases",
+      "title": "Latest releases",
+      "description": "The three most recent product releases. (Deliberately has no annotations, like many real servers.)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "text": "October: two-way HubSpot sync now covers custom objects.\nSeptember: approval steps in any workflow.\nAugust: EU data residency on every plan."
+    },
+    {
+      "name": "get_customer_story",
+      "title": "Customer story",
+      "description": "Returns one published customer story by its slug.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "short",
+              "full"
+            ]
+          }
+        },
+        "required": [
+          "slug",
+          "format"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "text": "Not used by the tests."
+    },
+    {
+      "name": "book_demo",
+      "title": "Book a demo",
+      "description": "Books a sales demo for the given person.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "text": "Demo booked."
+    }
+  ],
+  "resources": [
+    {
+      "uri": "northloop://integrations",
+      "name": "Integrations",
+      "mimeType": "text/markdown",
+      "text": "Northloop connects 300+ tools. The most used are HubSpot, Salesforce, Stripe, Zendesk, Slack and NetSuite."
+    }
+  ]
+}

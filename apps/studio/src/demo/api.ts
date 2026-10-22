@@ -2,18 +2,23 @@ import {
   bestPractices,
   briefEdit,
   briefToMarkdown,
+  describeTool,
   parsePrompt,
   templateGenerator,
   toBrief,
+  toolUse,
   type Brief,
   type SeoInsights,
   type SeoProvider,
+  type SiteData,
+  type ToolInfo,
 } from "@lph/brief/browser";
 import { generateDesignMd } from "@lph/design-md";
 import { renderPreview } from "@lph/kit/preview";
-import { checkContrast, resolveConflict, type Brand } from "@lph/tokens";
+import { checkContrast, resolveConflict, type Brand, type SiteMcp } from "@lph/tokens";
 import uiCss from "@lph/ui/styles.css?raw";
 import type { api, Job } from "../api.ts";
+import sampleMcp from "../../../../fixtures/northloop/mcp.json";
 import northloop from "./northloop.json";
 
 /**
@@ -21,7 +26,9 @@ import northloop from "./northloop.json";
  * replays a real extraction of the Northloop fixture (fixtures/northloop, with its URLs
  * moved to northloop.example); everything after that runs the same packages as the
  * server: conflict resolution, contrast, DESIGN.md, the preview, the offline brief
- * writer and the brief checks. Changes are kept in this browser only.
+ * writer and the brief checks. The site's MCP server is the fixture's (mcp.json),
+ * answered here the way scripts/serve-fixture.mjs answers it. Changes are kept in
+ * this browser only.
  */
 
 const SAMPLE = northloop as unknown as Brand;
@@ -137,6 +144,43 @@ const sampleSeo: SeoProvider = {
 };
 
 const providers = [bestPractices, sampleSeo];
+
+type SampleTool = ToolInfo & { text: string; articles?: { title: string; text: string }[] };
+const MCP_TOOLS = sampleMcp.tools as unknown as SampleTool[];
+const MCP_URL = "https://northloop.example/mcp";
+const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** What inspecting the sample server returns, with the tools a person allowed. */
+const inspectSample = (allowed: string[]): SiteMcp => ({
+  url: MCP_URL,
+  name: sampleMcp.server.title,
+  version: sampleMcp.server.version,
+  tools: MCP_TOOLS.map((t) => describeTool(t, allowed)),
+  resources: sampleMcp.resources.map(({ uri, name }) => ({ uri, name })),
+  allowed: allowed.filter((n) => MCP_TOOLS.some((t) => t.name === n)),
+  checkedAt: now(),
+});
+
+/** The same calls the server's collectSiteData makes, answered from the sample. */
+function collectSample(topic: string, allowed: string[]): SiteData {
+  const usable = MCP_TOOLS.map((t) => ({ t, ...toolUse(t, allowed.includes(t.name)) })).filter((x) => x.use);
+  const facts = usable.map(({ t }) => {
+    let text = t.text;
+    if (t.articles) {
+      const words = topic.toLowerCase().split(/\W+/).filter((w) => w.length > 2);
+      const hits = t.articles.filter((a) => words.some((w) => `${a.title} ${a.text}`.toLowerCase().includes(w)));
+      text = (hits.length ? hits : t.articles.slice(0, 2)).map((a) => `${a.title}: ${a.text}`).join("\n");
+    }
+    return { source: `tool:${t.name}`, label: t.title ?? t.name, text };
+  });
+  facts.push(...sampleMcp.resources.map((r) => ({ source: `resource:${r.uri}`, label: r.name, text: r.text })));
+  const skipped = MCP_TOOLS.length - usable.length;
+  return {
+    server: { name: sampleMcp.server.title, url: MCP_URL },
+    facts,
+    notes: skipped ? [`${skipped} tool${skipped === 1 ? " was" : "s were"} skipped: not read-only, or ${skipped === 1 ? "it needs" : "they need"} inputs the harness can't fill.`] : [],
+  };
+}
 const generator = templateGenerator();
 
 export const demoApi: typeof api = {
@@ -177,6 +221,20 @@ export const demoApi: typeof api = {
   async previewHtml(id) {
     return renderPreview(mustGet(id), uiCss);
   },
+  async connectSiteMcp(id) {
+    const brand = mustGet(id);
+    await pause(600);
+    return saveBrand({ ...brand, siteMcp: inspectSample([]) });
+  },
+  async allowSiteTools(id, allowed) {
+    const brand = mustGet(id);
+    if (!brand.siteMcp) throw new Error("No MCP server is connected");
+    return saveBrand({ ...brand, siteMcp: inspectSample(allowed) });
+  },
+  async disconnectSiteMcp(id) {
+    const { siteMcp: _, ...brand } = mustGet(id);
+    return saveBrand(brand);
+  },
 
   async seoProviders() {
     return providers.map(({ id, name, description }) => ({ id, name, description }));
@@ -184,14 +242,17 @@ export const demoApi: typeof api = {
   async generator() {
     return { name: generator.name, model: null };
   },
-  async createBrief(brandId, prompt, seoProvider) {
+  async createBrief(brandId, prompt, seoProvider, useSiteData = true) {
     const brand = mustGet(brandId);
     if (prompt.trim().length < 3) throw new Error("Describe the page or campaign");
     const provider = providers.find((p) => p.id === (seoProvider ?? providers.at(-1)!.id)) ?? bestPractices;
-    return startJob([`Researching keywords with ${provider.name}`, "Writing the brief"], async () => {
+    const mcp = useSiteData ? brand.siteMcp : undefined;
+    const steps = [...(mcp ? [`Reading site data from ${mcp.name}`] : []), `Researching keywords with ${provider.name}`, "Writing the brief"];
+    return startJob(steps, async () => {
+      const siteData = mcp ? collectSample(parsePrompt(prompt).topic, mcp.allowed) : undefined;
       const insights: SeoInsights = await provider.research({ topic: prompt, siteUrl: brand.url, lang: brand.content?.[0]?.lang ?? "en" });
-      const content = await generator.generate({ prompt, brand, insights });
-      const brief = toBrief(content, { id: crypto.randomUUID(), brandId, prompt, generator, insights });
+      const content = await generator.generate({ prompt, brand, insights, siteData });
+      const brief = toBrief(content, { id: crypto.randomUUID(), brandId, prompt, generator, insights, siteData });
       state.briefs[brief.id] = brief;
       persist();
       return { brandId, briefId: brief.id };

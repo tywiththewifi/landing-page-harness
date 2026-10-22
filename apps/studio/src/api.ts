@@ -50,11 +50,14 @@ export const api = {
   contrast: (id: string) => request<ContrastCheck[]>(`/api/brands/${id}/contrast`),
   confirm: (id: string) => request<{ dir: string; files: string[] }>(`/api/brands/${id}/confirm`, { method: "POST" }),
   previewHtml: (id: string) => request<string>(`/api/brands/${id}/preview.html`),
+  connectSiteMcp: (id: string, url: string) => request<Brand>(`/api/brands/${id}/site-mcp`, { method: "POST", body: JSON.stringify({ url }) }),
+  allowSiteTools: (id: string, allowed: string[]) => request<Brand>(`/api/brands/${id}/site-mcp`, { method: "PATCH", body: JSON.stringify({ allowed }) }),
+  disconnectSiteMcp: (id: string) => request<Brand>(`/api/brands/${id}/site-mcp`, { method: "DELETE" }),
 
   seoProviders: () => request<SeoProviderInfo[]>("/api/seo/providers"),
   generator: () => request<{ name: string; model: string | null }>("/api/generator"),
-  createBrief: (brandId: string, prompt: string, seoProvider?: string) =>
-    request<Job>(`/api/brands/${brandId}/briefs`, { method: "POST", body: JSON.stringify({ prompt, seoProvider }) }),
+  createBrief: (brandId: string, prompt: string, seoProvider?: string, useSiteData = true) =>
+    request<Job>(`/api/brands/${brandId}/briefs`, { method: "POST", body: JSON.stringify({ prompt, seoProvider, useSiteData }) }),
   listBriefs: (brandId: string) => request<BriefSummary[]>(`/api/brands/${brandId}/briefs`),
   brief: (id: string) => request<Brief>(`/api/briefs/${id}`),
   saveBrief: (brief: Brief) => request<Brief>(`/api/briefs/${brief.id}`, { method: "PUT", body: JSON.stringify(brief) }),

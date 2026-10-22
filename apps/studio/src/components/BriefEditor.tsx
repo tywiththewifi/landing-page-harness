@@ -228,7 +228,16 @@ export function BriefEditor({ brief, issues, update }: { brief: Brief; issues: B
           </div>
         </Section>
 
-        <Section id="proof" title="Proof points" intro="Anything marked “Needs evidence” has to be sourced or removed before the page is published.">
+        <Section
+          id="proof"
+          title="Proof points"
+          intro={
+            <>
+              Anything marked “Needs evidence” has to be sourced or removed before the page is published.
+              {brief.siteData ? <SiteDataSource brief={brief} /> : null}
+            </>
+          }
+        >
           <ListEditor
             items={brief.proofPoints}
             onChange={(next) => update((d) => void (d.proofPoints = next))}
@@ -242,7 +251,7 @@ export function BriefEditor({ brief, issues, update }: { brief: Brief; issues: B
                   <SelectField
                     label="Source"
                     value={p.source}
-                    options={PROOF_SOURCES.map((s) => [s, s === "site" ? "Your site" : s === "prompt" ? "Your request" : "Needs evidence"] as [typeof s, string])}
+                    options={PROOF_SOURCES.map((s) => [s, SOURCE_LABELS[s]] as [typeof s, string])}
                     onChange={(v) => set({ ...p, source: v })}
                   />
                 </div>
@@ -337,6 +346,27 @@ function Section({ id, title, intro, children }: { id: string; title: string; in
       </div>
       <div className={styles.fields}>{children}</div>
     </section>
+  );
+}
+
+const SOURCE_LABELS: Record<ProofPoint["source"], string> = { site: "Your site", data: "Site data", prompt: "Your request", needed: "Needs evidence" };
+
+/** What the site's MCP server answered, so evidence can be checked or copied from it. */
+function SiteDataSource({ brief }: { brief: Brief }) {
+  const { server, facts, notes } = brief.siteData!;
+  return (
+    <details className={styles.siteData}>
+      <summary>
+        Site data from {server?.name ?? "your MCP server"}: {facts.length ? `${facts.length} answer${facts.length === 1 ? "" : "s"}` : "nothing came back"}
+      </summary>
+      {facts.map((f) => (
+        <div key={f.source} className={styles.fact}>
+          <strong>{f.label}</strong>
+          <p>{f.text}</p>
+        </div>
+      ))}
+      {notes.length ? <span className={styles.seoNotes}>{notes.join(" ")}</span> : null}
+    </details>
   );
 }
 
