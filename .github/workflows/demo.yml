@@ -1,7 +1,9 @@
 name: Demo
 
 # Publishes the in-browser demo (apps/studio, `build:demo`) to GitHub Pages.
-# Needs Settings > Pages > Source set to "GitHub Actions".
+# Needs Settings > Pages > Source set to "GitHub Actions". With an HF_TOKEN secret, the
+# demo imports any site through the import service (import-service.yml); an IMPORT_API
+# variable points it at a service hosted elsewhere.
 on:
   push:
     branches: [main]
@@ -30,6 +32,20 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Find the import service
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          IMPORT_API: ${{ vars.IMPORT_API }}
+        run: |
+          if [ -z "$IMPORT_API" ] && [ -n "$HF_TOKEN" ]; then
+            pip install --quiet huggingface_hub
+            IMPORT_API=$(python scripts/hf-space.py url)
+          fi
+          echo "Import service: ${IMPORT_API:-none, so imports replay the sample}"
+          echo "VITE_IMPORT_API=$IMPORT_API" >> "$GITHUB_ENV"
       - run: pnpm --filter @lph/studio build:demo
       - run: cp apps/studio/dist-demo/demo.html apps/studio/dist-demo/index.html
       - uses: actions/configure-pages@v5

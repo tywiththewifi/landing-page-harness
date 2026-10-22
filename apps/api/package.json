@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "start:public": "tsx src/public-server.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.5",

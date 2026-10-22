@@ -26,7 +26,7 @@ import { previewHtml, writeBrandKit } from "@lph/kit";
 import { checkContrast, resolveConflict, toCss, toDtcg, type Brand } from "@lph/tokens";
 import { openApi } from "./openapi.ts";
 import type { BrandStore, BriefStore } from "./store.ts";
-import { assertPublicUrl, UrlRejected } from "./url-guard.ts";
+import { assertPublicUrl, browserGuard, UrlRejected } from "./url-guard.ts";
 
 export interface Job {
   id: string;
@@ -138,7 +138,7 @@ export function createApp(opts: AppOptions) {
   /** Extracts a brand from its pages. */
   const startJob = (input: ExtractOptions, keepId?: string) =>
     runJob(async (job) => {
-      const brand = await extract({ ...input, onProgress: (step) => (job.step = step) });
+      const brand = await extract({ ...input, ...browserGuard(opts.allowPrivateUrls), onProgress: (step) => (job.step = step) });
       if (keepId) brand.id = keepId;
       await store.save(brand);
       return { brandId: brand.id };

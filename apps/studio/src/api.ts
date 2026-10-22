@@ -23,6 +23,12 @@ export interface SeoProviderInfo {
  */
 export const DEMO = import.meta.env.MODE === "demo";
 
+/**
+ * The demo's import service (apps/api/src/public.ts), when the build names one with
+ * VITE_IMPORT_API: it opens other sites and their MCP servers, which a browser can't.
+ */
+export const IMPORT_SERVICE: string | null = (DEMO && (import.meta.env.VITE_IMPORT_API as string | undefined)?.replace(/\/+$/, "")) || null;
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,

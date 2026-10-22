@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/dist-demo
+.git
+data
+brands
+docs/screenshots
+test-results
+playwright-report
+coverage
+.env
+.env.*

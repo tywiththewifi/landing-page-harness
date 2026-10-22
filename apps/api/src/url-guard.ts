@@ -11,10 +11,10 @@ const PRIVATE_V4 = [
   /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,
 ];
 
-function isPrivate(address: string): boolean {
+export function isPrivateAddress(address: string): boolean {
   if (isIP(address) === 6) {
     const a = address.toLowerCase();
-    if (a.startsWith("::ffff:")) return isPrivate(a.slice(7));
+    if (a.startsWith("::ffff:")) return isPrivateAddress(a.slice(7));
     return a === "::1" || a === "::" || a.startsWith("fc") || a.startsWith("fd") || a.startsWith("fe80");
   }
   return PRIVATE_V4.some((r) => r.test(address));
@@ -37,8 +37,15 @@ export async function assertPublicUrl(raw: string, allowPrivate = process.env.LP
   const host = url.hostname.replace(/^\[|\]$/g, "");
   const addresses = isIP(host) ? [host] : (await lookup(host, { all: true }).catch(() => [])).map((a) => a.address);
   if (!addresses.length) throw new UrlRejected(`Couldn't resolve ${url.hostname}.`);
-  if (addresses.some(isPrivate)) throw new UrlRejected("Internal and private network addresses can't be imported.");
+  if (addresses.some(isPrivateAddress)) throw new UrlRejected("Internal and private network addresses can't be imported.");
   return url;
 }
 
 export class UrlRejected extends Error {}
+
+/**
+ * Extractor options that hold the page's own requests to the same rule (see
+ * ExtractOptions.allowAddress), so a page can't redirect or load its way inside.
+ */
+export const browserGuard = (allowPrivate = process.env.LPH_ALLOW_PRIVATE_URLS === "1") =>
+  allowPrivate ? {} : { allowAddress: (ip: string) => !isPrivateAddress(ip) };

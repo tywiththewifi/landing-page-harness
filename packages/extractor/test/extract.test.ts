@@ -1,3 +1,6 @@
+import { once } from "node:events";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { generateDesignMd } from "@lph/design-md";
 import { brandKitFiles } from "@lph/kit";
@@ -138,5 +141,31 @@ describe("extractBrand (fixture site)", () => {
     expect(checkContrast(brand).every((c) => c.level !== "fail")).toBe(true);
     const files = (await brandKitFiles(brand)).map((f) => f.path);
     expect(files).toEqual(["tokens.css", "tokens.json", "DESIGN.md", "brand.json", "preview.html", "logo.svg"]);
+  });
+});
+
+// Linux answers on all of 127.0.0.0/8, so 127.0.0.2 stands in for an internal address.
+// macOS only answers on 127.0.0.1 unless aliased, so these skip there.
+describe("extractBrand with allowAddress", () => {
+  const servers: ReturnType<typeof createServer>[] = [];
+  const listen = async (host: string, handler: Parameters<typeof createServer>[1]) => {
+    const server = createServer(handler).listen(0, host);
+    servers.push(server);
+    await once(server, "listening");
+    return `http://${host}:${(server.address() as AddressInfo).port}`;
+  };
+  afterAll(() => servers.forEach((s) => s.close()));
+  const allowAddress = (ip: string) => ip !== "127.0.0.2";
+
+  it("fails when the page redirects to a refused address", async (ctx) => {
+    const inside = await listen("127.0.0.2", (_, res) => res.end("<h1>Inside</h1>")).catch(() => ctx.skip());
+    const outside = await listen("127.0.0.1", (_, res) => res.writeHead(302, { location: `${inside}/` }).end());
+    await expect(extractBrand({ url: `${outside}/`, allowAddress })).rejects.toThrow("The page tried to load from 127.0.0.2, an internal address");
+  });
+
+  it("fails when the page loads something from a refused address", async (ctx) => {
+    const inside = await listen("127.0.0.2", (_, res) => res.writeHead(200, { "content-type": "text/css" }).end("body { color: red }")).catch(() => ctx.skip());
+    const outside = await listen("127.0.0.1", (_, res) => res.writeHead(200, { "content-type": "text/html" }).end(`<link rel="stylesheet" href="${inside}/x.css"><h1>Outside</h1>`));
+    await expect(extractBrand({ url: `${outside}/`, allowAddress })).rejects.toThrow("an internal address");
   });
 });

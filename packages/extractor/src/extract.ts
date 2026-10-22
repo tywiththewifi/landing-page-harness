@@ -1,4 +1,6 @@
-import { chromium, type Browser, type Page } from "playwright";
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
+import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 import type { Brand } from "@lph/tokens";
 import { analyze, type PageCapture } from "./analyze.ts";
 import { collectPage, removeOverlays, type PageSample } from "./collect.ts";
@@ -11,6 +13,12 @@ export interface ExtractOptions {
   browser?: Browser;
   onProgress?: (step: string) => void;
   timeoutMs?: number;
+  /**
+   * For a public service: every address the browser talks to is checked with this, and
+   * the import fails if one is refused (an internal address, say). Hosts are resolved
+   * before each request, and redirects are caught from the address that answered.
+   */
+  allowAddress?: (ip: string) => boolean;
 }
 
 const DESKTOP = { width: 1440, height: 900 };
@@ -77,8 +85,12 @@ export async function capturePages(opts: ExtractOptions): Promise<PageCapture[]>
   const timeoutMs = opts.timeoutMs ?? 30000;
   const progress = opts.onProgress ?? (() => {});
   const browser = opts.browser ?? (await launchBrowser());
+  let context: BrowserContext | undefined;
+  let guard: NetworkGuard | null = null;
   try {
-    const context = await browser.newContext({ viewport: DESKTOP, userAgent: undefined });
+    // Service workers fetch outside the guard's reach, so they're off when it's on.
+    context = await browser.newContext({ viewport: DESKTOP, userAgent: undefined, serviceWorkers: opts.allowAddress ? "block" : "allow" });
+    guard = opts.allowAddress ? await guardNetwork(context, opts.allowAddress) : null;
     // Bundlers (tsx/esbuild) can wrap functions with a __name helper that doesn't exist in the page.
     await context.addInitScript("window.__name = (f) => f;");
     const page = await context.newPage();
@@ -99,11 +111,61 @@ export async function capturePages(opts: ExtractOptions): Promise<PageCapture[]>
     for (const [i, url] of urls.entries()) {
       captures[i]!.mobile = await capture(page, url, timeoutMs);
     }
-    await context.close();
+    await guard?.check();
     return captures;
+  } catch (err) {
+    // A refused address explains the failure better than the browser's error does.
+    await guard?.check();
+    throw err;
   } finally {
+    // A shared browser outlives the import, so its context is closed even on failure.
+    await context?.close().catch(() => {});
     if (!opts.browser) await browser.close();
   }
+}
+
+interface NetworkGuard {
+  check: () => Promise<void>;
+}
+
+/** See ExtractOptions.allowAddress. */
+async function guardNetwork(context: BrowserContext, allow: (ip: string) => boolean): Promise<NetworkGuard> {
+  let refused: string | null = null;
+  const pending: Promise<void>[] = [];
+  const resolved = new Map<string, Promise<string[]>>();
+  // A host that doesn't resolve here won't load in the browser either.
+  const addresses = (host: string) => {
+    if (isIP(host)) return Promise.resolve([host]);
+    if (!resolved.has(host)) resolved.set(host, lookup(host, { all: true }).then((all) => all.map((a) => a.address), () => []));
+    return resolved.get(host)!;
+  };
+
+  await context.route("**/*", async (route) => {
+    const url = new URL(route.request().url());
+    const host = url.hostname.replace(/^\[|\]$/g, "");
+    if (/^(https?|wss?):$/.test(url.protocol) && (await addresses(host)).some((a) => !allow(a))) {
+      refused ??= url.hostname;
+      return route.abort("blockedbyclient");
+    }
+    return route.continue();
+  });
+  context.on("response", (res) => {
+    pending.push(
+      res
+        .serverAddr()
+        .then((addr) => {
+          if (addr && !allow(addr.ipAddress)) refused ??= new URL(res.url()).hostname;
+        })
+        .catch(() => {}),
+    );
+  });
+
+  return {
+    async check() {
+      await Promise.all(pending);
+      if (refused) throw new Error(`The page tried to load from ${refused}, an internal address, so it can't be imported.`);
+    },
+  };
 }
 
 export function brandId(url: string): string {

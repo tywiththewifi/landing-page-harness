@@ -17,7 +17,7 @@ import { generateDesignMd } from "@lph/design-md";
 import { renderPreview } from "@lph/kit/preview";
 import { checkContrast, resolveConflict, type Brand, type SiteMcp } from "@lph/tokens";
 import uiCss from "@lph/ui/styles.css?raw";
-import type { api, Job } from "../api.ts";
+import { IMPORT_SERVICE, type api, type Job } from "../api.ts";
 import sampleMcp from "../../../../fixtures/northloop/mcp.json";
 import northloop from "./northloop.json";
 
@@ -29,6 +29,9 @@ import northloop from "./northloop.json";
  * writer and the brief checks. The site's MCP server is the fixture's (mcp.json),
  * answered here the way scripts/serve-fixture.mjs answers it. Changes are kept in
  * this browser only.
+ *
+ * When the build names an import service (IMPORT_SERVICE), any other site is imported
+ * through it, and any other MCP server is read through it. Northloop stays local.
  */
 
 const SAMPLE = northloop as unknown as Brand;
@@ -183,16 +186,80 @@ function collectSample(topic: string, allowed: string[]): SiteData {
 }
 const generator = templateGenerator();
 
+const SAMPLE_HOST = new URL(SAMPLE.url).hostname;
+/** True when a URL is answered by the sample: always without a service, and for Northloop with one. */
+const isSample = (url: string) => {
+  if (!IMPORT_SERVICE) return true;
+  try {
+    return new URL(url).hostname === SAMPLE_HOST;
+  } catch {
+    return true;
+  }
+};
+
+/** A call to the import service, with messages for the ways a free host fails. */
+async function service<T>(path: string, body?: unknown): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${IMPORT_SERVICE}${path}`, body === undefined ? undefined : { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  } catch {
+    throw new Error("Couldn't reach the import service. It sleeps when nobody has used it for a while; try again in a minute.");
+  }
+  const data = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
+  if (res.ok && data) return data;
+  throw new Error(data?.error ?? (res.status >= 500 ? "The import service is starting up. Try again in a minute." : `Request failed (${res.status})`));
+}
+
+/** Asks a sleeping service to start, so it's awake by the time someone imports. */
+export function wakeService() {
+  if (IMPORT_SERVICE) void fetch(`${IMPORT_SERVICE}/api/health`).catch(() => {});
+}
+
+// The service hands a finished brand back once, so it's stored here as soon as it arrives.
+const remoteJobs = new Set<string>();
+
+async function importRemote(url: string, productUrl?: string, id?: string): Promise<Job> {
+  const job = await service<Job>("/api/brands", { url, productUrl: productUrl || undefined, id });
+  remoteJobs.add(job.id);
+  return job;
+}
+
+async function remoteJob(id: string): Promise<Job> {
+  const { brand, ...job } = await service<Job & { brand?: Brand }>(`/api/jobs/${id}`);
+  if (job.status === "running") return job;
+  remoteJobs.delete(id);
+  if (brand) {
+    // A retry keeps what the person set up on the brand before.
+    const before = state.brands[brand.id];
+    saveBrand({ ...brand, ...(before && { createdAt: before.createdAt, siteMcp: before.siteMcp }) });
+  }
+  return job;
+}
+
+const inspectRemote = (url: string, allowed: string[]) => service<SiteMcp>("/api/site-mcp/inspect", { url, allowed });
+
+/** Like the server: a server that can't be reached leaves a note, and the brief uses the site copy. */
+async function collectRemote({ url, name, allowed }: SiteMcp, topic: string): Promise<SiteData> {
+  try {
+    return await service<SiteData>("/api/site-mcp/collect", { url, topic, allowed });
+  } catch (err) {
+    return { server: { name, url }, facts: [], notes: [`${name} couldn't be reached (${(err as Error).message}), so the brief uses the site copy only.`] };
+  }
+}
+
 export const demoApi: typeof api = {
   async listBrands() {
     return Object.values(state.brands)
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
       .map(({ id, name, url, updatedAt }) => ({ id, name, url, updatedAt }));
   },
-  async importBrand() {
+  async importBrand(url, productUrl) {
+    if (!isSample(url)) return importRemote(url, productUrl);
     return startJob(importSteps(SAMPLE), async () => ({ brandId: importSample().id }));
   },
-  job: advance,
+  async job(id) {
+    return remoteJobs.has(id) ? remoteJob(id) : advance(id);
+  },
   async brand(id) {
     return mustGet(id);
   },
@@ -205,6 +272,7 @@ export const demoApi: typeof api = {
   },
   async retry(id) {
     const brand = mustGet(id);
+    if (!isSample(brand.url)) return importRemote(brand.pages[0]!, brand.pages[1], brand.id);
     return startJob(importSteps(brand), async () => ({ brandId: importSample().id }));
   },
   async designMd(id) {
@@ -221,15 +289,17 @@ export const demoApi: typeof api = {
   async previewHtml(id) {
     return renderPreview(mustGet(id), uiCss);
   },
-  async connectSiteMcp(id) {
+  async connectSiteMcp(id, url) {
     const brand = mustGet(id);
+    if (!isSample(url)) return saveBrand({ ...mustGet(id), siteMcp: await inspectRemote(url, []) });
     await pause(600);
     return saveBrand({ ...brand, siteMcp: inspectSample([]) });
   },
   async allowSiteTools(id, allowed) {
     const brand = mustGet(id);
     if (!brand.siteMcp) throw new Error("No MCP server is connected");
-    return saveBrand({ ...brand, siteMcp: inspectSample(allowed) });
+    const siteMcp = isSample(brand.siteMcp.url) ? inspectSample(allowed) : await inspectRemote(brand.siteMcp.url, allowed);
+    return saveBrand({ ...mustGet(id), siteMcp });
   },
   async disconnectSiteMcp(id) {
     const { siteMcp: _, ...brand } = mustGet(id);
@@ -249,7 +319,8 @@ export const demoApi: typeof api = {
     const mcp = useSiteData ? brand.siteMcp : undefined;
     const steps = [...(mcp ? [`Reading site data from ${mcp.name}`] : []), `Researching keywords with ${provider.name}`, "Writing the brief"];
     return startJob(steps, async () => {
-      const siteData = mcp ? collectSample(parsePrompt(prompt).topic, mcp.allowed) : undefined;
+      const topic = parsePrompt(prompt).topic;
+      const siteData = !mcp ? undefined : isSample(mcp.url) ? collectSample(topic, mcp.allowed) : await collectRemote(mcp, topic);
       const insights: SeoInsights = await provider.research({ topic: prompt, siteUrl: brand.url, lang: brand.content?.[0]?.lang ?? "en" });
       const content = await generator.generate({ prompt, brand, insights, siteData });
       const brief = toBrief(content, { id: crypto.randomUUID(), brandId, prompt, generator, insights, siteData });

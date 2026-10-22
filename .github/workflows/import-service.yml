@@ -1,0 +1,45 @@
+name: Import service
+
+# Deploys the demo's import service (Dockerfile, apps/api/src/public.ts) to a free
+# Hugging Face Space. Needs an HF_TOKEN secret: a Hugging Face token with write access.
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/api/**
+      - packages/**
+      - Dockerfile
+      - .dockerignore
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - scripts/hf-space.py
+      - .github/workflows/import-service.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: import-service
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for the token
+        id: token
+        run: |
+          if [ -n "$HF_TOKEN" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "::notice::Add an HF_TOKEN secret to deploy the import service."; fi
+      - uses: actions/setup-python@v5
+        if: steps.token.outputs.ok
+        with:
+          python-version: "3.12"
+      - if: steps.token.outputs.ok
+        run: pip install --quiet huggingface_hub
+      - if: steps.token.outputs.ok
+        run: python scripts/hf-space.py deploy
