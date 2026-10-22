@@ -1,0 +1,80 @@
+name: Import service
+
+# Deploys the demo's import service (Dockerfile, apps/api/src/public.ts) to Cloud Run.
+# Signs in to Google Cloud with GitHub's own token, so no key is stored: run
+# scripts/gcp-setup.sh once and add the two variables it prints (docs/import-service.md).
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/api/**
+      - packages/**
+      - Dockerfile
+      - .dockerignore
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .github/workflows/import-service.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: import-service
+  cancel-in-progress: true
+
+# demo.yml looks the service up by these.
+env:
+  REGION: europe-west1
+  SERVICE: lph-import
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the setup
+        id: gcp
+        env:
+          SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        run: |
+          if [ -n "$SERVICE_ACCOUNT" ] && [ -n "$PROVIDER" ]; then
+            echo "project=$(echo "$SERVICE_ACCOUNT" | sed -E 's/.*@([^.]+)\.iam\.gserviceaccount\.com$/\1/')" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Run scripts/gcp-setup.sh and add the two variables it prints to deploy the import service."
+          fi
+      - uses: google-github-actions/auth@v2
+        if: steps.gcp.outputs.project
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ steps.gcp.outputs.project }}
+      - uses: google-github-actions/setup-gcloud@v2
+        if: steps.gcp.outputs.project
+      - name: Build and push the image
+        if: steps.gcp.outputs.project
+        env:
+          GCP_PROJECT: ${{ steps.gcp.outputs.project }}
+        run: |
+          REGISTRY="$REGION-docker.pkg.dev/$GCP_PROJECT/lph"
+          gcloud artifacts repositories describe lph --location "$REGION" > /dev/null 2>&1 ||
+            gcloud artifacts repositories create lph --location "$REGION" --repository-format docker --description "landing-page-harness"
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build -t "$REGISTRY/import:$GITHUB_SHA" .
+          docker push "$REGISTRY/import:$GITHUB_SHA"
+          echo "IMAGE=$REGISTRY/import:$GITHUB_SHA" >> "$GITHUB_ENV"
+      # One instance at most: jobs live in its memory, so every poll must reach it.
+      # CPU stays on between requests, because imports run after the request that starts them.
+      # Public without an allUsers grant, which organisation policies often forbid.
+      - name: Deploy
+        if: steps.gcp.outputs.project
+        run: |
+          gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$REGION" --no-invoker-iam-check \
+            --port 7860 --cpu 2 --memory 2Gi --no-cpu-throttling --execution-environment gen2 \
+            --min-instances 0 --max-instances 1 --concurrency 80 --timeout 300
+          URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format 'value(status.url)')
+          curl -fsS --retry 5 --retry-delay 10 --retry-all-errors "$URL/api/health"
+          echo "Running at $URL" >> "$GITHUB_STEP_SUMMARY"

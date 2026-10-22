@@ -5,11 +5,12 @@ import { api } from "../api.ts";
 import { Shell } from "../components/Shell.tsx";
 import { routes } from "../routes.tsx";
 import "../styles/global.scss";
-import { demoApi, resetDemo } from "./api.ts";
+import { demoApi, resetDemo, wakeService } from "./api.ts";
 import { DemoBanner } from "./DemoBanner.tsx";
 
-// Every API call is answered in the browser.
+// Every API call is answered in the browser, apart from the imports the service makes.
 Object.assign(api, demoApi);
+wakeService();
 
 // A memory router: the demo can be hosted anywhere, including inside a frame, with no server routes.
 const router = createMemoryRouter([

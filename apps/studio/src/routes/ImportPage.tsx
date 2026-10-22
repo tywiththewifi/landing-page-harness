@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
-import { api, DEMO, waitForJob } from "../api.ts";
+import { api, DEMO, IMPORT_SERVICE, waitForJob } from "../api.ts";
 import styles from "./ImportPage.module.scss";
 
 const STEPS = ["Reading the home page", "Reading the product page", "Checking mobile type sizes", "Building the design system"];
@@ -33,7 +33,8 @@ export function ImportPage() {
     }
   }
 
-  const activeIndex = step ? STEPS.findIndex((s) => step.startsWith(s.split(" (")[0]!)) : -1;
+  // Steps before the first one ("Starting", or waiting for a browser) show in its place.
+  const activeIndex = step ? Math.max(0, STEPS.findIndex((s) => step.startsWith(s.split(" (")[0]!))) : -1;
 
   return (
     <div className={styles.page}>
@@ -43,7 +44,13 @@ export function ImportPage() {
         design system you can review before anything is generated.
       </p>
 
-      {DEMO ? (
+      {IMPORT_SERVICE ? (
+        <p className={styles.demo}>
+          Enter any public website. A small import service opens it in a headless browser and sends the measurements back, keeping nothing;
+          it allows a few imports an hour per visitor and can take a minute to wake up. Or keep northloop.example, a fictional B2B site built
+          for the tests, to see a result straight away.
+        </p>
+      ) : DEMO ? (
         <p className={styles.demo}>
           The demo can't open other websites from your browser, so whatever you enter, it imports Northloop, a fictional B2B site built for
           the tests. The values are from a real extraction of it.

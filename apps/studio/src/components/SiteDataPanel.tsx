@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Brand } from "@lph/tokens";
-import { api, DEMO } from "../api.ts";
+import { api, DEMO, IMPORT_SERVICE } from "../api.ts";
 import styles from "./SiteDataPanel.module.scss";
 
 /**
@@ -73,7 +73,11 @@ export function SiteDataPanel({
         </div>
         <span className={styles.hint}>
           If your site has an MCP server, the brief can use what it knows: plans, prices, help articles. Only tools it marks read-only are called.
-          {DEMO ? " In the demo, any URL connects Northloop's sample server." : ""}
+          {IMPORT_SERVICE
+            ? " In the demo, northloop.example/mcp is a sample server; other URLs are read through the import service."
+            : DEMO
+              ? " In the demo, any URL connects Northloop's sample server."
+              : ""}
         </span>
         {error ? <span className={styles.error}>{error}</span> : null}
       </div>

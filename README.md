@@ -13,7 +13,7 @@ It works on any website because it reads the CSS a site actually renders, not a 
 
 See [docs/spec.md](docs/spec.md) for the full plan.
 
-**Try it:** the [live demo](https://tywiththewifi.github.io/landing-page-harness/) runs the studio in your browser on Northloop, a fictional sample site. It has no server, so imports replay a real extraction of the sample and briefs come from the offline writer; everything else (conflicts, contrast, Design.md, the preview, brief editing and checks) runs the same code as the app.
+**Try it:** the [live demo](https://tywiththewifi.github.io/landing-page-harness/) runs the studio in your browser. Import any public site, or Northloop, a fictional sample. A small [import service](docs/import-service.md) opens the site in a headless browser and hands the measurements back, keeping nothing; everything else (conflicts, contrast, Design.md, the preview, briefs and checks) runs in the browser on the same code as the app, with briefs from the offline writer.
 
 ## Phase 1: brand import
 
@@ -113,6 +113,7 @@ An MCP server over the same API is planned (M5), so Claude, Codex, Cursor or any
 ```
 apps/
   api/          Hono API: import and brief jobs, edits, conflict resolution, checks, exports
+                (public.ts: the demo's stateless import service)
   studio/       React Router + Vite + SCSS Modules review UI (src/demo: the serverless demo build)
 packages/
   extractor/    Playwright sampling (collect.ts runs in the page) and analysis (analyze.ts)
@@ -127,7 +128,7 @@ fixtures/
 
 ## Security notes
 
-- The API drives a real browser to user-supplied URLs, so it refuses private and internal addresses (SSRF), unless `LPH_ALLOW_PRIVATE_URLS=1` is set for local fixtures. Redirects inside the browser are not yet checked; route-level blocking is on the list before any hosted deployment.
+- The API drives a real browser to user-supplied URLs, so it refuses private and internal addresses (SSRF), unless `LPH_ALLOW_PRIVATE_URLS=1` is set for local fixtures. The same rule holds inside the browser: every request the page makes is checked before it's sent, and redirects are caught from the address that answered, so a page can't redirect or load its way inside. The site's MCP server is checked the same way, and redirects from it are refused.
 - Site copy and SEO tool output reach the model as data in tagged blocks, separate from its instructions, and the brief comes back through a strict schema. The SEO endpoint is set by the operator, not by users.
 - SVG logos are sanitised in the page's own DOM at extraction time (scripts, event handlers, external links and `foreignObject` removed). Design.md is sanitised before rendering, and site-derived strings can't close the preview's `<style>` block.
 
