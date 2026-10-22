@@ -8,7 +8,7 @@ It keeps nothing. A finished import is handed back once and then forgotten, and 
 
 | Route | Does |
 |---|---|
-| `GET /api/health` | `{ ok, mode: "public", importsPerHour }`. The demo calls it on load to wake a sleeping Space. |
+| `GET /api/health` | `{ ok, mode: "public", importsPerHour }`. The demo calls it on load, so a sleeping service starts before anyone imports. |
 | `POST /api/brands` `{ url, productUrl?, id? }` | Starts an import and returns a job (202). `id` keeps a brand's id on a re-import. |
 | `GET /api/jobs/:id` | The job. When it's done, the brand comes with it, and the job is deleted. |
 | `POST /api/site-mcp/inspect` `{ url, allowed }` | What the site's MCP server offers, and which tools would be called. |
@@ -32,7 +32,17 @@ It keeps nothing. A finished import is handed back once and then forgotten, and 
 
 ## Deploying
 
-**Hugging Face (free).** Add an `HF_TOKEN` secret to the GitHub repository: a Hugging Face token with write access. On the next push to `main` that touches the service, `.github/workflows/import-service.yml` creates a Docker Space called `landing-page-harness` under that account, uploads the repo, and waits until the Space answers. The Pages build finds the Space's address the same way and builds the demo against it. To deploy without a push, run the workflow by hand from the Actions tab. Free Spaces sleep after two days without visitors and take about a minute to wake.
+**Cloud Run.** `.github/workflows/import-service.yml` builds the image, pushes it to Artifact Registry and deploys it to Cloud Run in `europe-west1`. It runs on every push to `main` that touches the service, or by hand from the Actions tab. The Pages build then finds the service's address and builds the demo against it.
+
+The service runs on 2 CPUs and 2 GB, with at most one instance, because jobs live in its memory. It scales to zero when idle and takes 10 to 30 seconds to start again. CPU stays on while an instance is up, since imports run after the request that starts them. Demo traffic should stay within Cloud Run's free tier.
+
+Setup, once:
+
+1. In the [Google Cloud console](https://console.cloud.google.com/), create a project. It needs a billing account; set a budget alert of a few euros under Billing > Budgets.
+2. Enable the [Cloud Run Admin API](https://console.cloud.google.com/apis/library/run.googleapis.com) and the [Artifact Registry API](https://console.cloud.google.com/apis/library/artifactregistry.googleapis.com).
+3. Under IAM > Service accounts, create a service account (`github-deploy`) with the roles **Cloud Run Admin**, **Artifact Registry Administrator** and **Service Account User**.
+4. On that account, open Keys > Add key > JSON. Paste the downloaded file into a GitHub Actions secret named `GCP_SA_KEY`, then delete the file.
+5. Run the Import service workflow from the Actions tab.
 
 **Anywhere else.** It's one container:
 

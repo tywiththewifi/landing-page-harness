@@ -3,8 +3,7 @@ import type { Browser } from "playwright";
 import { extractBrand, launchBrowser } from "@lph/extractor";
 import { createPublicApp } from "./public.ts";
 
-// The public import service for the online demo (see public.ts). Hugging Face Spaces
-// expect port 7860; other hosts set PORT.
+// The public import service for the online demo (see public.ts). Hosts set PORT.
 const port = Number(process.env.PORT ?? 7860);
 const env = (name: string, fallback: number) => Number(process.env[name] ?? fallback);
 

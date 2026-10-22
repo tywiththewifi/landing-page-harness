@@ -1,6 +1,6 @@
 # The public import service behind the online demo (apps/api/src/public-server.ts):
-# a headless browser that reads one site on request and keeps nothing. Runs on
-# Hugging Face Spaces (port 7860), Render, Cloud Run or any container host.
+# a headless browser that reads one site on request and keeps nothing. Deployed to
+# Cloud Run by .github/workflows/import-service.yml; runs on any container host.
 FROM mcr.microsoft.com/playwright:v1.64.1-noble
 
 ENV CI=true NODE_ENV=production PORT=7860
@@ -11,7 +11,7 @@ COPY . .
 # The image already has Playwright's browsers; the install only adds node packages.
 RUN pnpm install --frozen-lockfile && chmod -R a+rX /app
 
-# Hosts like Hugging Face run the container as an unprivileged user.
+# Runs as the image's unprivileged user.
 USER pwuser
 EXPOSE 7860
 CMD ["pnpm", "--filter", "@lph/api", "start:public"]

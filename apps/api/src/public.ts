@@ -61,7 +61,7 @@ export function createPublicApp(opts: PublicOptions) {
     return c.json({ error: "Something went wrong" }, 500);
   });
 
-  // Sliding windows of an hour. Behind a proxy (Hugging Face, Render) the first
+  // Sliding windows of an hour. Behind a proxy (Cloud Run, most hosts) the first
   // x-forwarded-for entry is the visitor. A visitor can forge it, so the per-visitor
   // limit is a courtesy and the total is the real cap.
   const hits = new Map<string, number[]>();
