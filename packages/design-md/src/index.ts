@@ -53,7 +53,7 @@ export function generateDesignMd(brand: Brand): string {
     "| Variable | Value | Use |",
     "|---|---|---|",
     `| \`--color-surface\` | \`${sem.surface}\` | Page background |`,
-    `| \`--color-ink\` | \`${sem.ink}\` | Body text and headings on light backgrounds |`,
+    `| \`--color-ink\` | \`${sem.ink}\` | Body text and headings on the page background |`,
     `| \`--color-brand\` | \`${sem.brand}\` | Brand bands (hero, navigation, footer) |`,
     `| \`--color-on-brand\` | \`${sem.onBrand}\` | Text on brand bands |`,
     `| \`--color-accent\` | \`${sem.accent}\` | Calls to action, highlights |`,

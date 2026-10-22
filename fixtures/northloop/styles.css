@@ -1,3 +1,7 @@
+/* Build tools (Astro, next/font) hash family names and add metric-matched fallbacks. */
+@font-face { font-family: "Archivo-3f9a1c2b7d"; src: local("Archivo"); font-weight: 400 700; }
+@font-face { font-family: "Archivo-3f9a1c2b7d fallback: Arial"; src: local("Arial"); size-adjust: 104%; }
+html { scroll-behavior: smooth; }
 /* Northloop: a fictional B2B automation company used as a test fixture. */
 :root {
   --nl-forest: #1a3e35;
@@ -10,7 +14,7 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: "Plus Jakarta Sans", system-ui, sans-serif; color: var(--nl-ink); background: #ffffff; font-size: 16px; line-height: 25px; }
-h1, h2, h3, h4 { font-family: Archivo, system-ui, sans-serif; margin: 0 0 16px; color: inherit; }
+h1, h2, h3, h4 { font-family: "Archivo-3f9a1c2b7d", "Archivo-3f9a1c2b7d fallback: Arial", Archivo, system-ui, sans-serif; margin: 0 0 16px; color: inherit; }
 h1 { font-size: 64px; line-height: 68px; font-weight: 600; letter-spacing: -1.5px; }
 h2 { font-size: 44px; line-height: 50px; font-weight: 600; letter-spacing: -0.8px; }
 h3 { font-size: 24px; line-height: 30px; font-weight: 600; }

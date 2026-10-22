@@ -1,5 +1,6 @@
 import {
   colorDistance,
+  contrastRatio,
   hueName,
   isChromatic,
   luminance,
@@ -108,6 +109,9 @@ function placeLabel(place: string): string {
   );
 }
 
+/** Share of the sampled page area (in %) a colour must cover to count as a brand band. */
+const BAND_AREA = 3;
+
 function analyzeColors(pages: PageCapture[], buttons: ButtonStyle[]) {
   const obs: ColorObservation[] = [];
   for (const { desktop: p } of pages) {
@@ -168,11 +172,19 @@ function analyzeColors(pages: PageCapture[], buttons: ButtonStyle[]) {
   const surfaceHex = canon.get(homeBody) ?? homeBody;
   push(surfaceHex, "surface", ["page background"], bg.buckets.get(surfaceHex), 0.95);
 
-  // Brand: the chromatic colour covering the most area.
+  // Brand: a chromatic colour that covers real area (hero, nav or footer bands). Without one,
+  // the primary button's colour: a few large secondary buttons on one page shouldn't
+  // outrank the main call to action. Tiny chromatic dots (avatars, charts) never count.
   const bgSorted = bg.sorted();
   const chromaticBgs = bgSorted.filter((b) => isChromatic(b.key) && b.key !== surfaceHex);
   const ctaSorted = cta.sorted();
-  const brandBucket = chromaticBgs[0] ?? ctaSorted.find((b) => isChromatic(b.key));
+  const primaryCta = buttons.find((b) => b.kind === "filled" && b.background && isChromatic(b.background));
+  const primaryCtaHex = primaryCta?.background ? canon.get(primaryCta.background) ?? primaryCta.background : null;
+  const brandBucket =
+    chromaticBgs.find((b) => b.weight >= BAND_AREA) ??
+    (primaryCtaHex ? cta.buckets.get(primaryCtaHex) ?? bg.buckets.get(primaryCtaHex) : undefined) ??
+    chromaticBgs.find((b) => b.weight >= 1) ??
+    ctaSorted.find((b) => isChromatic(b.key));
   if (brandBucket) {
     const share = brandBucket.weight / Math.max(1, chromaticBgs.reduce((s, b) => s + b.weight, 0));
     const usage = placesFor(brandBucket.key);
@@ -187,8 +199,11 @@ function analyzeColors(pages: PageCapture[], buttons: ButtonStyle[]) {
     push(accentBucket.key, "accent", ["calls to action", "highlights", ...placesFor(accentBucket.key).filter((p) => p !== "buttons")], accentBucket, Math.min(1, 0.5 + accentBucket.weight / 10));
   }
 
-  // Ink: the most common dark text colour.
-  const inkBucket = text.sorted().find((b) => luminance(b.key) < 0.2) ?? ctaSorted.find((b) => luminance(b.key) < 0.1);
+  // Ink: the most common text colour that reads strongly on the surface. Contrast rather
+  // than darkness, so dark-themed sites get their light text as ink.
+  const readable = (min: number) => (b: Bucket<string>) => contrastRatio(b.key, surfaceHex) >= min;
+  const inkBucket =
+    text.sorted().find(readable(7)) ?? text.sorted().find(readable(4.5)) ?? ctaSorted.find(readable(7));
   if (inkBucket) {
     const share = inkBucket.weight / Math.max(1, text.total());
     push(inkBucket.key, "ink", ["body text", "headings", ...(cta.buckets.has(inkBucket.key) ? ["primary buttons"] : [])], inkBucket, 0.5 + share / 2);
@@ -207,7 +222,8 @@ function analyzeColors(pages: PageCapture[], buttons: ButtonStyle[]) {
   for (const b of rest.sorted()) {
     if (used.has(b.key)) continue;
     if (isChromatic(b.key)) {
-      if (chromaticExtras >= 2 || b.weight < 0.03) continue;
+      // A site with no brand colour (monochrome) keeps a neutral palette.
+      if (!brandBucket || chromaticExtras >= 2 || b.weight < 0.03) continue;
       chromaticExtras++;
       push(b.key, "brand", placesFor(b.key), b, 0.5);
     } else {
