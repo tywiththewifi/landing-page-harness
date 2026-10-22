@@ -1,0 +1,51 @@
+/* Northloop: a fictional B2B automation company used as a test fixture. */
+:root {
+  --nl-forest: #1a3e35;
+  --nl-lime: #c6f29d;
+  --nl-ink: #212526;
+  --nl-sage-50: #ecf5f1;
+  --nl-sage-300: #a7b8b0;
+  --nl-sage-600: #5b6b65;
+  --nl-line: #dfe7e3;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Plus Jakarta Sans", system-ui, sans-serif; color: var(--nl-ink); background: #ffffff; font-size: 16px; line-height: 25px; }
+h1, h2, h3, h4 { font-family: Archivo, system-ui, sans-serif; margin: 0 0 16px; color: inherit; }
+h1 { font-size: 64px; line-height: 68px; font-weight: 600; letter-spacing: -1.5px; }
+h2 { font-size: 44px; line-height: 50px; font-weight: 600; letter-spacing: -0.8px; }
+h3 { font-size: 24px; line-height: 30px; font-weight: 600; }
+h4 { font-size: 18px; line-height: 24px; font-weight: 600; }
+p { margin: 0 0 16px; }
+small, .eyebrow { font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+a { color: var(--nl-forest); }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+.nav { background: var(--nl-forest); color: #fff; }
+.nav .container { display: flex; align-items: center; justify-content: space-between; height: 80px; gap: 24px; }
+.nav ul { display: flex; gap: 32px; list-style: none; margin: 0; padding: 0; }
+.nav a { color: #fff; text-decoration: none; font-size: 15px; }
+.logo { display: flex; align-items: center; gap: 10px; color: #fff; font-family: Archivo, sans-serif; font-weight: 700; letter-spacing: 2px; }
+.hero { background: var(--nl-forest); color: #fff; padding: 96px 0 120px; }
+.hero p { font-size: 20px; line-height: 30px; color: var(--nl-sage-50); max-width: 560px; }
+.section { padding: 96px 0; }
+.section--sage { background: var(--nl-sage-50); }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.actions { display: flex; gap: 16px; margin-top: 32px; }
+.btn { display: inline-flex; align-items: center; padding: 14px 24px; border-radius: 12px; font-size: 16px; font-weight: 600; text-decoration: none; border: 0; cursor: pointer; font-family: inherit; }
+.btn--primary { background: var(--nl-ink); color: #ecf5f1; }
+.btn--secondary { background: var(--nl-lime); color: #1b2a22; }
+.btn--tertiary { background: transparent; color: var(--nl-lime); border: 1.5px solid var(--nl-lime); }
+.card { background: #fff; border: 1px solid var(--nl-line); border-radius: 16px; padding: 32px; }
+.card--feature { background: #ffffff; border: 0; border-radius: 16px; padding: 32px; box-shadow: 0 8px 24px rgba(26, 62, 53, 0.08); }
+.card p { color: var(--nl-sage-600); }
+.form { display: grid; gap: 12px; max-width: 480px; }
+.input { background: #fff; border: 1px solid var(--nl-sage-300); border-radius: 10px; padding: 12px 16px; font-size: 16px; color: var(--nl-ink); font-family: inherit; }
+.footer { background: var(--nl-ink); color: var(--nl-sage-300); padding: 64px 0; }
+.footer a { color: var(--nl-sage-300); }
+/* A legacy page template that never moved to the new body font. */
+.legacy p, .legacy li { font-family: Inter, system-ui, sans-serif; }
+@media (max-width: 600px) {
+  h1 { font-size: 40px; line-height: 44px; }
+  h2 { font-size: 32px; line-height: 38px; }
+  .grid { grid-template-columns: 1fr; }
+  .nav ul { display: none; }
+}
