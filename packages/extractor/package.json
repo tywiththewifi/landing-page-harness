@@ -1,0 +1,23 @@
+{
+  "name": "@lph/extractor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "lph-extract": "./src/cli.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@lph/kit": "workspace:*",
+    "@lph/tokens": "workspace:*",
+    "playwright": "^1.64.1"
+  },
+  "devDependencies": {
+    "@lph/design-md": "workspace:*"
+  }
+}

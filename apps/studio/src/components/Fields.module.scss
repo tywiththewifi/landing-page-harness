@@ -1,0 +1,15 @@
+.field { display: block; min-width: 0; }
+.color {
+  display: flex; align-items: center; gap: 6px;
+  input[type="color"] {
+    flex: none; width: 36px; height: 36px; padding: 2px; border: 1px solid var(--ui-line-strong); border-radius: 8px; background: #fff; cursor: pointer;
+    &::-webkit-color-swatch-wrapper { padding: 0; }
+    &::-webkit-color-swatch { border: 0; border-radius: 5px; }
+  }
+  :global(.ui-input) { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; text-transform: lowercase; }
+}
+.number {
+  position: relative; display: block;
+  :global(.ui-input) { padding-right: 30px; }
+}
+.unit { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--ui-faint); font-size: 11px; pointer-events: none; }
