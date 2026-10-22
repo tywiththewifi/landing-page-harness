@@ -8,7 +8,7 @@ export function Logo({ brand }: { brand: Brand }) {
     // Sanitised at extraction time (scripts, handlers and external links removed).
     return (
       <>
-        <span style={{ display: "inline-flex" }} dangerouslySetInnerHTML={{ __html: logo.svg }} />
+        <span className="lph-logo" {...(logo.text ? { "aria-hidden": true } : { role: "img", "aria-label": brand.name })} dangerouslySetInnerHTML={{ __html: logo.svg }} />
         {logo.text ? <span>{logo.text}</span> : null}
       </>
     );

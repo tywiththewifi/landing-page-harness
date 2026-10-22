@@ -75,6 +75,8 @@ export function checkPage(page: Page, brief: Brief, brand: Brand): PageIssue[] {
     const who = variant ? `${variant.name}: ` : "";
     const keys = variant ? Object.keys(variant.overrides) : [...view.blocks.flatMap(textPaths), "seo.title", "seo.metaDescription"];
     const text = (key: string) => baseValue(view, key) ?? "";
+    // A version is only checked on what it changes, so it doesn't repeat the general page's issues.
+    const touched = (key: string) => !variant || key in variant.overrides;
     const area = (key: string) => (key.startsWith("seo.") ? "seo" : key.split(".")[0]!);
 
     const unwritten = new Map<string, string[]>();
@@ -98,19 +100,19 @@ export function checkPage(page: Page, brief: Brief, brand: Brand): PageIssue[] {
 
     for (const b of view.blocks) {
       if (b.type === "hero") {
-        if (b.heading.length > 70) add("warning", b.id, "h1-length", `${who}The H1 is ${b.heading.length} characters. Under 70 reads at a glance.`, { ...v, path: `${b.id}.heading` });
-        if (b.lead.length > 220) add("info", b.id, "lead-length", `${who}The subheadline is ${b.lead.length} characters. One or two short sentences work best.`, { ...v, path: `${b.id}.lead` });
+        if (touched(`${b.id}.heading`) && b.heading.length > 70) add("warning", b.id, "h1-length", `${who}The H1 is ${b.heading.length} characters. Under 70 reads at a glance.`, { ...v, path: `${b.id}.heading` });
+        if (touched(`${b.id}.lead`) && b.lead.length > 220) add("info", b.id, "lead-length", `${who}The subheadline is ${b.lead.length} characters. One or two short sentences work best.`, { ...v, path: `${b.id}.lead` });
       }
       if (b.type === "hero" || b.type === "cta") {
         for (const [slot, link] of [["primaryCta", b.primaryCta], ["secondaryCta", b.secondaryCta]] as const) {
-          if (words(link.label) > 5) add("warning", b.id, `${slot}-length`, `${who}"${link.label}" is long for a button. Aim for two to four words.`, { ...v, path: `${b.id}.${slot}.label` });
+          if (touched(`${b.id}.${slot}.label`) && words(link.label) > 5) add("warning", b.id, `${slot}-length`, `${who}"${link.label}" is long for a button. Aim for two to four words.`, { ...v, path: `${b.id}.${slot}.label` });
         }
       }
-      if (b.type === "testimonial" && !b.quote.includes(PLACEHOLDER) && b.quote.trim() && !textIsSourced(b.quote.replace(QUOTE_MARKS, ""), sources)) {
+      if (b.type === "testimonial" && touched(`${b.id}.quote`) && !b.quote.includes(PLACEHOLDER) && b.quote.trim() && !textIsSourced(b.quote.replace(QUOTE_MARKS, ""), sources)) {
         add("warning", b.id, "quote-source", `${who}This quote isn't on your site or in the brief's proof. Publish it only if it's real and you have the customer's permission.`, { ...v, path: `${b.id}.quote` });
       }
       if (b.type === "faq") {
-        const short = b.items.filter((q) => q.answer.trim() && !q.answer.includes(PLACEHOLDER) && words(q.answer) < 25).length;
+        const short = b.items.filter((q, i) => touched(`${b.id}.items.${i}.answer`) && q.answer.trim() && !q.answer.includes(PLACEHOLDER) && words(q.answer) < 25).length;
         if (short) add("info", b.id, "answers", `${who}${short} FAQ answer${short === 1 ? " is" : "s are"} under 25 words. Answer engines quote complete 40 to 60 word answers.`, v);
       }
     }

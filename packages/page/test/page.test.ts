@@ -163,6 +163,19 @@ describe("checkPage", () => {
     expect(checkPage(page, brief, brand).some((i) => i.message.includes('"400"'))).toBe(false);
   });
 
+  it("checks a version only on what it changes, without repeating the general page", async () => {
+    const { page, brief } = await finishedPage();
+    const testimonial = page.blocks.find((b) => b.type === "testimonial");
+    if (testimonial?.type === "testimonial") testimonial.quote = "Northloop changed how we route leads.";
+    const v = page.variants[0]!;
+    let issues = checkPage(page, brief, brand).filter((i) => i.area === "testimonial");
+    expect(issues.map((i) => i.id)).toEqual(["testimonial.quote-source"]);
+    // Once the version has its own quote, it's checked on its own.
+    v.overrides["testimonial.quote"] = "We stopped rebuilding workflows.";
+    issues = checkPage(page, brief, brand).filter((i) => i.area === "testimonial");
+    expect(issues.map((i) => i.id)).toEqual(["testimonial.quote-source", `${v.id}:testimonial.quote-source`]);
+  });
+
   it("checks each version's URL and that it says something different", async () => {
     const { page, brief } = await finishedPage();
     page.variants.push({ ...page.variants[0]!, id: "copy", overrides: {} });

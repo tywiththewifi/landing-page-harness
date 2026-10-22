@@ -77,6 +77,7 @@
 .lph-nav__links a { color: inherit; text-decoration: none; }
 .lph-nav__logo { display: inline-flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-family: var(--font-heading, inherit); font-weight: 700; }
 .lph-nav__logo svg, .lph-nav__logo img { height: 28px; width: auto; }
+.lph-logo { display: inline-flex; }
 @media (max-width: 700px) { .lph-nav__links { display: none; } }
 .lph-footer { background: var(--color-ink, #111); color: var(--color-subtle, #ccc); padding: 48px 0; }
 .lph-footer a { color: inherit; }
