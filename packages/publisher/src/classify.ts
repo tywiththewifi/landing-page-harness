@@ -16,7 +16,7 @@ export interface Classification {
   reasons: string[];
 }
 
-export const LABELS = { content: "lph:content", review: "lph:needs-review" } as const;
+export const LABELS = { content: "lph:content", review: "lph:needs-review", override: "lph:override" } as const;
 
 /**
  * Everything about a page that isn't copy: which sections it has and in what order,
@@ -108,7 +108,10 @@ export function classify(before: PageSource | null, after: PageSource, changes: 
         : "The checks found warnings a person has to accept.",
     );
   }
-  if (gate?.verdict === "blocked") reasons.push("The checks found errors.");
+  if (gate?.verdict === "blocked") {
+    const o = after.override;
+    reasons.push(o ? `Published over ${o.errors === 1 ? "an error" : `${o.errors} errors`} the checks found. The reason given: “${o.reason}”` : "The checks found errors.");
+  }
   if (reasons.length) return { risk: "review", reasons };
   const kept = warnings.length - fresh.length;
   return {

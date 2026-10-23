@@ -61,21 +61,22 @@ export function PublishPage() {
   }
 
   const stale = !!report && report.pageUpdatedAt !== page.updatedAt;
-  const blocked = running
+  const notYet = running
     ? "The checks are running."
     : !info.gate
       ? "Run the checks on this version of the page first."
-      : info.gate.verdict === "blocked"
-        ? "Fix the errors the checks found, then run them again."
-        : info.target && info.gate.environment !== "server"
-          ? "The checks have to run on the server first."
-          : null;
+      : info.target && info.gate.environment !== "server"
+        ? "The checks have to run on the server first."
+        : null;
+  // Errors block publishing, unless a person publishes anyway and says why.
+  const errors = !notYet && info.gate?.verdict === "blocked";
+  const blocked = notYet ?? (errors ? "Fix the errors the checks found, then run them again." : null);
 
-  const publish = async () => {
+  const publish = async (override?: string) => {
     setBusy(true);
     setPublishError(null);
     try {
-      setResult(await api.publish(page.id));
+      setResult(await api.publish(page.id, override));
       await refresh();
     } catch (e) {
       setPublishError((e as Error).message);
@@ -84,10 +85,10 @@ export function PublishPage() {
     }
   };
 
-  const download = async () => {
+  const download = async (override?: string) => {
     setPublishError(null);
     try {
-      const blob = await api.siteZip(page.id);
+      const blob = await api.siteZip(page.id, override);
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `${page.slug}-cloudflare-pages.zip`;
@@ -103,7 +104,7 @@ export function PublishPage() {
       <div className={review.head}>
         <div>
           <h1>Publish</h1>
-          <p>Every version is checked as the HTML that will go live. Errors block publishing; new warnings go to a reviewer.</p>
+          <p>Every version is checked as the HTML that will go live. Errors block publishing unless you publish anyway and say why; new warnings go to a reviewer.</p>
         </div>
         <div className={review.actions}>
           <Link className="ui-button" to={`/pages/${page.id}`}>
@@ -142,7 +143,7 @@ export function PublishPage() {
             </div>
           </div>
           <div className={styles.body}>
-            <PublishPanel info={info} blocked={blocked} demo={DEMO} busy={busy} result={result} error={publishError} onPublish={publish} onDownload={download} />
+            <PublishPanel info={info} blocked={blocked} overridable={errors && info.overrideAllowed} demo={DEMO} busy={busy} result={result} error={publishError} onPublish={publish} onDownload={download} />
           </div>
         </section>
       </div>

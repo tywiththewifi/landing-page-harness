@@ -20,13 +20,13 @@ import {
   type SeoProvider,
   type SiteData,
 } from "@lph/brief";
-import { runGate, serverRunner, type GateRunner } from "@lph/checks";
+import { runGate, serverRunner, type GateReport, type GateRunner } from "@lph/checks";
 import { generateDesignMd } from "@lph/design-md";
 import { extractBrand, type ExtractOptions } from "@lph/extractor";
 import { deliver, parseSubmission, type Connector, type DeliveryResult } from "@lph/forms";
 import { previewHtml, uiCss, writeBrandKit } from "@lph/kit";
 import { checkPage, defaultPageGenerator, findVariant, pageEdit, pruneOverrides, renderPage, renderVersions, toPage, type Page, type PageGenerator } from "@lph/page";
-import { cloudflareZip, DEFAULT_SITE, formAction, github, GitHubError, planPublish, type GitHubTarget, type SiteConfig } from "@lph/publisher";
+import { cloudflareZip, DEFAULT_SITE, formAction, github, GitHubError, overrideFor, planPublish, type GitHubTarget, type SiteConfig } from "@lph/publisher";
 import { checkContrast, resolveConflict, toCss, toDtcg, type Brand } from "@lph/tokens";
 import { openApi } from "./openapi.ts";
 import type { BrandStore, BriefStore, GateStore, PageStore, StoredSubmission, SubmissionStore } from "./store.ts";
@@ -57,6 +57,12 @@ export interface AppOptions {
    * download as a folder for Cloudflare Pages.
    */
   publish?: { github?: GitHubTarget; site?: Partial<SiteConfig>; previewUrl?: string };
+  /**
+   * Lets a person publish or download a page the checks blocked, with a reason. The pull
+   * request is labelled lph:override and goes to a reviewer, and the site's CI still fails.
+   * On by default; LPH_PUBLISH_OVERRIDE=off turns it off.
+   */
+  allowOverride?: boolean;
   /** Writes briefs. Defaults to Claude when credentials are set, the offline template otherwise. */
   generator?: BriefGenerator;
   /** Writes page copy. Same default as briefs. */
@@ -497,13 +503,23 @@ export function createApp(opts: AppOptions) {
   });
 
   /** What publishing would do now: the files, the risk, and the pull request's description. Writes nothing. */
-  const plan = async (page: Page) => {
+  const plan = async (page: Page, override?: { reason: string } | null) => {
     const brand = await mustGet(page.brandId);
     const brief = await mustGetBrief(page.briefId);
     const config = await siteConfig(brand);
     const gate = await freshGate(page);
-    const result = await planPublish({ page, brand, uiCss: await uiCss(), config, gate, targets: targetsOf(brief), read: repo ? repo.read : async () => null, previewUrl: opts.publish?.previewUrl });
+    const result = await planPublish({ page, brand, uiCss: await uiCss(), config, gate, override, targets: targetsOf(brief), read: repo ? repo.read : async () => null, previewUrl: opts.publish?.previewUrl });
     return { brand, brief, config, gate, plan: result };
+  };
+  const allowOverride = opts.allowOverride ?? true;
+  const overrideBody = z.object({ override: z.object({ reason: z.string().trim().min(1, "Say why it's published anyway").max(500) }).optional() });
+  /** Why a page can't be published or downloaded now, or null when it can. The override only gets past errors. */
+  const refusal = (gate: GateReport | null, override: { reason: string } | null | undefined, action: string): string | null => {
+    if (!gate) return "Run the checks on this version of the page first.";
+    if (gate.verdict !== "blocked" || override) return null;
+    return allowOverride
+      ? `The checks found errors. Fix them and run the checks again, or ${action} anyway with a reason.`
+      : `The checks found errors. Fix them, run the checks again, then ${action}.`;
   };
   app.get("/api/pages/:id/publish", async (c) => {
     const page = await mustGetPage(c.req.param("id"));
@@ -517,20 +533,28 @@ export function createApp(opts: AppOptions) {
       report: gate ?? (await gates.latest(page.id)),
       plan: summary,
       published: page.published ?? null,
+      overrideAllowed: allowOverride,
     });
   });
   app.post("/api/pages/:id/publish", async (c) => {
     const page = await mustGetPage(c.req.param("id"));
     if (!repo) throw new HTTPException(400, { message: "No site repo is connected. Set LPH_GITHUB_REPO and LPH_GITHUB_TOKEN on the server, or download the page for Cloudflare Pages." });
-    const { gate, plan: p } = await plan(page);
-    if (!gate) return c.json({ error: "Run the checks on this version of the page first." }, 409);
-    if (gate.environment !== "server") return c.json({ error: "The checks have to run on the server before publishing." }, 409);
-    if (gate.verdict === "blocked") return c.json({ error: "The checks found errors. Fix them, run the checks again, then publish." }, 409);
+    const body = overrideBody.safeParse(await c.req.json().catch(() => ({})));
+    if (!body.success) return c.json({ error: body.error.issues.map((i) => i.message).join("; ") }, 400);
+    const override = allowOverride ? body.data.override : null;
+    if (body.data.override && !override) return c.json({ error: "Publishing over the checks is turned off on this server." }, 403);
+    const { gate, plan: p } = await plan(page, override);
+    const refused = refusal(gate, override, "publish");
+    if (refused) return c.json({ error: refused }, 409);
+    if (gate!.environment !== "server") return c.json({ error: "The checks have to run on the server before publishing." }, 409);
     if (p.unchanged) return c.json({ error: `${opts.publish!.github!.base} already has this version of the page.` }, 409);
     const result = await repo.publish(p, { expectedHead: page.published?.branch === p.branch ? page.published.commit : null });
     // Not an edit: updatedAt stays, so the checks stay current.
-    await pages.save({ ...page, published: { branch: result.branch, commit: result.commit, number: result.number, url: result.url, risk: p.classification.risk, at: new Date().toISOString() } });
-    return c.json({ ...result, risk: p.classification.risk, reasons: p.classification.reasons, previews: p.previews }, result.created ? 201 : 200);
+    await pages.save({
+      ...page,
+      published: { branch: result.branch, commit: result.commit, number: result.number, url: result.url, risk: p.classification.risk, at: new Date().toISOString(), ...(p.override && { override: p.override }) },
+    });
+    return c.json({ ...result, risk: p.classification.risk, reasons: p.classification.reasons, previews: p.previews, override: p.override }, result.created ? 201 : 200);
   });
 
   // The fallback: the same files as a folder for Cloudflare Pages, with the form endpoint as a Pages Function.
@@ -538,8 +562,13 @@ export function createApp(opts: AppOptions) {
     const page = await mustGetPage(c.req.param("id"));
     const brand = await mustGet(page.brandId);
     const gate = await freshGate(page);
-    if (!gate || gate.verdict === "blocked") return c.json({ error: gate ? "The checks found errors. Fix them before downloading the page to host." : "Run the checks on this version of the page first." }, 409);
-    const bytes = await cloudflareZip({ page, brand, uiCss: await uiCss(), config: await siteConfig(brand), gate, targets: targetsOf(await mustGetBrief(page.briefId)) });
+    // ?override=<reason> downloads a page the checks blocked; the reason is kept in its source file.
+    const reason = c.req.query("override")?.trim().slice(0, 500);
+    if (reason && !allowOverride) return c.json({ error: "Downloading over the checks is turned off on this server." }, 403);
+    const refused = refusal(gate, reason ? { reason } : null, "download it");
+    if (refused) return c.json({ error: refused }, 409);
+    const override = overrideFor(gate, reason ? { reason } : null);
+    const bytes = await cloudflareZip({ page, brand, uiCss: await uiCss(), config: await siteConfig(brand), gate, override, targets: targetsOf(await mustGetBrief(page.briefId)) });
     c.header("content-type", "application/zip");
     c.header("content-disposition", `attachment; filename="${page.slug}-cloudflare-pages.zip"`);
     return c.body(bytes);

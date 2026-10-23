@@ -16,6 +16,7 @@ import {
   handleForm,
   mergeForms,
   mergeHeaders,
+  overrideFor,
   parseSource,
   planPublish,
   previewFor,
@@ -246,6 +247,28 @@ describe("planPublish", () => {
     // Publishing the same thing again changes nothing.
     const again = await planPublish({ page, brand, uiCss: css, config, gate, read: async (p) => files.get(p) ?? null });
     expect(again.unchanged).toBe(true);
+  });
+
+  it("only records an override when the checks blocked and a reason is given", async () => {
+    const { page, brief } = await readyPage();
+    const ready = await gateFor(page, brief);
+    const blocked: GateReport = { ...ready, verdict: "blocked", checks: [{ ...ready.checks[0]!, status: "fail", issues: [{ check: ready.checks[0]!.id, id: "x", severity: "error", message: "Broken" }] }, ...ready.checks.slice(1)] };
+    expect(overrideFor(ready, { reason: "Testing" })).toBeNull();
+    expect(overrideFor(blocked, { reason: "  " })).toBeNull();
+    expect(overrideFor(null, { reason: "Testing" })).toBeNull();
+    expect(overrideFor(blocked, { reason: " Testing " })).toEqual({ reason: "Testing", errors: 1 });
+
+    const plan = await planPublish({ page, brand, uiCss: css, config, gate: blocked, override: { reason: "Testing" }, read: async () => null });
+    expect(plan.override).toEqual({ reason: "Testing", errors: 1 });
+    expect(plan.labels).toEqual([LABELS.review, LABELS.override]);
+    expect(plan.classification.reasons).toContain("Published over an error the checks found. The reason given: “Testing”");
+    expect(plan.body).toContain("⛔ **Published over blocking checks.**");
+    expect(parseSource(plan.files.find((f) => f.kind === "source")!.content)!.override).toEqual({ reason: "Testing", errors: 1 });
+    // Without a reason it's the usual blocked plan, which the API refuses to publish.
+    const plain = await planPublish({ page, brand, uiCss: css, config, gate: blocked, read: async () => null });
+    expect(plain.override).toBeNull();
+    expect(plain.labels).toEqual([LABELS.review]);
+    expect(plain.classification.reasons).toContain("The checks found errors.");
   });
 
   it("names branch previews the way Cloudflare Pages does", () => {

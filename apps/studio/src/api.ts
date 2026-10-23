@@ -39,6 +39,8 @@ export interface PublishInfo {
   report: GateReport | null;
   plan: Omit<PublishPlan, "files">;
   published: Page["published"] | null;
+  /** Whether a person may publish or download a page the checks blocked, with a reason. */
+  overrideAllowed: boolean;
 }
 export interface PublishResult {
   number: number;
@@ -50,6 +52,7 @@ export interface PublishResult {
   risk: "content" | "review";
   reasons: string[];
   previews: PublishPlan["previews"];
+  override: PublishPlan["override"];
 }
 export interface SeoProviderInfo {
   id: string;
@@ -117,10 +120,12 @@ export const api = {
 
   runGate: (pageId: string) => request<Job>(`/api/pages/${pageId}/gate`, { method: "POST" }),
   publishInfo: (pageId: string) => request<PublishInfo>(`/api/pages/${pageId}/publish`),
-  publish: (pageId: string) => request<PublishResult>(`/api/pages/${pageId}/publish`, { method: "POST" }),
-  /** The page as a folder for Cloudflare Pages. */
-  siteZip: async (pageId: string): Promise<Blob> => {
-    const res = await fetch(`/api/pages/${pageId}/site.zip`);
+  /** With an override reason, publishes although the checks found errors. */
+  publish: (pageId: string, override?: string) =>
+    request<PublishResult>(`/api/pages/${pageId}/publish`, { method: "POST", body: JSON.stringify(override ? { override: { reason: override } } : {}) }),
+  /** The page as a folder for Cloudflare Pages. With an override reason, even when the checks found errors. */
+  siteZip: async (pageId: string, override?: string): Promise<Blob> => {
+    const res = await fetch(`/api/pages/${pageId}/site.zip${override ? `?override=${encodeURIComponent(override)}` : ""}`);
     if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? `Download failed (${res.status})`);
     return res.blob();
   },

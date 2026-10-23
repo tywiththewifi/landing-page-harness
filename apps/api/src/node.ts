@@ -59,6 +59,7 @@ export function nodeApp(env: NodeJS.ProcessEnv = process.env) {
     seoProviders,
     outputDir,
     allowPrivateUrls,
+    allowOverride: env.LPH_PUBLISH_OVERRIDE !== "off",
     extract: async (opts) => extractBrand({ ...opts, browser: await getBrowser() }),
   });
 

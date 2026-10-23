@@ -17,7 +17,7 @@ import { generateDesignMd } from "@lph/design-md";
 import { checkBrief } from "@lph/brief/check";
 import { browserRunner, runGate, type GateReport } from "@lph/checks/browser";
 import { pageEdit, pruneOverrides, renderVersions, templatePageGenerator, toPage, type Page } from "@lph/page/browser";
-import { cloudflareZip, DEFAULT_SITE, formAction, planPublish, type SiteConfig } from "@lph/publisher/browser";
+import { cloudflareZip, DEFAULT_SITE, formAction, overrideFor, planPublish, type SiteConfig } from "@lph/publisher/browser";
 import { renderPreview } from "@lph/kit/preview";
 import { checkContrast, resolveConflict, type Brand, type SiteMcp } from "@lph/tokens";
 import uiCss from "@lph/ui/styles.css?raw";
@@ -429,17 +429,19 @@ export const demoApi: typeof api = {
     const config = siteConfig(brand);
     const gate = freshGate(page);
     const { files: _, ...plan } = await planPublish({ page, brand, uiCss, config, gate, targets: targetsOf(mustGetBrief(page.briefId)), read: async () => null });
-    return { target: null, config, gate, report: state.gates[page.id] ?? null, plan, published: page.published ?? null };
+    return { target: null, config, gate, report: state.gates[page.id] ?? null, plan, published: page.published ?? null, overrideAllowed: true };
   },
   async publish() {
     throw new Error("The demo doesn't push anywhere. Run the studio with a site repo connected to open pull requests.");
   },
-  async siteZip(pageId) {
+  async siteZip(pageId, reason) {
     const page = mustGetPage(pageId);
     const brand = mustGet(page.brandId);
     const gate = freshGate(page);
-    if (!gate || gate.verdict === "blocked") throw new Error(gate ? "The checks found errors. Fix them before downloading the page to host." : "Run the checks on this version of the page first.");
-    const bytes = await cloudflareZip({ page, brand, uiCss, config: siteConfig(brand), gate, targets: targetsOf(mustGetBrief(page.briefId)) });
+    if (!gate) throw new Error("Run the checks on this version of the page first.");
+    const override = overrideFor(gate, reason ? { reason } : null);
+    if (gate.verdict === "blocked" && !override) throw new Error("The checks found errors. Fix them and run the checks again, or download it anyway with a reason.");
+    const bytes = await cloudflareZip({ page, brand, uiCss, config: siteConfig(brand), gate, override, targets: targetsOf(mustGetBrief(page.briefId)) });
     return new Blob([bytes], { type: "application/zip" });
   },
 };

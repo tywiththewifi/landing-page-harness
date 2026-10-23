@@ -129,7 +129,16 @@ export interface Page extends PageEdit {
   updatedAt: string;
   generator: { name: string; model?: string };
   /** The last time the page was published as a pull request. */
-  published?: { branch: string; commit: string; number: number; url: string; risk: "content" | "review"; at: string };
+  published?: {
+    branch: string;
+    commit: string;
+    number: number;
+    url: string;
+    risk: "content" | "review";
+    at: string;
+    /** Published over the checks' errors, and why. */
+    override?: { reason: string; errors: number };
+  };
 }
 
 /** What a generator writes. toPage adds ids and provenance. */

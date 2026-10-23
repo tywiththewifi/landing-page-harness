@@ -12,11 +12,24 @@ Each version is rendered exactly as it will be published, with the live site's c
 
 | Verdict | Means |
 |---|---|
-| **Blocked** | At least one error. Publishing and the download are disabled until it's fixed and the checks run again. |
+| **Blocked** | At least one error. Publishing and the download wait until it's fixed and the checks run again, unless someone [publishes anyway](#publishing-anyway). |
 | **Passed with warnings** | Nothing blocks publishing. A reviewer looks at each warning once (see [Risk](#risk-copy-only-or-needs-a-reviewer)). |
 | **Ready** | Every check passed. |
 
 Errors link back to the field in the editor (**Fix in the editor**), in the right version.
+
+### Publishing anyway
+
+To try the publishing flow on a page that isn't finished, or when a person has looked at the errors and decided they don't matter here, tick **Publish anyway** and say why. The buttons become **Open a pull request anyway** and **Download anyway**. Agents send `POST /api/pages/:id/publish` with `{"override": {"reason": "…"}}`, or `GET /api/pages/:id/site.zip?override=…`; the MCP server's `publish_page` takes `overrideReason`.
+
+It only gets past errors: the checks still have to have run on this version of the page (on the server, for a pull request). What's different about the pull request:
+
+- It's labelled `lph:override` as well as `lph:needs-review`, so it never merges itself.
+- Its description opens with **Published over blocking checks**, and the reason is listed with the other reasons it needs a reviewer.
+- The page's source records the reason and how many errors there were, and the studio shows it on the page's latest pull request.
+- The site's CI runs the checks again and fails on the same errors. Merging it is a reviewer's call, and with a required check, an admin's.
+
+Set `LPH_PUBLISH_OVERRIDE=off` on the server to turn it off.
 
 | Check | What it looks at | Errors | Warnings |
 |---|---|---|---|
@@ -135,7 +148,7 @@ pnpm site classify --repo ../www --base origin/main         # the risk alone, no
 
 ## Without a site repo: Cloudflare Pages
 
-**Download for Cloudflare Pages** (or `GET /api/pages/:id/site.zip`) gives the same files as a ready-to-deploy project, once the checks pass without errors:
+**Download for Cloudflare Pages** (or `GET /api/pages/:id/site.zip`) gives the same files as a ready-to-deploy project, once the checks pass without errors (or with a reason, [anyway](#publishing-anyway)):
 
 ```text
 site/<slug>.html, site/<slug>/<version>.html, site/_headers
