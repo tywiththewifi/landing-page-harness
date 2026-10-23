@@ -78,6 +78,16 @@
 }
 .logoMark { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 0.12em; svg { height: 32px; width: auto; } }
 .logoImg { max-height: 48px; max-width: 70%; }
+.customers {
+  display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin: 0; padding: 0; list-style: none;
+  li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--ui-line); border-radius: 10px; background: #fff; }
+  :global(.ui-input) { flex: 1; min-width: 0; height: 32px; }
+}
+.customerLogo {
+  display: inline-flex; align-items: center; justify-content: center; flex: none; width: 96px; height: 28px;
+  span { display: inline-flex; height: 100%; }
+  svg, img { height: 100%; width: auto; max-width: 96px; object-fit: contain; }
+}
 
 /* UI elements */
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }

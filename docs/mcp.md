@@ -73,11 +73,11 @@ Then ask: *"Try the landing page harness on qonto.com and tell me what it found.
 | `write_brief`, `get_brief`, `update_brief` | The brief, its check, and edits to it |
 | `build_page`, `get_page`, `update_page` | The page (summary, record or published HTML), and constrained edits |
 | `run_checks` | The publish gate: content, brand, SEO/AEO, axe and performance |
-| `publish_plan`, `publish_page` | What publishing would do, then the pull request (needs a site repo on the server) |
+| `publish_plan`, `publish_page` | What publishing would do, then the pull request (needs a site repo on the server). `overrideReason` publishes over errors when the person asks for it |
 
 Each brand's `DESIGN.md` and `tokens.css` are also resources (`lph://brands/{id}/design.md`), so a client can attach them to a conversation.
 
-An agent can close the loop: read a check's errors, fix the copy with `update_page`, run the checks again. The tools keep the harness's rules: values come from the site, numbers and quotes need a source, and publishing needs a gate with no errors.
+An agent can close the loop: read a check's errors, fix the copy with `update_page`, run the checks again. The tools keep the harness's rules: values come from the site, numbers and quotes need a source, and publishing needs a gate with no errors, unless the person chooses to publish anyway and says why.
 
 ## Results from random sites
 

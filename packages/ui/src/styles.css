@@ -107,7 +107,11 @@ textarea.lph-input { min-height: 112px; resize: vertical; }
 .lph-section--brand .lph-button--link, .lph-hero .lph-button--link, .lph-nav .lph-button--link { color: inherit; }
 .lph-card .lph-muted { color: var(--color-muted, #555); opacity: 1; }
 
-.lph-logos { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 48px; margin: 0; padding: 0; list-style: none; font-family: var(--font-heading, inherit); font-size: calc(var(--text-body-size, 16px) * 1.25); font-weight: 700; }
+.lph-logos { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 16px 48px; margin: 0; padding: 0; list-style: none; font-family: var(--font-heading, inherit); font-size: calc(var(--text-body-size, 16px) * 1.25); font-weight: 700; }
+.lph-logos__mark { display: inline-flex; height: 28px; max-width: 160px; }
+.lph-logos__mark svg { height: 100%; width: auto; max-width: 160px; }
+img.lph-logos__mark { width: auto; object-fit: contain; }
+@media (max-width: 640px) { .lph-logos { gap: 12px 32px; } .lph-logos__mark { height: 22px; max-width: 120px; } }
 
 .lph-steps { counter-reset: lph-step; display: grid; gap: var(--space-md, 24px); grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 0; padding: 0; list-style: none; }
 .lph-steps > li { counter-increment: lph-step; }

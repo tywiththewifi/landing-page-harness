@@ -34,5 +34,17 @@
   padding: 12px 14px; border-radius: 10px; background: var(--ui-ok-soft); border: 1px solid #bbf7d0;
   p { margin: 4px 0 0; }
 }
+.override {
+  display: grid; gap: 10px; padding: 12px 14px; border-radius: 10px; border: 1px dashed var(--ui-line);
+  &.overriding { border: 1px solid #fecaca; background: var(--ui-bad-soft); }
+}
+.toggle {
+  display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
+  input { margin-top: 3px; }
+  span { display: grid; gap: 2px; }
+  small { color: var(--ui-muted); font-size: 13px; line-height: 1.45; }
+}
+.reason { display: grid; gap: 4px; textarea { width: 100%; resize: vertical; } }
+.actions .danger { background: var(--ui-bad); border-color: var(--ui-bad); color: #fff; &:hover:not(:disabled) { background: #b91c1c; border-color: #b91c1c; } }
 .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .why { color: var(--ui-muted); font-size: 13px; }

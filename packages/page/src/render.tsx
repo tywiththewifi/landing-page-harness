@@ -63,7 +63,7 @@ function BlockView({ block, brand, formAction }: { block: Block; brand: Brand; f
     case "logos":
       return (
         <Section id={id} tone={tone} align="center" title={opt(block.heading)}>
-          <LogoRow items={block.items.filter((s) => s.trim())} />
+          <LogoRow items={block.items.filter((s) => s.trim())} logos={brand.customers} />
         </Section>
       );
     case "features":

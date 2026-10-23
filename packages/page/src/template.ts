@@ -25,7 +25,7 @@ function ctas(brief: Brief, types: BlockType[]): { primary: Link; secondary: Lin
 function blockFor(type: BlockType, heading: string, id: string, brief: Brief, brand: Brand, cta: { primary: Link; secondary: Link }): Block {
   const proof = brief.proofPoints.filter((p) => p.source !== "needed");
   const offer = written(brief.offer.offer) ? brief.offer.offer : null;
-  const blank = emptyBlock(type, id, { cardVariant: brand.cards[0]?.name, cta: brief.offer.primaryCta || undefined });
+  const blank = emptyBlock(type, id, { cardVariant: brand.cards[0]?.name, cta: brief.offer.primaryCta || undefined, customers: brand.customers?.map((c) => c.name) });
   const head = heading.trim() ? heading : todo("Heading");
 
   switch (blank.type) {

@@ -86,6 +86,7 @@ export function PagePage() {
                 else v.overrides[key] = value;
               }),
             resetText: (key) => update((d) => void delete d.variants.find((x) => x.id === variant?.id)?.overrides[key]),
+            toGeneral: () => setVariantId(null),
           }
         : null,
     [page, brand, variant, update],

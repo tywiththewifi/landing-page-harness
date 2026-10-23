@@ -31,6 +31,9 @@ a { color: var(--nl-forest); }
 .hero { background: var(--nl-forest); color: #fff; padding: 96px 0 120px; }
 .hero p { font-size: 20px; line-height: 30px; color: var(--nl-sage-50); max-width: 560px; }
 .section { padding: 96px 0; }
+.logo-band { padding: 32px 0; text-align: center; color: var(--nl-sage-600); }
+.logo-strip { display: flex; justify-content: center; gap: 32px; list-style: none; margin: 0; padding: 0; }
+.logo-strip .mark { fill: var(--nl-forest); }
 .section--sage { background: var(--nl-sage-50); }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 .actions { display: flex; gap: 16px; margin-top: 32px; }

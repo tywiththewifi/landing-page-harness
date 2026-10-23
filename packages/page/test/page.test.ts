@@ -208,6 +208,19 @@ describe("renderPage", () => {
     expect(html).not.toMatch(/lph-card--default/);
   });
 
+  it("shows each customer in a logo row as the site's logo, by name", async () => {
+    const { page } = await finishedPage();
+    const withImage = { ...brand, customers: [...(brand.customers ?? []), { name: "Acme Corp", src: "https://cdn.example/acme.svg", source: { page: brand.url, selector: "img", count: 1 } }] } as Brand;
+    const logos = { ...emptyBlock("logos", "logos", { customers: ["halcyon", "Acme Corp", "Brightwave", "Nobody Inc"] }), heading: "Teams that run on Northloop" };
+    const html = renderPage({ ...page, blocks: [logos] }, withImage, css);
+    expect(html).toContain('<span class="lph-logos__mark" role="img" aria-label="halcyon"><svg');
+    expect(html).toContain('<img class="lph-logos__mark" src="https://cdn.example/acme.svg" alt="Acme Corp"');
+    expect(html).toContain("<li>Nobody Inc</li>");
+    // A new logo row starts from the site's strip; without one, with placeholders.
+    expect(emptyBlock("logos", "logos", { customers: brand.customers!.map((c) => c.name) }).items).toEqual(["Halcyon", "Brightwave", "Ferro", "Tallyho", "Orbit"]);
+    expect(emptyBlock("logos", "logos", { customers: ["Only one"] }).items[0]).toMatch(PLACEHOLDER);
+  });
+
   it("renders one H1, SEO tags and structured data for the general page", async () => {
     const { page, brief } = await finishedPage();
     const html = renderPage(page, brand, css, { origin: "https://northloop.example" });

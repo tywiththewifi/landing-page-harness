@@ -97,6 +97,21 @@ describe("API", () => {
     expect(bad.status).toBe(400);
   });
 
+  it("lets customer logos be renamed or removed, but not replaced", async () => {
+    const current: Brand = await (await app.request(`/api/brands/${brand.id}`)).json();
+    expect(current.customers?.map((c) => c.name)).toEqual(["Halcyon", "Brightwave", "Ferro", "Tallyho", "Orbit"]);
+    const [halcyon, brightwave, ...rest] = current.customers!;
+    const edited = {
+      ...current,
+      customers: [{ ...brightwave, name: "BrightWave" }, { ...halcyon, svg: '<svg onload="alert(1)"></svg>' }, { name: "Injected", src: "https://evil.example/x.svg" }, ...rest],
+    };
+    const saved: Brand = await (await app.request(`/api/brands/${brand.id}`, { ...json(edited), method: "PUT" })).json();
+    expect(saved.customers?.map((c) => c.name)).toEqual(["BrightWave", "Ferro", "Tallyho", "Orbit"]);
+    expect(saved.customers![0]!.svg).toBe(brightwave!.svg);
+    // Put them back for the tests that follow.
+    await app.request(`/api/brands/${brand.id}`, { ...json(current), method: "PUT" });
+  });
+
   it("resolves conflicts", async () => {
     const res = await app.request(`/api/brands/${brand.id}/conflicts/fonts.body`, json({ value: "Inter" }));
     expect(res.status).toBe(200);
@@ -444,6 +459,69 @@ describe("API", () => {
       expect(res.status).toBe(400);
       expect((await res.json()).error).toMatch(/LPH_GITHUB_REPO/);
       expect((await (await app.request(`/api/pages/${page.id}/publish`)).json()).target).toBeNull();
+    });
+  });
+
+  describe("publishing over the checks", () => {
+    const runner: GateRunner = { environment: "server", parse: parseDocument };
+    const setup = async (allowOverride?: boolean) => {
+      const gh = fakeGitHub("northloop/site", { "lph.json": JSON.stringify({ publicDir: "site", sourceDir: ".lph/pages", functionsDir: "functions" }) });
+      const server = createApp({
+        store: new BrandStore(join(dir, "brands")),
+        briefs: new BriefStore(join(dir, "briefs")),
+        pages: new PageStore(join(dir, "pages")),
+        submissions: new SubmissionStore(join(dir, "submissions")),
+        gates: new GateStore(join(dir, "gates")),
+        generator: templateGenerator(),
+        pageGenerator: templatePageGenerator(),
+        outputDir: join(dir, "out"),
+        allowPrivateUrls: true,
+        gateRunner: async () => runner,
+        publish: { github: { repo: "northloop/site", base: "main", token: "test-token", fetch: gh.fetch }, site: { origin: "https://www.northloop.example" } },
+        allowOverride,
+      });
+      const brief: Brief = await (await server.request(`/api/brands/${brand.id}/briefs?wait=true`, json({ prompt: "Landing page for our HubSpot integration for ops managers" }))).json();
+      const page: Page = await (await server.request(`/api/briefs/${brief.id}/pages?wait=true`, { method: "POST" })).json();
+      // The offline writer leaves copy for a person, so the gate blocks.
+      const report: GateReport = await (await server.request(`/api/pages/${page.id}/gate?wait=true`, { method: "POST" })).json();
+      expect(report.verdict).toBe("blocked");
+      const publish = (body: unknown) => server.request(`/api/pages/${page.id}/publish`, json(body));
+      return { gh, server, page, publish, errors: report.checks.flatMap((c) => c.issues).filter((i) => i.severity === "error").length };
+    };
+
+    it("publishes a blocked page when a person says why, and marks it", async () => {
+      const { gh, server, page, publish, errors } = await setup();
+      expect((await (await server.request(`/api/pages/${page.id}/publish`)).json()).overrideAllowed).toBe(true);
+      const refused = await publish({});
+      expect(refused.status).toBe(409);
+      expect((await refused.json()).error).toMatch(/anyway with a reason/);
+      expect((await publish({ override: { reason: "   " } })).status).toBe(400);
+
+      const res = await publish({ override: { reason: "Testing the publishing flow" } });
+      expect(res.status).toBe(201);
+      const result = await res.json();
+      expect(result).toMatchObject({ risk: "review", override: { reason: "Testing the publishing flow", errors } });
+      expect(result.reasons[result.reasons.length - 1]).toMatch(/^Published over .* the checks found\. The reason given: “Testing the publishing flow”/);
+      const pr = gh.pulls[0]!;
+      expect([...pr.labels]).toEqual(["lph:needs-review", "lph:override"]);
+      expect(pr.body).toMatch(/Published over blocking checks/);
+      const source = JSON.parse(gh.filesOn(`lph/${page.slug}`)[`.lph/pages/${page.slug}.json`]!);
+      expect(source.override).toEqual({ reason: "Testing the publishing flow", errors });
+      expect(source.gate.verdict).toBe("blocked");
+      expect((await (await server.request(`/api/pages/${page.id}/publish`)).json()).published.override).toEqual({ reason: "Testing the publishing flow", errors });
+
+      expect((await server.request(`/api/pages/${page.id}/site.zip`)).status).toBe(409);
+      const zip = await server.request(`/api/pages/${page.id}/site.zip?override=${encodeURIComponent("Hosting a test copy")}`);
+      expect(zip.status).toBe(200);
+      expect(zip.headers.get("content-type")).toBe("application/zip");
+    });
+
+    it("can be turned off on the server", async () => {
+      const { server, page, publish } = await setup(false);
+      expect((await (await server.request(`/api/pages/${page.id}/publish`)).json()).overrideAllowed).toBe(false);
+      expect((await publish({ override: { reason: "Testing" } })).status).toBe(403);
+      expect((await (await publish({})).json()).error).not.toMatch(/anyway/);
+      expect((await server.request(`/api/pages/${page.id}/site.zip?override=Testing`)).status).toBe(403);
     });
   });
 

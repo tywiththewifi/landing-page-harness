@@ -47,7 +47,19 @@ export interface PageSource {
     /** Each warning, by what it's about. Once this source is merged, a reviewer has accepted them (see classify). */
     warnings: WarningRef[];
   } | null;
+  /** Published although the checks found errors, and why. The site's CI still runs the checks. */
+  override?: Override;
 }
+
+/** Someone chose to publish over the gate's errors, and said why. */
+export interface Override {
+  reason: string;
+  /** How many errors the checks found when they did. */
+  errors: number;
+}
+
+/** The errors in a gate report: what blocks publishing unless someone overrides it. */
+export const errorsOf = (report: GateReport) => report.checks.flatMap((c) => c.issues).filter((i) => i.severity === "error");
 
 /** A warning the gate found, by what it's about rather than its wording. */
 export type WarningRef = Pick<GateIssue, "check" | "id" | "path" | "field" | "variant">;
@@ -164,6 +176,8 @@ export interface SiteInput {
   uiCss: string;
   config: SiteConfig;
   gate?: GateReport | null;
+  /** Set when publishing over the gate's errors. */
+  override?: Override | null;
   /** The brief's search targets, kept with the page so the site's CI checks the same things. */
   targets?: PageSource["targets"];
   /** Reads a file as it is on the base branch, to merge shared files. Null when it doesn't exist. */
@@ -191,6 +205,7 @@ export async function siteFiles(input: SiteInput): Promise<SiteFile[]> {
     gate: input.gate
       ? { verdict: input.gate.verdict, environment: input.gate.environment, checks: input.gate.checks.map(({ id, status, summary }) => ({ id, status, summary })), warnings: warningsOf(input.gate) }
       : null,
+    ...(input.override && { override: input.override }),
   };
   files.push({ path: sourceFile(config, page), content: `${JSON.stringify(source, null, 2)}\n`, kind: "source" });
 

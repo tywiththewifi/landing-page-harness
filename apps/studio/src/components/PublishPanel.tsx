@@ -12,19 +12,27 @@ interface Props {
   info: PublishInfo;
   /** Why publishing isn't possible right now, if it isn't. */
   blocked: string | null;
+  /** The only thing in the way is the checks' errors, and the server lets a person publish over them. */
+  overridable: boolean;
   demo: boolean;
   busy: boolean;
   result: PublishResult | null;
   error: string | null;
-  onPublish: () => void;
-  onDownload: () => void;
+  /** With a reason when publishing over the checks' errors. */
+  onPublish: (override?: string) => void;
+  onDownload: (override?: string) => void;
 }
 
 /** Where the page goes, how risky the change is, and the pull request that carries it. */
-export function PublishPanel({ info, blocked, demo, busy, result, error, onPublish, onDownload }: Props) {
+export function PublishPanel({ info, blocked, overridable, demo, busy, result, error, onPublish, onDownload }: Props) {
   const { plan, target, published } = info;
   const [showBody, setShowBody] = useState(false);
   const [showSame, setShowSame] = useState(false);
+  const [anyway, setAnyway] = useState(false);
+  const [reason, setReason] = useState("");
+  const overriding = overridable && anyway;
+  const override = overriding ? reason.trim() : "";
+  const stopped = overriding ? (override ? null : "Say why it goes out with errors.") : blocked;
   const body = useMemo(() => (showBody ? DOMPurify.sanitize(marked.parse(plan.body, { async: false })) : ""), [showBody, plan.body]);
   const changed = plan.changes.filter((c) => c.status !== "unchanged");
   const files = showSame ? plan.changes : changed;
@@ -56,6 +64,7 @@ export function PublishPanel({ info, blocked, demo, busy, result, error, onPubli
                 <a href={published.url} target="_blank" rel="noreferrer">
                   #{published.number}
                 </a>
+                {published.override ? <>, published over the checks ({published.override.reason})</> : null}
               </>
             ) : null}
           </p>
@@ -127,7 +136,13 @@ export function PublishPanel({ info, blocked, demo, busy, result, error, onPubli
               #{result.number}
             </a>
           </strong>
-          <p>{result.risk === "content" ? "It merges itself once the site's checks pass." : "It waits for a reviewer."}</p>
+          <p>
+            {result.override
+              ? "It was published over the checks' errors, so it waits for a reviewer and the site's checks fail until the errors are fixed."
+              : result.risk === "content"
+                ? "It merges itself once the site's checks pass."
+                : "It waits for a reviewer."}
+          </p>
           {result.previews.length ? (
             <p>
               Previews:{" "}
@@ -144,16 +159,49 @@ export function PublishPanel({ info, blocked, demo, busy, result, error, onPubli
         </div>
       ) : null}
 
+      {overridable ? (
+        <div className={`${styles.override} ${overriding ? styles.overriding : ""}`}>
+          <label className={styles.toggle}>
+            <input type="checkbox" checked={anyway} onChange={(e) => setAnyway(e.target.checked)} />
+            <span>
+              <strong>Publish anyway</strong>
+              <small>
+                For a test, or when you've looked at the errors and they don't matter here.{" "}
+                {target
+                  ? "The pull request is labelled lph:override and always waits for a reviewer, and the site's checks still fail on it."
+                  : "The reason is kept with the page in the folder, and the site's checks still fail on it if it goes through them."}
+              </small>
+            </span>
+          </label>
+          {overriding ? (
+            <label className={styles.reason}>
+              <span className="ui-label">Why it goes out with errors</span>
+              <textarea className="ui-input" rows={2} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Testing the publishing flow; the copy gets written next." />
+            </label>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className={styles.actions}>
         {target ? (
-          <button type="button" className="ui-button ui-button--primary" disabled={!!blocked || busy || plan.unchanged} onClick={onPublish}>
-            {busy ? "Publishing…" : published ? "Publish the changes" : "Open a pull request"}
+          <button
+            type="button"
+            className={`ui-button ${overriding ? styles.danger : "ui-button--primary"}`}
+            disabled={!!stopped || busy || plan.unchanged}
+            onClick={() => onPublish(override || undefined)}
+          >
+            {busy ? "Publishing…" : `${published ? "Publish the changes" : "Open a pull request"}${overriding ? " anyway" : ""}`}
           </button>
         ) : null}
-        <button type="button" className={`ui-button${target ? "" : " ui-button--primary"}`} disabled={!!blocked} onClick={onDownload}>
-          Download for Cloudflare Pages
+        <button
+          type="button"
+          className={`ui-button${target ? "" : overriding ? ` ${styles.danger}` : " ui-button--primary"}`}
+          disabled={!!stopped}
+          onClick={() => onDownload(override || undefined)}
+        >
+          {overriding ? "Download anyway" : "Download for Cloudflare Pages"}
         </button>
-        <span className={styles.why}>{plan.unchanged ? `${target?.base ?? "The site"} already has this version of the page.` : blocked}</span>
+        <span className={styles.why}>{plan.unchanged ? `${target?.base ?? "The site"} already has this version of the page.` : stopped}</span>
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ The fastest way to try it on a site is launch_from_url: it imports the brand fro
 
 Step by step: import_brand → (resolve_conflict) → write_brief → (update_brief until check has no errors) → build_page → (update_page) → run_checks → publish_plan → publish_page.
 
-Rules the harness keeps: brand values are always measured from the site, never invented. Numbers and quotes on a page must come from the site, its MCP data or the prompt. Text marked [To write] needs a person (or you) to write it before the page can publish. Errors block; warnings need a reviewer.`;
+Rules the harness keeps: brand values are always measured from the site, never invented. Numbers and quotes on a page must come from the site, its MCP data or the prompt. Text marked [To write] needs a person (or you) to write it before the page can publish. Errors block, unless the person chooses to publish anyway and gives a reason; warnings need a reviewer.`;
 
 type Content = { content: { type: "text"; text: string }[]; isError?: boolean };
 const text = (t: string): Content => ({ content: [{ type: "text", text: t }] });
@@ -239,11 +239,16 @@ export function createServer(api: ApiClient, info: { version?: string } = {}) {
     {
       title: "Publish the page",
       description:
-        "Opens (or updates) a pull request with the page in the company's site repo. Needs the checks to have run on this version of the page with no errors, and a site repo set up on the server. Confirm with the person before calling this.",
-      inputSchema: { pageId: id("page") },
+        "Opens (or updates) a pull request with the page in the company's site repo. Needs the checks to have run on this version of the page, and a site repo set up on the server. If the checks found errors, it only publishes with overrideReason, which only the person can decide on: the pull request is then labelled lph:override, waits for a reviewer and fails the site's checks. Confirm with the person before calling this.",
+      inputSchema: {
+        pageId: id("page"),
+        overrideReason: z.string().max(500).optional().describe("Publish although the checks found errors, for this reason. Only when the person asked for it, in their words."),
+      },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },
-    safely(async ({ pageId }) => json(await api.json("POST", `/api/pages/${encodeURIComponent(pageId)}/publish`))),
+    safely(async ({ pageId, overrideReason }) =>
+      json(await api.json("POST", `/api/pages/${encodeURIComponent(pageId)}/publish`, overrideReason?.trim() ? { override: { reason: overrideReason } } : {})),
+    ),
   );
 
   // Brands as resources, so a client can attach a brand's DESIGN.md or tokens to a conversation.

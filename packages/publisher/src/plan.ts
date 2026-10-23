@@ -2,7 +2,7 @@ import { gateMarkdown, type GateReport } from "@lph/checks/browser";
 import { applyVariant, versionPath, type Page } from "@lph/page/browser";
 import type { Brand } from "@lph/tokens";
 import { classify, LABELS, type Classification, type FileChange } from "./classify.ts";
-import { htmlFile, parseSource, siteFiles, sourceFile, warningsOf, type PageSource, type SiteConfig, type SiteFile } from "./site.ts";
+import { errorsOf, htmlFile, parseSource, siteFiles, sourceFile, warningsOf, type Override, type PageSource, type SiteConfig, type SiteFile } from "./site.ts";
 import { beyondCopy } from "./skeleton.ts";
 
 export interface PublishPlan {
@@ -19,6 +19,8 @@ export interface PublishPlan {
   previews: { name: string; path: string; url: string }[];
   /** Nothing differs from the base branch. */
   unchanged: boolean;
+  /** Set when this publishes over the checks' errors. */
+  override: Override | null;
 }
 
 export interface PlanInput {
@@ -32,6 +34,18 @@ export interface PlanInput {
   read: (path: string) => Promise<string | null>;
   /** e.g. "https://{branch}.my-site.pages.dev": where the host previews a branch. */
   previewUrl?: string;
+  /**
+   * Publish although the checks found errors, with the reason a person gave. The pull
+   * request is labelled and always goes to a reviewer, and the site's CI still fails.
+   */
+  override?: { reason: string } | null;
+}
+
+/** The override to record, when there is one and the checks did block. */
+export function overrideFor(gate: GateReport | null, override: { reason: string } | null | undefined): Override | null {
+  const reason = override?.reason.trim();
+  if (!gate || gate.verdict !== "blocked" || !reason) return null;
+  return { reason, errors: errorsOf(gate).length };
 }
 
 export const branchFor = (page: Pick<Page, "slug">) => `lph/${page.slug}`;
@@ -51,7 +65,8 @@ const cell = (s: string) => s.replace(/\|/g, "\\|").replace(/\r?\n/g, " ").repla
 /** Works out what publishing writes, how risky it is, and the pull request that carries it. */
 export async function planPublish(input: PlanInput): Promise<PublishPlan> {
   const { page, config } = input;
-  const files = await siteFiles({ page, brand: input.brand, uiCss: input.uiCss, config, gate: input.gate, targets: input.targets, read: input.read });
+  const override = overrideFor(input.gate, input.override);
+  const files = await siteFiles({ page, brand: input.brand, uiCss: input.uiCss, config, gate: input.gate, override, targets: input.targets, read: input.read });
   const before = parseSource(await input.read(sourceFile(config, page)));
   const after = parseSource(files.find((f) => f.kind === "source")!.content)!;
 
@@ -79,24 +94,28 @@ export async function planPublish(input: PlanInput): Promise<PublishPlan> {
   return {
     branch,
     title,
-    body: prBody({ page, config, gate: input.gate, classification, changes, previews, isNew: !before }),
-    labels: [classification.risk === "content" ? LABELS.content : LABELS.review],
+    body: prBody({ page, config, gate: input.gate, override, classification, changes, previews, isNew: !before }),
+    labels: [classification.risk === "content" ? LABELS.content : LABELS.review, ...(override ? [LABELS.override] : [])],
     files,
     removed,
     changes,
     classification,
     previews,
     unchanged: changes.every((c) => c.status === "unchanged"),
+    override,
   };
 }
 
-function prBody(o: { page: Page; config: SiteConfig; gate: GateReport | null; classification: Classification; changes: FileChange[]; previews: PublishPlan["previews"]; isNew: boolean }): string {
+function prBody(o: { page: Page; config: SiteConfig; gate: GateReport | null; override: Override | null; classification: Classification; changes: FileChange[]; previews: PublishPlan["previews"]; isNew: boolean }): string {
   const { page, config, classification } = o;
   const live = (path: string) => `${config.origin.replace(/\/+$/, "")}${path}`;
   const versions = [null, ...page.variants];
   const lines = [
     `${o.isNew ? "Publishes" : "Updates"} **${cell(page.title)}** at [\`${versionPath(page, null)}\`](${live(versionPath(page, null))})${page.variants.length ? `, with ${page.variants.length === 1 ? "a version" : `${page.variants.length} versions`} for ${page.variants.map((v) => v.name).join(", ")}` : ""}.`,
     "",
+    ...(o.override
+      ? [`⛔ **Published over blocking checks.** The checks found ${o.override.errors === 1 ? "an error" : `${o.override.errors} errors`} (listed under Checks), and this was published anyway. The site's checks will fail on it too, so merging it is a reviewer's call.`, ""]
+      : []),
     classification.risk === "content" ? "🟢 **Copy only.** This merges itself once the checks pass." : "🟡 **Needs a reviewer.**",
     ...classification.reasons.map((r) => `- ${r}`),
     "",

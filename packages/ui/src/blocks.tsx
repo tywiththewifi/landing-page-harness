@@ -6,12 +6,35 @@ import type { ReactNode } from "react";
  * band, the heading and the spacing; these only lay out the content.
  */
 
-export function LogoRow({ items }: { items: string[] }) {
+/** A customer logo as the site shows it. The SVG was sanitised when it was imported. */
+export interface LogoMark {
+  name: string;
+  svg?: string;
+  src?: string;
+}
+
+/** Names match a logo whatever their case and punctuation: "Monday.com" is "monday.com". */
+export const logoKey = (name: string) => name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+
+/** Customer names, each shown as its logo when there is one, as text otherwise. */
+export function LogoRow({ items, logos = [] }: { items: string[]; logos?: LogoMark[] }) {
+  const byName = new Map(logos.map((l) => [logoKey(l.name), l]));
   return (
     <ul className="lph-logos" aria-label="Customers">
-      {items.map((name, i) => (
-        <li key={i}>{name}</li>
-      ))}
+      {items.map((name, i) => {
+        const logo = byName.get(logoKey(name));
+        return (
+          <li key={i}>
+            {logo?.svg ? (
+              <span className="lph-logos__mark" role="img" aria-label={name} dangerouslySetInnerHTML={{ __html: logo.svg }} />
+            ) : logo?.src ? (
+              <img className="lph-logos__mark" src={logo.src} alt={name} loading="lazy" decoding="async" />
+            ) : (
+              name
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

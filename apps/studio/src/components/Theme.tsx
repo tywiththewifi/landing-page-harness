@@ -64,7 +64,7 @@ export function Theme({ brand, update, resolve }: { brand: Brand; update: Update
         <Overview brand={brand} update={update} resolve={resolve} />
         <Colors brand={brand} update={update} />
         <Typography brand={brand} update={update} />
-        <LogoSection brand={brand} />
+        <LogoSection brand={brand} update={update} />
         <UiElements brand={brand} update={update} />
         <Radius brand={brand} update={update} />
         <Spacing brand={brand} update={update} />
@@ -319,7 +319,8 @@ function LogoMark({ brand }: { brand: Brand }) {
   return <span className={styles.logoMark}>{logo.text}</span>;
 }
 
-function LogoSection({ brand }: { brand: Brand }) {
+function LogoSection({ brand, update }: { brand: Brand; update: Update }) {
+  const customers = brand.customers ?? [];
   const brandColor = brand.colors.find((c) => c.role === "brand")?.value ?? "#111";
   const surface = brand.colors.find((c) => c.role === "surface")?.value ?? "#fff";
   const ink = brand.colors.find((c) => c.role === "ink")?.value ?? "#111";
@@ -342,6 +343,28 @@ function LogoSection({ brand }: { brand: Brand }) {
       ) : (
         <div className={`${styles.notice} ${styles.bad}`}>We couldn't find a logo in the site header. Add it manually or skip for now.</div>
       )}
+      <h3 className={styles.sub}>Customer logos</h3>
+      <p className={styles.subIntro}>
+        {customers.length
+          ? "From the site's strip of customer logos. A logo row on a page shows each customer whose name matches as their logo; fix a name here if it was read wrong."
+          : "The site has no strip of customer logos we could read, so logo rows show customers by name."}
+      </p>
+      {customers.length ? (
+        <ul className={styles.customers}>
+          {customers.map((c, i) => (
+            <li key={c.svg ?? c.src ?? i}>
+              <span className={styles.customerLogo} style={{ color: ink }}>
+                {/* Sanitised at extraction time, like the header logo. */}
+                {c.svg ? <span dangerouslySetInnerHTML={{ __html: c.svg }} /> : <img src={c.src} alt="" />}
+              </span>
+              <input className="ui-input" aria-label={`Name of customer ${i + 1}`} value={c.name} onChange={(e) => update((d) => void (d.customers![i]!.name = e.target.value))} />
+              <button type="button" className="ui-button ui-button--ghost ui-button--small" onClick={() => update((d) => void d.customers!.splice(i, 1))} aria-label={`Remove ${c.name}`}>
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </Section>
   );
 }

@@ -22,6 +22,8 @@ export function brandSummary(brand: Brand) {
     buttons: brand.buttons.map((b) => `${b.name} (${b.kind}): ${b.background ?? "transparent"} / ${b.color}, radius ${b.radius}px, "${b.sampleText}"`),
     cards: brand.cards.length,
     logo: brand.logo?.kind ?? "not found",
+    /** Names in a logo row that match these show as the site's logos. */
+    customerLogos: (brand.customers ?? []).map((c) => c.name),
     conflicts: brand.conflicts.map((c) => ({ id: c.id, field: c.field, message: c.message, options: c.options.map((o) => o.value), resolved: c.resolved ?? null })),
     warnings: brand.warnings,
   };

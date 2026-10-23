@@ -107,7 +107,7 @@ export function reportMarkdown(r: RunReport): string {
   }
   if (r.brand) {
     const b = r.brand;
-    lines.push("", "## Brand", "", `Pages sampled: ${b.pagesSampled.join(", ")}`, "", `Fonts: ${b.fonts.heading} (headings), ${b.fonts.body} (body). Logo: ${b.logo}. Cards: ${b.cards}.`, "");
+    lines.push("", "## Brand", "", `Pages sampled: ${b.pagesSampled.join(", ")}`, "", `Fonts: ${b.fonts.heading} (headings), ${b.fonts.body} (body). Logo: ${b.logo}. Cards: ${b.cards}.`, `Customer logos: ${b.customerLogos.join(", ") || "none found"}.`, "");
     lines.push("| Colour | Value | Role | Confidence |", "|---|---|---|---|", ...b.colors.map((c) => `| ${c.name} | \`${c.value}\` | ${c.role} | ${c.confidence} |`));
     lines.push("", "Buttons:", ...b.buttons.map((x) => `- ${x}`));
     if (b.conflicts.length) lines.push("", "Conflicts:", ...b.conflicts.map((c) => `- ${c.message} (${c.options.join(" / ")})`));
