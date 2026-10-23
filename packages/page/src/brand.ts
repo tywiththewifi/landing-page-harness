@@ -7,14 +7,16 @@ import type { Tone } from "./schema.ts";
  * picks per band instead of asking anyone to: buttons measured on that background
  * first, then any that stay visible on it.
  */
+/** "hero" is a hero left on its automatic band; pass heroTone(brand, block.tone) for a hero block. */
 export function buttonsFor(brand: Brand, tone: Tone | "hero"): { primary: string; secondary: string; visible: boolean } {
   const sem = semanticColors(brand);
-  const bg = tone === "brand" || tone === "hero" ? sem.brand : tone === "subtle" ? sem.subtle : sem.surface;
+  const band = tone === "hero" ? heroTone(brand) : tone;
+  const bg = band === "brand" ? sem.brand : band === "subtle" ? sem.subtle : sem.surface;
   const edge = (b: ButtonStyle) => (b.kind === "filled" ? b.background : b.borderColor) ?? b.color;
   const visible = (b: ButtonStyle) =>
-    // Labels are normal-size text, so they need WCAG AA's 4.5:1 to pass the publish checks.
-    b.kind === "text" ? contrastRatio(b.color, bg) >= 4.5 : contrastRatio(edge(b), bg) >= 1.4 && contrastRatio(b.color, b.background ?? bg) >= 4.5;
-  const here = (b: ButtonStyle) => (tone === "subtle" ? b.context === sem.surface || b.context === bg : b.context === bg);
+    // Labels need WCAG AA's 4.5:1 to pass the publish checks, or 3:1 when they're large text.
+    b.kind === "text" ? contrastRatio(b.color, bg) >= labelMin(b) : contrastRatio(edge(b), bg) >= 1.4 && contrastRatio(b.color, b.background ?? bg) >= labelMin(b);
+  const here = (b: ButtonStyle) => (band === "subtle" ? b.context === sem.surface || b.context === bg : b.context === bg);
 
   const boxed = brand.buttons.filter((b) => b.kind !== "text" && visible(b));
   const ranked = [...boxed.filter(here), ...boxed.filter((b) => !here(b))];
@@ -27,6 +29,17 @@ export function buttonsFor(brand: Brand, tone: Tone | "hero"): { primary: string
     visible: !!primary || !brand.buttons.length,
   };
 }
+
+/** WCAG's large text: 24px, or 18.66px (14pt) bold. Large labels need 3:1 instead of 4.5:1. */
+const labelMin = (b: ButtonStyle) => (b.fontSize >= 24 || (b.fontSize >= 18.66 && b.fontWeight >= 700) ? 3 : 4.5);
+
+/**
+ * The hero's band. It sits on the brand colour unless a person chose the subtle band, or
+ * none of the brand's buttons would stand out on the brand colour, as when the brand colour
+ * is the button colour (Genki's red). Then it takes the subtle band, as such sites do.
+ */
+export const heroTone = (brand: Brand, tone?: Tone): "brand" | "subtle" =>
+  tone === "subtle" || (brand.buttons.length && !buttonsFor(brand, "brand").visible) ? "subtle" : "brand";
 
 /** Match where the site puts its header: a logo drawn in the brand colour vanishes on a brand band. */
 export const navTone = (brand: Brand): "brand" | "surface" =>

@@ -10,6 +10,7 @@ import {
   checkPage,
   claudePageGenerator,
   emptyBlock,
+  heroTone,
   keyLabel,
   pageEdit,
   pruneOverrides,
@@ -270,6 +271,23 @@ describe("renderPage", () => {
     expect(buttonsFor(brand, "hero").primary).toBe("secondary");
     expect(buttonsFor(brand, "default").primary).toBe("primary");
     expect(buttonsFor(brand, "hero").visible).toBe(true);
+  });
+
+  it("moves the hero off the brand colour when no button would stand out on it", async () => {
+    // Genki: a red button with a large bold white label (3.4:1, enough for large text), and a red brand.
+    const red = { ...brand.buttons.find((b) => b.kind === "filled")!, name: "primary", background: "#ff3e3e", color: "#ffffff", context: "#ffffff", fontSize: 20, fontWeight: 800 };
+    const genki = { ...brand, colors: brand.colors.map((c) => (c.role === "brand" ? { ...c, value: "#ff3e3e" } : c)), buttons: [red] } as Brand;
+    expect(heroTone(genki)).toBe("subtle");
+    expect(buttonsFor(genki, "hero")).toMatchObject({ primary: "primary", visible: true });
+    const { page } = await finishedPage();
+    const html = renderPage(page, genki, css);
+    expect(html).toContain("lph-hero--subtle");
+    // The same label at body size needs 4.5:1, so nothing on the page would stand out.
+    const small = { ...genki, buttons: [{ ...red, fontSize: 16, fontWeight: 400 }] } as Brand;
+    expect(buttonsFor(small, "default").visible).toBe(false);
+    // Northloop's hero keeps its brand colour, unless a person picks the subtle band.
+    expect(heroTone(brand, "default")).toBe("brand");
+    expect(heroTone(brand, "subtle")).toBe("subtle");
   });
 
   it("previews the form without sending when there's no action", async () => {

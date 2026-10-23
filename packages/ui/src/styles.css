@@ -64,6 +64,7 @@
 
 /* Hero band */
 .lph-hero { background: var(--color-brand); color: var(--color-on-brand, #fff); padding: clamp(64px, 10vw, 120px) 0; }
+.lph-hero--subtle { background: var(--color-subtle, #f5f5f5); color: var(--color-ink, #111); }
 .lph-hero__inner { display: grid; gap: clamp(32px, 5vw, 64px); align-items: center; }
 .lph-hero--split .lph-hero__inner { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); }
 @media (max-width: 860px) { .lph-hero--split .lph-hero__inner { grid-template-columns: 1fr; } }
