@@ -5,7 +5,7 @@ const STEPS = ["Brand", "Brief", "Page", "Publish"];
 
 export function Shell() {
   const { pathname } = useLocation();
-  const step = pathname.startsWith("/briefs/") || pathname.endsWith("/briefs/new") ? 1 : 0;
+  const step = pathname.startsWith("/pages/") ? 2 : pathname.startsWith("/briefs/") || pathname.endsWith("/briefs/new") ? 1 : 0;
   return (
     <div className={styles.shell}>
       <header className={styles.bar}>

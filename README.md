@@ -8,12 +8,12 @@ It works on any website because it reads the CSS a site actually renders, not a 
 |---|---|---|
 | 1. Brand | Enter a URL; get a reviewed design system (tokens, Design.md, starter components) | **Built** |
 | 2. Brief | Describe a campaign; get an editable marketing brief grounded in the site and your SEO/AEO tools | **Built** |
-| 3. Page | Generate the landing page from the starter components, one variant per audience | Planned |
+| 3. Page | Generate the landing page from the starter components, one version per persona, with a lead form wired to HubSpot or a webhook | **Built** |
 | 4. Publish | Brand, accessibility, performance and SEO checks, then a pull request with a preview | Planned |
 
 See [docs/spec.md](docs/spec.md) for the full plan.
 
-**Try it:** the [live demo](https://tywiththewifi.github.io/landing-page-harness/) runs the studio in your browser. Import any public site, or Northloop, a fictional sample. A small [import service](docs/import-service.md) opens the site in a headless browser and hands the measurements back, keeping nothing; everything else (conflicts, contrast, Design.md, the preview, briefs and checks) runs in the browser on the same code as the app, with briefs from the offline writer.
+**Try it:** the [live demo](https://tywiththewifi.github.io/landing-page-harness/) runs the studio in your browser. Import any public site, or Northloop, a fictional sample. A small [import service](docs/import-service.md) opens the site in a headless browser and hands the measurements back, keeping nothing; everything else (conflicts, contrast, Design.md, the preview, briefs, pages and checks) runs in the browser on the same code as the app, with briefs and page copy from the offline writer.
 
 ## Phase 1: brand import
 
@@ -66,6 +66,23 @@ Ads are out of scope for now: channels are owned and earned only.
 |---|---|
 | ![SEO and AEO](docs/screenshots/11-brief-seo.png) | ![Brief.md](docs/screenshots/12-brief-md.png) |
 
+## Phase 3: page
+
+![Page editor with live checks and preview](docs/screenshots/13-page-editor.png)
+
+1. **Build.** Each section of the brief's outline becomes a block from the component library: hero, logo row, features, how it works, stats, testimonial, comparison, FAQ, lead form or closing CTA. Building is refused while the brief has must-fix issues.
+2. **Write.** Claude writes the copy into that structure under the brief's grounding rules; anything it can't source is left as `[To write]` for a person. Without an API key, an offline writer fills the blocks from the brief and marks the rest.
+3. **Edit.** A constrained editor: copy, plus the few props the components expose (a section's background, the brand's card styles, the form's fields). No free layout. Buttons are picked per band from the styles the site uses on that background.
+4. **Personalise.** Each persona gets a version on its own URL (`/{slug}/{persona}`) that overrides copy only, so a fix to the general page reaches every version. The **Versions** tab lays them out as a table: URL, H1, subheadline, CTA and which fields are personalised.
+5. **Capture leads.** The form's fields are named after HubSpot contact properties. Leads go to a HubSpot form (Forms API v3), to a signed webhook, or stay in the studio in test mode, with the page, version, UTMs and HubSpot tracking cookie attached.
+6. **Check.** The page checks run as you type: placeholders left, missing text, broken anchors and links, the form's fields and connector, version URLs, unsourced numbers and quotes, and title and meta lengths. Errors block publishing in phase 4.
+
+The preview renders exactly the HTML that gets published: one H1, canonical and Open Graph tags, and `WebPage`, `Organization` and `FAQPage` JSON-LD. See [docs/pages.md](docs/pages.md) for the checks, the version model, the webhook payload and signature, and the API.
+
+| ![A persona's version](docs/screenshots/14-page-version.png) | ![Versions table](docs/screenshots/15-page-versions.png) |
+|---|---|
+| ![Leads](docs/screenshots/16-page-leads.png) | |
+
 ## Quick start
 
 ```bash
@@ -79,9 +96,9 @@ pnpm fixture
 LPH_ALLOW_PRIVATE_URLS=1 pnpm dev
 ```
 
-Open http://localhost:5173 and import `http://127.0.0.1:4319/`, or any public site. Confirm the brand, then choose **Plan a page** to write a brief.
+Open http://localhost:5173 and import `http://127.0.0.1:4319/`, or any public site. Confirm the brand, then choose **Plan a page** to write a brief, and **Build the page** to make it.
 
-Set `ANTHROPIC_API_KEY` for Claude-written briefs (see [.env.example](.env.example) for the other settings).
+Set `ANTHROPIC_API_KEY` for Claude-written briefs and page copy (see [.env.example](.env.example) for the other settings).
 
 From the command line (no UI):
 
@@ -104,6 +121,11 @@ curl localhost:8787/api/brands/<id>/tokens.css
 curl -X POST 'localhost:8787/api/brands/<id>/briefs?wait=true' -H 'content-type: application/json' -d '{"prompt":"Landing page for our HubSpot integration for ops managers"}'
 curl localhost:8787/api/briefs/<briefId>/check
 curl localhost:8787/api/briefs/<briefId>/brief.md
+
+# Build the page (blocking), check it, and render a persona's version
+curl -X POST 'localhost:8787/api/briefs/<briefId>/pages?wait=true'
+curl localhost:8787/api/pages/<pageId>/check
+curl 'localhost:8787/api/pages/<pageId>/page.html?version=<persona>'
 ```
 
 An MCP server over the same API is planned (M5), so Claude, Codex, Cursor or any other MCP client can read a brand directly.
@@ -112,7 +134,8 @@ An MCP server over the same API is planned (M5), so Claude, Codex, Cursor or any
 
 ```
 apps/
-  api/          Hono API: import and brief jobs, edits, conflict resolution, checks, exports
+  api/          Hono API: import, brief and page jobs, edits, conflict resolution, checks,
+                exports and the form endpoint
                 (public.ts: the demo's stateless import service)
   studio/       React Router + Vite + SCSS Modules review UI (src/demo: the serverless demo build)
 packages/
@@ -120,7 +143,9 @@ packages/
   brief/        Brief schema, Claude and offline writers, SEO/AEO providers, consistency check
   tokens/       Brand types, colour maths, CSS/DTCG output, contrast, edits
   design-md/    DESIGN.md generator
-  ui/           Starter components: framework-agnostic CSS classes plus React wrappers
+  page/         Page schema, persona versions, Claude and offline writers, checks, renderer
+  forms/        Lead form fields, submission parsing, HubSpot and webhook delivery (Web APIs only)
+  ui/           Starter components and page blocks: framework-agnostic CSS classes plus React wrappers
   kit/          Writes the brand kit and renders preview.html
 fixtures/
   northloop/    A fictional B2B site used by the tests
@@ -130,7 +155,8 @@ fixtures/
 
 - The API drives a real browser to user-supplied URLs, so it refuses private and internal addresses (SSRF), unless `LPH_ALLOW_PRIVATE_URLS=1` is set for local fixtures. The same rule holds inside the browser: every request the page makes is checked before it's sent, and redirects are caught from the address that answered, so a page can't redirect or load its way inside. The site's MCP server is checked the same way, and redirects from it are refused.
 - Site copy and SEO tool output reach the model as data in tagged blocks, separate from its instructions, and the brief comes back through a strict schema. The SEO endpoint is set by the operator, not by users.
-- SVG logos are sanitised in the page's own DOM at extraction time (scripts, event handlers, external links and `foreignObject` removed). Design.md is sanitised before rendering, and site-derived strings can't close the preview's `<style>` block.
+- The form endpoint keeps only the fields the form asks for, validates them, and drops honeypot posts silently. Webhook URLs get the same SSRF rule as imports, redirects aren't followed, and posts can be signed (HMAC-SHA256 with a timestamp). Every lead is stored with its delivery result, so a failed delivery isn't lost. Page links are limited to sections, site paths, https, `mailto:` and `tel:`.
+- SVG logos are sanitised in the page's own DOM at extraction time (scripts, event handlers, external links and `foreignObject` removed). Design.md is sanitised before rendering, and site-derived strings can't close the preview's `<style>` block or a page's JSON-LD.
 
 ## Development
 

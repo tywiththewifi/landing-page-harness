@@ -22,10 +22,12 @@ import {
 } from "@lph/brief";
 import { generateDesignMd } from "@lph/design-md";
 import { extractBrand, type ExtractOptions } from "@lph/extractor";
-import { previewHtml, writeBrandKit } from "@lph/kit";
+import { deliver, parseSubmission, type Connector, type DeliveryResult } from "@lph/forms";
+import { previewHtml, uiCss, writeBrandKit } from "@lph/kit";
+import { checkPage, defaultPageGenerator, findVariant, pageEdit, pruneOverrides, renderPage, toPage, type Page, type PageGenerator } from "@lph/page";
 import { checkContrast, resolveConflict, toCss, toDtcg, type Brand } from "@lph/tokens";
 import { openApi } from "./openapi.ts";
-import type { BrandStore, BriefStore } from "./store.ts";
+import type { BrandStore, BriefStore, PageStore, StoredSubmission, SubmissionStore } from "./store.ts";
 import { assertPublicUrl, browserGuard, UrlRejected } from "./url-guard.ts";
 
 export interface Job {
@@ -34,14 +36,24 @@ export interface Job {
   step: string;
   brandId?: string;
   briefId?: string;
+  pageId?: string;
   error?: string;
 }
 
 export interface AppOptions {
   store: BrandStore;
   briefs: BriefStore;
+  pages: PageStore;
+  submissions: SubmissionStore;
   /** Writes briefs. Defaults to Claude when credentials are set, the offline template otherwise. */
   generator?: BriefGenerator;
+  /** Writes page copy. Same default as briefs. */
+  pageGenerator?: PageGenerator;
+  /**
+   * Secrets for sending leads on, from the server's environment: LPH_WEBHOOK_SECRET signs
+   * webhook posts, HUBSPOT_ACCESS_TOKEN (a private app token) uses HubSpot's authenticated endpoint.
+   */
+  formSecrets?: { webhookSecret?: string; hubspotToken?: string };
   /** SEO/AEO sources to choose from. Best practices is always available. */
   seoProviders?: SeoProvider[];
   /** Where confirmed brand kits are written. */
@@ -93,6 +105,8 @@ export function createApp(opts: AppOptions) {
   const { store, briefs } = opts;
   const extract = opts.extract ?? extractBrand;
   const generator = opts.generator ?? defaultGenerator();
+  const pageGenerator = opts.pageGenerator ?? defaultPageGenerator();
+  const { pages, submissions } = opts;
   const providers = opts.seoProviders?.length ? opts.seoProviders : [bestPractices];
   const jobs = new Map<string, Job>();
   const app = new Hono();
@@ -118,6 +132,12 @@ export function createApp(opts: AppOptions) {
     const brief = await briefs.get(id).catch(() => null);
     if (!brief) throw new HTTPException(404, { message: "Brief not found" });
     return brief;
+  };
+
+  const mustGetPage = async (id: string) => {
+    const page = await pages.get(id).catch(() => null);
+    if (!page) throw new HTTPException(404, { message: "Page not found" });
+    return page;
   };
 
   /** Runs work in the background and tracks it as a job that clients poll. */
@@ -183,7 +203,9 @@ export function createApp(opts: AppOptions) {
 
   app.get("/api/brands", async (c) => c.json(await store.list()));
   app.get("/api/seo/providers", (c) => c.json(providers.map(({ id, name, description }) => ({ id, name, description }))));
-  app.get("/api/generator", (c) => c.json({ name: generator.name, model: generator.model ?? null }));
+  app.get("/api/generator", (c) =>
+    c.json({ name: generator.name, model: generator.model ?? null, page: { name: pageGenerator.name, model: pageGenerator.model ?? null } }),
+  );
 
   // Import a brand from a URL. Returns a job; pass ?wait=true to block until it finishes.
   app.post("/api/brands", async (c) => {
@@ -297,6 +319,98 @@ export function createApp(opts: AppOptions) {
   app.get("/api/briefs/:id/brief.md", async (c) => {
     c.header("content-type", "text/markdown; charset=utf-8");
     return c.body(briefToMarkdown(await mustGetBrief(c.req.param("id"))));
+  });
+
+  // Phase 3: a brief becomes a page built from the component library, with a version per persona.
+  app.post("/api/briefs/:id/pages", async (c) => {
+    const brief = await mustGetBrief(c.req.param("id"));
+    const brand = await mustGet(brief.brandId);
+    const blocking = checkBrief(brief, brand).filter((i) => i.severity === "error");
+    if (blocking.length) return c.json({ error: "Fix the brief's must-fix issues first.", issues: blocking }, 409);
+    const { job, done } = runJob(async (job) => {
+      job.step = "Writing the page";
+      const draft = await pageGenerator.generate({ brief, brand });
+      const page = toPage(draft, { id: crypto.randomUUID(), brief, generator: pageGenerator });
+      await pages.save(page);
+      return { brandId: brand.id, briefId: brief.id, pageId: page.id };
+    });
+    if (c.req.query("wait") === "true") {
+      const finished = await done;
+      if (finished.status === "failed") return c.json(finished, 502);
+      return c.json(await mustGetPage(finished.pageId!), 201);
+    }
+    return c.json(job, 202);
+  });
+  app.get("/api/briefs/:id/pages", async (c) => c.json(await pages.listFor((await mustGetBrief(c.req.param("id"))).id)));
+
+  app.get("/api/pages/:id", async (c) => c.json(await mustGetPage(c.req.param("id"))));
+  // Save edits. Ids, the brand and brief it came from, and provenance stay as stored.
+  app.put("/api/pages/:id", async (c) => {
+    const current = await mustGetPage(c.req.param("id"));
+    const edit = pageEdit.parse(await c.req.json());
+    const next: Page = pruneOverrides({ ...current, ...edit, updatedAt: new Date().toISOString() });
+    return c.json(await pages.save(next));
+  });
+  app.get("/api/pages/:id/check", async (c) => {
+    const page = await mustGetPage(c.req.param("id"));
+    return c.json(checkPage(page, await mustGetBrief(page.briefId), await mustGet(page.brandId)));
+  });
+  // The page as it will be published. ?version=<slug> renders a persona's version. Previews are never indexed.
+  app.get("/api/pages/:id/page.html", async (c) => {
+    const page = await mustGetPage(c.req.param("id"));
+    const version = c.req.query("version");
+    if (version && !findVariant(page, version)) throw new HTTPException(404, { message: "Version not found" });
+    const origin = new URL(c.req.url).origin;
+    return c.html(renderPage(page, await mustGet(page.brandId), await uiCss(), { variant: version, formAction: `${origin}/api/forms/${page.id}`, noindex: true }));
+  });
+  app.get("/api/pages/:id/submissions", async (c) => c.json(await submissions.listFor((await mustGetPage(c.req.param("id"))).id)));
+
+  /** Where a page's leads go, with secrets from the environment rather than the page. */
+  const connectorFor = async (page: Page): Promise<Connector> => {
+    const { form } = page;
+    if (form.connector === "hubspot") return { kind: "hubspot", portalId: form.hubspotPortalId.trim(), formId: form.hubspotFormId.trim(), token: opts.formSecrets?.hubspotToken };
+    if (form.connector === "webhook") {
+      const url = await assertPublicUrl(form.webhookUrl.trim(), opts.allowPrivateUrls);
+      return { kind: "webhook", url: url.href, secret: opts.formSecrets?.webhookSecret };
+    }
+    return { kind: "none" };
+  };
+
+  // A page's form posts here, urlencoded from the page's script or a plain form post, or JSON from other clients.
+  app.post("/api/forms/:pageId", async (c) => {
+    const page = await pages.get(c.req.param("pageId")).catch(() => null);
+    const form = page?.blocks.find((b) => b.type === "form");
+    if (!page || form?.type !== "form") return c.json({ error: "Form not found" }, 404);
+    const type = c.req.header("content-type") ?? "";
+    const body = type.includes("application/json") ? await c.req.json().catch(() => null) : await c.req.parseBody().catch(() => null);
+    const parsed = parseSubmission(body, form.fields);
+    if (!parsed.ok) return c.json({ message: "Please check the highlighted fields.", errors: parsed.errors }, 422);
+    // Bots that fill the hidden field are told it worked and nothing is kept.
+    if (parsed.spam) return c.json({ ok: true, message: form.successMessage });
+
+    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
+    let result: DeliveryResult;
+    try {
+      result = await deliver(parsed.submission, await connectorFor(page), { pageId: page.id, ipAddress: ip });
+    } catch (err) {
+      // The webhook URL points somewhere private. The lead is still kept below.
+      result = { ok: false, status: "failed", message: "Sorry, that didn't go through. Please try again in a moment.", detail: `The webhook URL was refused: ${(err as Error).message}` };
+    }
+    const now = new Date().toISOString();
+    const record: StoredSubmission = {
+      ...parsed.submission,
+      id: crypto.randomUUID(),
+      pageId: page.id,
+      receivedAt: now,
+      updatedAt: now,
+      delivery: { status: result.status, connector: page.form.connector, ...(result.detail && { detail: result.detail }) },
+    };
+    await submissions.save(record);
+    if (!result.ok) {
+      console.error(`Form ${page.id}: ${result.detail}`);
+      return c.json({ ok: false, message: result.message }, 502);
+    }
+    return c.json({ ok: true, message: form.successMessage });
   });
 
   app.get("/api/brands/:id/tokens.css", async (c) => {

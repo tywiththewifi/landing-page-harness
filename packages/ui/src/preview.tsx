@@ -8,7 +8,7 @@ export function Logo({ brand }: { brand: Brand }) {
     // Sanitised at extraction time (scripts, handlers and external links removed).
     return (
       <>
-        <span style={{ display: "inline-flex" }} dangerouslySetInnerHTML={{ __html: logo.svg }} />
+        <span className="lph-logo" {...(logo.text ? { "aria-hidden": true } : { role: "img", "aria-label": brand.name })} dangerouslySetInnerHTML={{ __html: logo.svg }} />
         {logo.text ? <span>{logo.text}</span> : null}
       </>
     );
@@ -57,7 +57,7 @@ export function BrandPreview({ brand }: { brand: Brand }) {
             submitLabel="Submit"
             variant={onBrand[0]?.name ?? filled[0]?.name}
             fields={[
-              { name: "email", label: "Work email", type: "email", placeholder: "you@company.com" },
+              { name: "email", label: "Work email", type: "email", placeholder: "you@company.com", required: true },
               { name: "company", label: "Company", placeholder: "Company name" },
             ]}
           />

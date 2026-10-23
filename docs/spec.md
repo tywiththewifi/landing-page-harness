@@ -50,4 +50,6 @@ packages/
 | M4 | Publish: checks gate, GitHub PR publisher, demo-site preview deploys, webhook + HubSpot | CI/CD, guardrails, the "safe self-serve" thesis |
 | M5 | API + MCP, README, 2-minute demo video, Genki case-study page | Systems thinking, any-agent design |
 
+Forms (webhook + HubSpot) shipped with M3, so a page can be tried end to end before the publish gate exists. See [pages.md](pages.md).
+
 Run M1 against genki.world as the first case study, and against one more site to show portability.

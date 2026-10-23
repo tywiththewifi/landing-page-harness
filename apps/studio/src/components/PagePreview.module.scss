@@ -1,0 +1,14 @@
+.wrap { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--ui-line); }
+.url {
+  display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding: 4px 10px; border-radius: 999px; background: #f4f4f2; color: var(--ui-muted); font-size: 12.5px;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  strong { color: var(--ui-text); font-weight: 500; }
+}
+.toggle {
+  display: flex; flex: none; padding: 3px; gap: 2px; background: #f4f4f2; border-radius: 8px;
+  button { border: 0; background: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; color: var(--ui-muted); }
+  button[aria-pressed="true"] { background: #fff; color: var(--ui-text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
+}
+.frameWrap { flex: 1; min-height: 0; display: flex; justify-content: center; background: #f4f4f2; padding: 12px; }
+.frame { height: 100%; min-height: 480px; border: 1px solid var(--ui-line); border-radius: 8px; background: #fff; transition: width 0.2s ease; }

@@ -14,6 +14,8 @@ import {
   type ToolInfo,
 } from "@lph/brief/browser";
 import { generateDesignMd } from "@lph/design-md";
+import { checkBrief } from "@lph/brief/check";
+import { pageEdit, pruneOverrides, templatePageGenerator, toPage, type Page } from "@lph/page/browser";
 import { renderPreview } from "@lph/kit/preview";
 import { checkContrast, resolveConflict, type Brand, type SiteMcp } from "@lph/tokens";
 import uiCss from "@lph/ui/styles.css?raw";
@@ -26,7 +28,7 @@ import northloop from "./northloop.json";
  * replays a real extraction of the Northloop fixture (fixtures/northloop, with its URLs
  * moved to northloop.example); everything after that runs the same packages as the
  * server: conflict resolution, contrast, DESIGN.md, the preview, the offline brief
- * writer and the brief checks. The site's MCP server is the fixture's (mcp.json),
+ * writer and the brief checks, and the offline page writer. The site's MCP server is the fixture's (mcp.json),
  * answered here the way scripts/serve-fixture.mjs answers it. Changes are kept in
  * this browser only.
  *
@@ -40,16 +42,17 @@ const KEY = "lph-demo";
 interface State {
   brands: Record<string, Brand>;
   briefs: Record<string, Brief>;
+  pages: Record<string, Page>;
 }
 
 function load(): State {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) ?? "null") as State | null;
-    if (saved?.brands && saved.briefs) return saved;
+    if (saved?.brands && saved.briefs) return { ...saved, pages: saved.pages ?? {} };
   } catch {
     // Storage can be blocked or hold something else; start fresh.
   }
-  return { brands: {}, briefs: {} };
+  return { brands: {}, briefs: {}, pages: {} };
 }
 
 let state = load();
@@ -63,7 +66,7 @@ function persist() {
 }
 
 export function resetDemo() {
-  state = { brands: {}, briefs: {} };
+  state = { brands: {}, briefs: {}, pages: {} };
   try {
     localStorage.removeItem(KEY);
   } catch {
@@ -83,6 +86,12 @@ function mustGetBrief(id: string): Brief {
   const brief = state.briefs[id];
   if (!brief) throw new Error("Brief not found");
   return brief;
+}
+
+function mustGetPage(id: string): Page {
+  const page = state.pages[id];
+  if (!page) throw new Error("Page not found");
+  return page;
 }
 
 function saveBrand(brand: Brand): Brand {
@@ -185,6 +194,7 @@ function collectSample(topic: string, allowed: string[]): SiteData {
   };
 }
 const generator = templateGenerator();
+const pageGenerator = templatePageGenerator();
 
 const SAMPLE_HOST = new URL(SAMPLE.url).hostname;
 /** True when a URL is answered by the sample: always without a service, and for Northloop with one. */
@@ -310,7 +320,7 @@ export const demoApi: typeof api = {
     return providers.map(({ id, name, description }) => ({ id, name, description }));
   },
   async generator() {
-    return { name: generator.name, model: null };
+    return { name: generator.name, model: null, page: { name: pageGenerator.name, model: null } };
   },
   async createBrief(brandId, prompt, seoProvider, useSiteData = true) {
     const brand = mustGet(brandId);
@@ -348,5 +358,37 @@ export const demoApi: typeof api = {
   },
   async briefMd(id) {
     return briefToMarkdown(mustGetBrief(id));
+  },
+
+  async createPage(briefId) {
+    const brief = mustGetBrief(briefId);
+    const brand = mustGet(brief.brandId);
+    if (checkBrief(brief, brand).some((i) => i.severity === "error")) throw new Error("Fix the brief's must-fix issues first.");
+    return startJob(["Writing the page"], async () => {
+      const page = toPage(await pageGenerator.generate({ brief, brand }), { id: crypto.randomUUID(), brief, generator: pageGenerator });
+      state.pages[page.id] = page;
+      persist();
+      return { brandId: brand.id, briefId, pageId: page.id };
+    });
+  },
+  async listPages(briefId) {
+    return Object.values(state.pages)
+      .filter((p) => p.briefId === briefId)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .map(({ id, title, slug, updatedAt, variants }) => ({ id, title, slug, updatedAt, versions: variants.length }));
+  },
+  async page(id) {
+    return mustGetPage(id);
+  },
+  async savePage(page) {
+    // Same rule as the server: ids and provenance stay as stored, and stale overrides are dropped.
+    const current = mustGetPage(page.id);
+    const next: Page = pruneOverrides({ ...current, ...pageEdit.parse(page), updatedAt: now() });
+    state.pages[next.id] = next;
+    persist();
+    return next;
+  },
+  async leads() {
+    return [];
   },
 };
