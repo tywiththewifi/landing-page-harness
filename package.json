@@ -13,7 +13,9 @@
     "test": "vitest run",
     "extract": "pnpm --filter @lph/extractor exec tsx src/cli.ts",
     "fixture": "node scripts/serve-fixture.mjs",
-    "site": "pnpm --filter @lph/publisher exec tsx src/cli.ts"
+    "site": "pnpm --filter @lph/publisher exec tsx src/cli.ts",
+    "try": "pnpm --filter @lph/mcp exec tsx src/cli.ts",
+    "mcp": "pnpm --silent --filter @lph/mcp exec tsx src/stdio.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

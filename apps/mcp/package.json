@@ -1,0 +1,24 @@
+{
+  "name": "@lph/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "lph-mcp": "./src/stdio.ts"
+  },
+  "scripts": {
+    "start": "tsx src/stdio.ts",
+    "try": "tsx src/cli.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "@lph/api": "workspace:*",
+    "@lph/brief": "workspace:*",
+    "@lph/checks": "workspace:*",
+    "@lph/page": "workspace:*",
+    "@lph/tokens": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "zod": "^4.6.7"
+  }
+}
