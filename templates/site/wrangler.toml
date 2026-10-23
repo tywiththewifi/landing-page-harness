@@ -1,0 +1,8 @@
+name = "example-site"
+pages_build_output_dir = "site"
+compatibility_date = "2026-09-01"
+
+# Keep every lead (optional): npx wrangler kv namespace create LEADS, then paste its id.
+# [[kv_namespaces]]
+# binding = "LEADS"
+# id = ""

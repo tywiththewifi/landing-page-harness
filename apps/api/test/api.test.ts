@@ -3,13 +3,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createServer, type IncomingMessage } from "node:http";
-import { GenerationError, templateGenerator, type Brief, type BriefIssue, type SeoProvider } from "@lph/brief";
+import { GenerationError, PLACEHOLDER, templateGenerator, type Brief, type BriefIssue, type SeoProvider } from "@lph/brief";
+import { parseDocument, type GateReport, type GateRunner } from "@lph/checks";
 import { verifyWebhook } from "@lph/forms";
 import { templatePageGenerator, type Page, type PageIssue } from "@lph/page";
 import type { Brand } from "@lph/tokens";
+import { fakeGitHub } from "../../../packages/publisher/test/fake-github.ts";
 import { serveFixture } from "../../../scripts/serve-fixture.mjs";
 import { createApp } from "../src/app.ts";
-import { BrandStore, BriefStore, PageStore, SubmissionStore } from "../src/store.ts";
+import { BrandStore, BriefStore, GateStore, PageStore, SubmissionStore } from "../src/store.ts";
 import { assertPublicUrl } from "../src/url-guard.ts";
 
 describe("assertPublicUrl", () => {
@@ -36,6 +38,7 @@ describe("API", () => {
       briefs: new BriefStore(join(dir, "briefs")),
       pages: new PageStore(join(dir, "pages")),
       submissions: new SubmissionStore(join(dir, "submissions")),
+      gates: new GateStore(join(dir, "gates")),
       generator: templateGenerator(),
       pageGenerator: templatePageGenerator(),
       formSecrets: { webhookSecret: "test-secret" },
@@ -174,6 +177,7 @@ describe("API", () => {
         briefs: new BriefStore(join(dir, "briefs")),
         pages: new PageStore(join(dir, "pages")),
         submissions: new SubmissionStore(join(dir, "submissions")),
+        gates: new GateStore(join(dir, "gates")),
         outputDir: join(dir, "out"),
         generator: { name: "broken", generate: async () => { throw new GenerationError("The model declined to write this brief."); } },
       });
@@ -189,6 +193,7 @@ describe("API", () => {
         briefs: new BriefStore(join(dir, "briefs")),
         pages: new PageStore(join(dir, "pages")),
         submissions: new SubmissionStore(join(dir, "submissions")),
+        gates: new GateStore(join(dir, "gates")),
         outputDir: join(dir, "out"),
         generator: templateGenerator(),
         seoProviders: [down],
@@ -344,6 +349,7 @@ describe("API", () => {
         briefs: new BriefStore(join(dir, "briefs")),
         pages: new PageStore(join(dir, "pages")),
         submissions: new SubmissionStore(join(dir, "submissions")),
+        gates: new GateStore(join(dir, "gates")),
         generator: templateGenerator(),
         pageGenerator: templatePageGenerator(),
         outputDir: join(dir, "out"),
@@ -353,6 +359,91 @@ describe("API", () => {
       expect(res.status).toBe(502);
       expect(received.length).toBe(before);
       expect((await strict.request("/api/forms/nope", json({}))).status).toBe(404);
+    });
+  });
+
+  describe("publishing", () => {
+    const gh = fakeGitHub("northloop/site", { "site/_headers": "/*\n  X-Robots-Tag: all\n", "lph.json": JSON.stringify({ publicDir: "site", sourceDir: ".lph/pages", functionsDir: "functions" }) });
+    let publisher: ReturnType<typeof createApp>;
+    let page: Page;
+    const runner: GateRunner = { environment: "server", parse: parseDocument };
+
+    beforeAll(async () => {
+      publisher = createApp({
+        store: new BrandStore(join(dir, "brands")),
+        briefs: new BriefStore(join(dir, "briefs")),
+        pages: new PageStore(join(dir, "pages")),
+        submissions: new SubmissionStore(join(dir, "submissions")),
+        gates: new GateStore(join(dir, "gates")),
+        generator: templateGenerator(),
+        pageGenerator: templatePageGenerator(),
+        outputDir: join(dir, "out"),
+        allowPrivateUrls: true,
+        gateRunner: async () => runner,
+        publish: { github: { repo: "northloop/site", base: "main", token: "test-token", fetch: gh.fetch }, site: { origin: "https://www.northloop.example" }, previewUrl: "https://{branch}.northloop-site.pages.dev" },
+      });
+      const brief: Brief = await (await publisher.request(`/api/brands/${brand.id}/briefs?wait=true`, json({ prompt: "Landing page for our HubSpot integration for ops managers" }))).json();
+      page = await (await publisher.request(`/api/briefs/${brief.id}/pages?wait=true`, { method: "POST" })).json();
+    });
+
+    const gate = async () => (await publisher.request(`/api/pages/${page.id}/gate?wait=true`, { method: "POST" })).json() as Promise<GateReport>;
+    const publish = () => publisher.request(`/api/pages/${page.id}/publish`, { method: "POST" });
+
+    it("won't publish until the checks pass on this version of the page", async () => {
+      const preview = await (await publisher.request(`/api/pages/${page.id}/publish`)).json();
+      expect(preview).toMatchObject({ target: { kind: "github", repo: "northloop/site", base: "main" }, gate: null, plan: { branch: `lph/${page.slug}`, classification: { risk: "review" } } });
+      expect(preview.config).toMatchObject({ origin: "https://www.northloop.example", publicDir: "site", functionsDir: "functions" });
+      expect((await publish()).status).toBe(409);
+      expect((await publisher.request(`/api/pages/${page.id}/site.zip`)).status).toBe(409);
+
+      // The offline writer leaves copy for a person, so the gate blocks.
+      const blocked = await gate();
+      expect(blocked).toMatchObject({ pageId: page.id, environment: "server", verdict: "blocked" });
+      expect((await (await publish()).json()).error).toMatch(/found errors/);
+    });
+
+    it("opens a pull request with the pages, their source and the form endpoint", async () => {
+      const fill = (v: unknown): unknown =>
+        typeof v === "string" ? (v.includes(PLACEHOLDER) ? "Written by a person" : v) : Array.isArray(v) ? v.map(fill) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fill(x)])) : v;
+      const done = { ...page, blocks: (fill(page.blocks) as Page["blocks"]).filter((b) => b.type !== "testimonial"), variants: fill(page.variants) as Page["variants"], form: { ...page.form, connector: "hubspot" as const, hubspotPortalId: "123456", hubspotFormId: "0e295a5b-85c8-4061-a36f-eb1f0749b877" } };
+      page = await (await publisher.request(`/api/pages/${page.id}`, { ...json(done), method: "PUT" })).json();
+      const report = await gate();
+      expect(report.checks.flatMap((c) => c.issues.filter((i) => i.severity === "error"))).toEqual([]);
+
+      const res = await publish();
+      expect(res.status).toBe(201);
+      const result = await res.json();
+      expect(result).toMatchObject({ number: 1, branch: `lph/${page.slug}`, risk: "review", created: true });
+      expect(result.previews[0].url).toBe(`https://lph-${page.slug}.northloop-site.pages.dev/${page.slug}`);
+      const files = gh.filesOn(`lph/${page.slug}`);
+      expect(files[`site/${page.slug}.html`]).toContain(`<link rel="canonical" href="https://www.northloop.example/${page.slug}"/>`);
+      expect(files[`site/${page.slug}.html`]).toContain(`action="/api/forms/${page.id}"`);
+      expect(JSON.parse(files[`.lph/pages/${page.slug}.json`]!).page.published).toBeUndefined();
+      expect(files["functions/api/forms/[pageId].ts"]).toContain("handleForm");
+      expect(gh.pulls[0]!.body).toContain("### Checks");
+
+      const after = await (await publisher.request(`/api/pages/${page.id}/publish`)).json();
+      expect(after.published).toMatchObject({ number: 1, url: "https://github.com/northloop/site/pull/1", risk: "review" });
+      // Publishing the same page again only refreshes the description.
+      const again = await (await publish()).json();
+      expect(again).toMatchObject({ number: 1, created: false, unchanged: true });
+
+      const zip = await publisher.request(`/api/pages/${page.id}/site.zip`);
+      expect(zip.headers.get("content-type")).toBe("application/zip");
+      expect(new TextDecoder().decode((await zip.arrayBuffer()).slice(0, 2))).toBe("PK");
+    });
+
+    it("needs the checks again after an edit", async () => {
+      page = await (await publisher.request(`/api/pages/${page.id}`, { ...json({ ...page, title: "Edited" }), method: "PUT" })).json();
+      expect((await (await publisher.request(`/api/pages/${page.id}/publish`)).json()).gate).toBeNull();
+      expect((await publish()).status).toBe(409);
+    });
+
+    it("says what to do when no repo is connected", async () => {
+      const res = await app.request(`/api/pages/${page.id}/publish`, { method: "POST" });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toMatch(/LPH_GITHUB_REPO/);
+      expect((await (await app.request(`/api/pages/${page.id}/publish`)).json()).target).toBeNull();
     });
   });
 

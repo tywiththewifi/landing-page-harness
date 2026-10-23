@@ -229,3 +229,13 @@ function PageDocument({ page, brand, uiCss, opts }: { page: Page; brand: Brand; 
 export function renderPage(page: Page, brand: Brand, uiCss: string, opts: RenderOptions = {}): string {
   return `<!doctype html>\n${renderToStaticMarkup(<PageDocument page={page} brand={brand} uiCss={uiCss} opts={opts} />)}\n`;
 }
+
+/** Every version of the page as it will be published: the general page first, then each persona's. */
+export function renderVersions(page: Page, brand: Brand, uiCss: string, opts: Omit<RenderOptions, "variant"> = {}) {
+  return [null, ...page.variants].map((v) => ({
+    slug: v?.slug ?? null,
+    name: v?.name ?? "General",
+    path: versionPath(page, v),
+    html: renderPage(page, brand, uiCss, { ...opts, variant: v?.id ?? null }),
+  }));
+}

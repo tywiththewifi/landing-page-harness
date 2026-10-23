@@ -15,7 +15,9 @@ import {
 } from "@lph/brief/browser";
 import { generateDesignMd } from "@lph/design-md";
 import { checkBrief } from "@lph/brief/check";
-import { pageEdit, pruneOverrides, templatePageGenerator, toPage, type Page } from "@lph/page/browser";
+import { browserRunner, runGate, type GateReport } from "@lph/checks/browser";
+import { pageEdit, pruneOverrides, renderVersions, templatePageGenerator, toPage, type Page } from "@lph/page/browser";
+import { cloudflareZip, DEFAULT_SITE, formAction, planPublish, type SiteConfig } from "@lph/publisher/browser";
 import { renderPreview } from "@lph/kit/preview";
 import { checkContrast, resolveConflict, type Brand, type SiteMcp } from "@lph/tokens";
 import uiCss from "@lph/ui/styles.css?raw";
@@ -28,9 +30,11 @@ import northloop from "./northloop.json";
  * replays a real extraction of the Northloop fixture (fixtures/northloop, with its URLs
  * moved to northloop.example); everything after that runs the same packages as the
  * server: conflict resolution, contrast, DESIGN.md, the preview, the offline brief
- * writer and the brief checks, and the offline page writer. The site's MCP server is the fixture's (mcp.json),
- * answered here the way scripts/serve-fixture.mjs answers it. Changes are kept in
- * this browser only.
+ * writer and the brief checks, the offline page writer, and the publish gate (axe in a
+ * sandboxed frame, no lab timings). The site's MCP server is the fixture's (mcp.json),
+ * answered here the way scripts/serve-fixture.mjs answers it. Nothing is pushed: the
+ * Publish step shows the pull request it would open, and the Cloudflare download is real.
+ * Changes are kept in this browser only.
  *
  * When the build names an import service (IMPORT_SERVICE), any other site is imported
  * through it, and any other MCP server is read through it. Northloop stays local.
@@ -43,16 +47,17 @@ interface State {
   brands: Record<string, Brand>;
   briefs: Record<string, Brief>;
   pages: Record<string, Page>;
+  gates: Record<string, GateReport>;
 }
 
 function load(): State {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) ?? "null") as State | null;
-    if (saved?.brands && saved.briefs) return { ...saved, pages: saved.pages ?? {} };
+    if (saved?.brands && saved.briefs) return { ...saved, pages: saved.pages ?? {}, gates: saved.gates ?? {} };
   } catch {
     // Storage can be blocked or hold something else; start fresh.
   }
-  return { brands: {}, briefs: {}, pages: {} };
+  return { brands: {}, briefs: {}, pages: {}, gates: {} };
 }
 
 let state = load();
@@ -66,7 +71,7 @@ function persist() {
 }
 
 export function resetDemo() {
-  state = { brands: {}, briefs: {}, pages: {} };
+  state = { brands: {}, briefs: {}, pages: {}, gates: {} };
   try {
     localStorage.removeItem(KEY);
   } catch {
@@ -195,6 +200,17 @@ function collectSample(topic: string, allowed: string[]): SiteData {
 }
 const generator = templateGenerator();
 const pageGenerator = templatePageGenerator();
+
+/** The demo publishes to the default layout, on the brand's own domain. */
+const siteConfig = (brand: Brand): SiteConfig => ({ ...DEFAULT_SITE, origin: new URL(brand.url).origin });
+const targetsOf = (brief: Brief) => ({ keyword: brief.seo.primaryKeyword, questions: brief.seo.questions.map((q) => q.question) });
+/** The latest report, when it's for the page as it is now. */
+const freshGate = (page: Page) => {
+  const report = state.gates[page.id];
+  return report && report.pageUpdatedAt === page.updatedAt ? report : null;
+};
+// axe is 560 KB, so it loads only when the checks run.
+const gateRunner = browserRunner({ axeSource: () => import("axe-core/axe.min.js?raw").then((m) => m.default) });
 
 const SAMPLE_HOST = new URL(SAMPLE.url).hostname;
 /** True when a URL is answered by the sample: always without a service, and for Northloop with one. */
@@ -390,5 +406,40 @@ export const demoApi: typeof api = {
   },
   async leads() {
     return [];
+  },
+
+  async runGate(pageId) {
+    const page = mustGetPage(pageId);
+    const brief = mustGetBrief(page.briefId);
+    const brand = mustGet(page.brandId);
+    const config = siteConfig(brand);
+    const versions = renderVersions(page, brand, uiCss, { origin: config.origin, formAction: formAction(page, config) });
+    // The checks start now; the job's steps play while they run.
+    const run = runGate({ model: { page, brief, brand }, versions }, gateRunner);
+    run.catch(() => {});
+    return startJob(["Rendering every version", "Checking the copy, brand and SEO", "Checking accessibility with axe"], async () => {
+      state.gates[page.id] = await run;
+      persist();
+      return { pageId: page.id };
+    });
+  },
+  async publishInfo(pageId) {
+    const page = mustGetPage(pageId);
+    const brand = mustGet(page.brandId);
+    const config = siteConfig(brand);
+    const gate = freshGate(page);
+    const { files: _, ...plan } = await planPublish({ page, brand, uiCss, config, gate, targets: targetsOf(mustGetBrief(page.briefId)), read: async () => null });
+    return { target: null, config, gate, report: state.gates[page.id] ?? null, plan, published: page.published ?? null };
+  },
+  async publish() {
+    throw new Error("The demo doesn't push anywhere. Run the studio with a site repo connected to open pull requests.");
+  },
+  async siteZip(pageId) {
+    const page = mustGetPage(pageId);
+    const brand = mustGet(page.brandId);
+    const gate = freshGate(page);
+    if (!gate || gate.verdict === "blocked") throw new Error(gate ? "The checks found errors. Fix them before downloading the page to host." : "Run the checks on this version of the page first.");
+    const bytes = await cloudflareZip({ page, brand, uiCss, config: siteConfig(brand), gate, targets: targetsOf(mustGetBrief(page.briefId)) });
+    return new Blob([bytes], { type: "application/zip" });
   },
 };
