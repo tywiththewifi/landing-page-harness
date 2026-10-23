@@ -83,17 +83,33 @@ function buttonVars(b: ButtonStyle): string[] {
   ];
 }
 
-function cardVars(c: CardStyle): string[] {
+/** Text on a card: ink where it reads, else white or ink, whichever reads better (dark cards). */
+export function cardText(c: CardStyle, sem: { ink: string; muted: string }): { fg: string; muted: string } {
+  if (contrastRatio(sem.ink, c.background) >= 4.5) return { fg: sem.ink, muted: contrastRatio(sem.muted, c.background) >= 4.5 ? sem.muted : sem.ink };
+  const fg = contrastRatio("#ffffff", c.background) >= contrastRatio(sem.ink, c.background) ? "#ffffff" : sem.ink;
+  return { fg, muted: fg };
+}
+
+function cardVars(c: CardStyle, sem: { ink: string; muted: string }): string[] {
   const p = `--card-${c.name}`;
+  const text = cardText(c, sem);
   return [
     `${p}-bg: ${c.background};`,
+    `${p}-fg: ${text.fg};`,
+    `${p}-muted: ${text.muted};`,
     `${p}-border: ${c.borderColor ?? "transparent"};`,
     `${p}-border-width: ${px(c.borderWidth)};`,
     `${p}-radius: ${px(c.radius)};`,
     `${p}-shadow: ${c.shadow ?? "none"};`,
-    `${p}-padding: ${px(c.padding)};`,
+    `${p}-padding: ${px(cardPadding(c))};`,
   ];
 }
+
+/**
+ * Cards on many sites pad an inner wrapper below an image, so the card itself measures
+ * 0px (GoodHabitz). A section's text would then touch the card's edge, so it gets room.
+ */
+export const cardPadding = (c: CardStyle): number => (c.padding >= 12 ? c.padding : Math.min(32, Math.max(16, c.radius)));
 
 const indent = (lines: string[], n = 2) => lines.map((l) => " ".repeat(n) + l).join("\n");
 
@@ -147,7 +163,7 @@ export function toCss(brand: Brand, opts: { selector?: string } = {}): string {
     ...brand.buttons.flatMap(buttonVars),
     "",
     "/* Cards */",
-    ...brand.cards.flatMap(cardVars),
+    ...brand.cards.flatMap((c) => cardVars(c, sem)),
   ];
 
   if (brand.input) {
@@ -194,7 +210,7 @@ export function toCss(brand: Brand, opts: { selector?: string } = {}): string {
     ...brand.cards.map((c) => {
       const p = `--card-${c.name}`;
       return `${scope}.lph-card--${c.name} {\n${indent(
-        ["bg", "border", "border-width", "radius", "shadow", "padding"].map((k) => `--_${k}: var(${p}-${k});`),
+        ["bg", "fg", "muted", "border", "border-width", "radius", "shadow", "padding"].map((k) => `--_${k}: var(${p}-${k});`),
       )}\n}`;
     }),
   );

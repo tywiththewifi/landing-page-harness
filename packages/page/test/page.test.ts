@@ -10,7 +10,9 @@ import {
   checkPage,
   claudePageGenerator,
   emptyBlock,
+  heroTone,
   keyLabel,
+  navTone,
   pageEdit,
   pruneOverrides,
   renderPage,
@@ -270,6 +272,38 @@ describe("renderPage", () => {
     expect(buttonsFor(brand, "hero").primary).toBe("secondary");
     expect(buttonsFor(brand, "default").primary).toBe("primary");
     expect(buttonsFor(brand, "hero").visible).toBe(true);
+  });
+
+  it("moves the hero off the brand colour when no button would stand out on it", async () => {
+    // Genki: a red button with a large bold white label (3.4:1, enough for large text), and a red brand.
+    const red = { ...brand.buttons.find((b) => b.kind === "filled")!, name: "primary", background: "#ff3e3e", color: "#ffffff", context: "#ffffff", fontSize: 20, fontWeight: 800 };
+    const genki = { ...brand, colors: brand.colors.map((c) => (c.role === "brand" ? { ...c, value: "#ff3e3e" } : c)), buttons: [red] } as Brand;
+    expect(heroTone(genki)).toBe("subtle");
+    expect(buttonsFor(genki, "hero")).toMatchObject({ primary: "primary", visible: true });
+    const { page } = await finishedPage();
+    const html = renderPage(page, genki, css);
+    expect(html).toContain("lph-hero--subtle");
+    // The same label at body size needs 4.5:1, so nothing on the page would stand out.
+    const small = { ...genki, buttons: [{ ...red, fontSize: 16, fontWeight: 400 }] } as Brand;
+    expect(buttonsFor(small, "default").visible).toBe(false);
+    // Northloop's hero keeps its brand colour, unless a person picks the subtle band.
+    expect(heroTone(brand, "default")).toBe("brand");
+    expect(heroTone(brand, "subtle")).toBe("subtle");
+  });
+
+  it("lets keyboard users scroll a comparison table", async () => {
+    const { page } = await finishedPage();
+    const table = { ...emptyBlock("comparison", "compare", {}), heading: "Northloop or spreadsheets" };
+    expect(renderPage({ ...page, blocks: [table] }, brand, css)).toMatch(/<div class="lph-table-wrap" tabindex="0" role="region" aria-label="[^"]+">/);
+  });
+
+  it("puts the header on the brand colour when the logo is drawn for a dark one", () => {
+    // SCAYLE: a white and mint wordmark that vanishes on a white header.
+    const light = { ...brand, colors: brand.colors.map((c) => (c.role === "brand" ? { ...c, value: "#032819" } : c)), logo: { kind: "svg", svg: '<svg><path fill="#fff"/><path fill="#14ffa8"/></svg>' } } as Brand;
+    expect(navTone(light)).toBe("brand");
+    // A dark mark, or one in currentColor, keeps the header where the site has it.
+    expect(navTone({ ...light, logo: { kind: "svg", svg: '<svg><path fill="#0f0f0f"/></svg>' } } as Brand)).toBe(navTone(brand));
+    expect(navTone({ ...light, logo: { kind: "svg", svg: '<svg><path fill="currentColor"/></svg>' } } as Brand)).toBe(navTone(brand));
   });
 
   it("previews the form without sending when there's no action", async () => {

@@ -505,19 +505,37 @@ export async function collectPage(): Promise<PageSample> {
   let logoLink: HTMLAnchorElement | null = null;
   if (header) {
     const anchors = [...header.querySelectorAll("a")].filter((a) => visible(a));
-    const graphic = (a: Element) => a.querySelector("svg, img") ?? cssGraphic(a);
+    // Menu chevrons and other icons are graphics too, but a logo is bigger than 20px one way.
+    const mark = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return r.width >= 20 || r.height >= 20;
+    };
+    const graphic = (a: Element) => [...a.querySelectorAll("svg, img")].find(mark) ?? cssGraphic(a);
     const left = (a: Element) => a.getBoundingClientRect().left;
     // Prefer a home link with a graphic, then the left-most link with a graphic, then any
     // home link with text (not a link to a section of the home page).
     logoLink =
       anchors.find((a) => isHomeHref(a.href) && graphic(a)) ??
       anchors.filter((a) => graphic(a) && left(a) < vw * 0.3).sort((a, b) => left(a) - left(b))[0] ??
-      anchors.find((a) => isHomeHref(a.href) && !new URL(a.href, location.href).hash && ownText(a).length > 0) ??
+      // href="#" opens a menu (SCAYLE's "Platform"), though it resolves to the home page.
+      anchors.find((a) => isHomeHref(a.href) && !a.getAttribute("href")?.startsWith("#") && !new URL(a.href, location.href).hash && ownText(a).length > 0) ??
       null;
     const scope = logoLink ?? header;
     // Sites often ship a second logo for small screens, hidden on desktop.
-    const svg = [...scope.querySelectorAll("svg")].find(visible) ?? scope.querySelector("svg");
-    const img = [...scope.querySelectorAll("img")].find(visible) ?? scope.querySelector("img");
+    // Some sites don't link their logo (SCAYLE): then it's a wide mark at the top left of the page.
+    const topLeft = (sel: string) =>
+      [...document.querySelectorAll(sel)].find((el) => {
+        const r = el.getBoundingClientRect();
+        return visible(el) && r.top < 150 && r.left < vw * 0.3 && r.width >= 60 && r.width < 400 && r.height < 120;
+      });
+    // Inside the logo link, a hidden one is the small-screen logo; a visible tiny one is an icon.
+    const pick = (sel: string) =>
+      [...scope.querySelectorAll(sel)].find((el) => visible(el) && mark(el)) ??
+      (logoLink ? [...scope.querySelectorAll(sel)].find((el) => !visible(el)) : undefined) ??
+      topLeft(sel) ??
+      null;
+    const svg = pick("svg") as SVGElement | null;
+    const img = svg ? null : pick("img");
     const drawn = !svg && !img ? cssGraphic(scope) : null;
     // Only text shown next to the mark (a wordmark), not the SVG's own <title>/<text>.
     const label = () => {

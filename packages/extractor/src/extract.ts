@@ -84,7 +84,12 @@ export async function botCheck(page: Page): Promise<string | null> {
 }
 
 async function capture(page: Page, url: string, timeoutMs: number): Promise<PageSample> {
-  await page.goto(url, { waitUntil: "load", timeout: timeoutMs });
+  await page.goto(url, { waitUntil: "load", timeout: timeoutMs }).catch(async (err: unknown) => {
+    // The previous page's scripts can cancel the next navigation (GoodHabitz does on the
+    // second visit to its home page); trying once more gets through.
+    if (!String(err).includes("net::ERR_ABORTED")) throw err;
+    await page.goto(url, { waitUntil: "load", timeout: timeoutMs });
+  });
   await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
   // Some checks pass by themselves after a few seconds and reload the page.
   for (let i = 0; i < 4 && (await botCheck(page)); i++) {
