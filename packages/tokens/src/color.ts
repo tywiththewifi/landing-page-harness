@@ -96,6 +96,25 @@ export function contrastRatio(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+/** A colour in a drawing and how much of it there is, in pixels say. */
+export interface ColorShare {
+  color: string;
+  weight: number;
+}
+
+/**
+ * How well a drawing such as a logo, sampled as colour shares, stands out on a background:
+ * the share of it that reaches 3:1, WCAG's minimum for graphics, and the contrast of its
+ * main colour. Genki's red wordmark on a band of the same red keeps only its leaf.
+ */
+export function drawingContrast(colors: ColorShare[], background: string, min = 3): { share: number; main: number } {
+  const total = colors.reduce((n, c) => n + c.weight, 0);
+  if (!total) return { share: 1, main: 21 };
+  const main = colors.reduce((a, b) => (b.weight > a.weight ? b : a));
+  const visible = colors.filter((c) => contrastRatio(c.color, background) >= min).reduce((n, c) => n + c.weight, 0);
+  return { share: visible / total, main: contrastRatio(main.color, background) };
+}
+
 /** Euclidean distance in RGB, weighted towards how people perceive it ("redmean"). */
 export function colorDistance(a: string, b: string): number {
   const x = parseColor(a)!;
