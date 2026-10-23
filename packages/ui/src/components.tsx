@@ -30,9 +30,10 @@ export interface CardProps {
   children?: ReactNode;
 }
 
-export function Card({ variant = "default", title, children }: CardProps) {
+/** Without a variant (a brand with no measured card styles), the card is drawn from the colour and radius tokens alone. */
+export function Card({ variant, title, children }: CardProps) {
   return (
-    <div className={cx("lph-card", `lph-card--${variant}`)}>
+    <div className={cx("lph-card", variant && `lph-card--${variant}`)}>
       {title ? <h3 className="lph-h3">{title}</h3> : null}
       {children}
     </div>
@@ -151,6 +152,8 @@ export interface LeadFormProps {
   /** Where submissions are posted (the forms webhook). */
   action?: string;
   variant?: string;
+  /** The brand's card style the form sits in. Without one, the card is drawn from the tokens. */
+  card?: string;
   /** What the details are used for, under the button. */
   consent?: ReactNode;
   /** Shown in place of the form once a submission goes through (the page's form script swaps it in). */
@@ -159,9 +162,9 @@ export interface LeadFormProps {
   honeypot?: string;
 }
 
-export function LeadForm({ title, fields, submitLabel, action, variant = "primary", consent, successMessage, honeypot }: LeadFormProps) {
+export function LeadForm({ title, fields, submitLabel, action, variant = "primary", card, consent, successMessage, honeypot }: LeadFormProps) {
   return (
-    <div className="lph-card lph-card--default">
+    <div className={cx("lph-card", card && `lph-card--${card}`)}>
       {title ? <h3 className="lph-h3">{title}</h3> : null}
       <form className="lph-form" method="post" action={action} data-success={successMessage}>
         {fields.map((f) => (

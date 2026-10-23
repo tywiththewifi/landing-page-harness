@@ -28,7 +28,7 @@ export function BrandPreview({ brand }: { brand: Brand }) {
   const heroCtas = onBrand.length ? onBrand : filled.slice(0, 2);
   // Match where the site puts its header: a logo drawn in the brand colour vanishes on a brand band.
   const navOnBrand = brand.colors.find((c) => c.role === "brand")?.usage.includes("navigation") ?? false;
-  const card = (i: number) => brand.cards[i % Math.max(1, brand.cards.length)]?.name ?? "default";
+  const card = (i: number) => brand.cards[i % Math.max(1, brand.cards.length)]?.name;
 
   return (
     <div className="lph">
@@ -56,6 +56,7 @@ export function BrandPreview({ brand }: { brand: Brand }) {
             title="Book a demo"
             submitLabel="Submit"
             variant={onBrand[0]?.name ?? filled[0]?.name}
+            card={card(0)}
             fields={[
               { name: "email", label: "Work email", type: "email", placeholder: "you@company.com", required: true },
               { name: "company", label: "Company", placeholder: "Company name" },

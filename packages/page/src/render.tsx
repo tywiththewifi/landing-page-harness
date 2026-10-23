@@ -124,6 +124,7 @@ function BlockView({ block, brand, formAction }: { block: Block; brand: Brand; f
                 submitLabel={block.submitLabel}
                 action={formAction}
                 variant={buttonsFor(brand, "default").primary}
+                card={brand.cards[0]?.name}
                 consent={opt(block.consent)}
                 successMessage={block.successMessage || "Thanks, we got it."}
                 honeypot={HONEYPOT}

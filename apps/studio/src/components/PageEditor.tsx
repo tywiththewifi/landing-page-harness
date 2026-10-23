@@ -156,7 +156,7 @@ function BlockFields({ block }: { block: Block }) {
               <SelectField
                 label="Card style"
                 value={block.cardVariant}
-                options={(brand.cards.length ? brand.cards.map((c) => c.name) : ["default"]).map((n) => [n, n] as [string, string])}
+                options={brand.cards.length ? brand.cards.map((c) => [c.name, c.name] as [string, string]) : [["", "From the tokens"]]}
                 onChange={(v) => editBlock(api, block, (b) => void (b.cardVariant = v))}
               />
             )}
