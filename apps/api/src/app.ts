@@ -20,14 +20,16 @@ import {
   type SeoProvider,
   type SiteData,
 } from "@lph/brief";
+import { runGate, serverRunner, type GateRunner } from "@lph/checks";
 import { generateDesignMd } from "@lph/design-md";
 import { extractBrand, type ExtractOptions } from "@lph/extractor";
 import { deliver, parseSubmission, type Connector, type DeliveryResult } from "@lph/forms";
 import { previewHtml, uiCss, writeBrandKit } from "@lph/kit";
-import { checkPage, defaultPageGenerator, findVariant, pageEdit, pruneOverrides, renderPage, toPage, type Page, type PageGenerator } from "@lph/page";
+import { checkPage, defaultPageGenerator, findVariant, pageEdit, pruneOverrides, renderPage, renderVersions, toPage, type Page, type PageGenerator } from "@lph/page";
+import { cloudflareZip, DEFAULT_SITE, formAction, github, GitHubError, planPublish, type GitHubTarget, type SiteConfig } from "@lph/publisher";
 import { checkContrast, resolveConflict, toCss, toDtcg, type Brand } from "@lph/tokens";
 import { openApi } from "./openapi.ts";
-import type { BrandStore, BriefStore, PageStore, StoredSubmission, SubmissionStore } from "./store.ts";
+import type { BrandStore, BriefStore, GateStore, PageStore, StoredSubmission, SubmissionStore } from "./store.ts";
 import { assertPublicUrl, browserGuard, UrlRejected } from "./url-guard.ts";
 
 export interface Job {
@@ -45,6 +47,16 @@ export interface AppOptions {
   briefs: BriefStore;
   pages: PageStore;
   submissions: SubmissionStore;
+  /** The latest publish gate report for each page. */
+  gates: GateStore;
+  /** Runs the gate's browser checks (axe, lab timings). Defaults to Chromium on this server. */
+  gateRunner?: () => Promise<GateRunner>;
+  /**
+   * Publishing. With a GitHub repo, pages are published as pull requests into it; the
+   * repo's lph.json says how it's laid out, and `site` overrides it. Without one, pages
+   * download as a folder for Cloudflare Pages.
+   */
+  publish?: { github?: GitHubTarget; site?: Partial<SiteConfig>; previewUrl?: string };
   /** Writes briefs. Defaults to Claude when credentials are set, the offline template otherwise. */
   generator?: BriefGenerator;
   /** Writes page copy. Same default as briefs. */
@@ -106,7 +118,7 @@ export function createApp(opts: AppOptions) {
   const extract = opts.extract ?? extractBrand;
   const generator = opts.generator ?? defaultGenerator();
   const pageGenerator = opts.pageGenerator ?? defaultPageGenerator();
-  const { pages, submissions } = opts;
+  const { pages, submissions, gates } = opts;
   const providers = opts.seoProviders?.length ? opts.seoProviders : [bestPractices];
   const jobs = new Map<string, Job>();
   const app = new Hono();
@@ -117,6 +129,7 @@ export function createApp(opts: AppOptions) {
     if (err instanceof HTTPException) return c.json({ error: err.message }, err.status);
     if (err instanceof UrlRejected) return c.json({ error: err.message }, 400);
     if (err instanceof GenerationError) return c.json({ error: err.message }, 502);
+    if (err instanceof GitHubError) return c.json({ error: err.message }, err.status === 409 ? 409 : 502);
     if (err instanceof z.ZodError) return c.json({ error: "Invalid request", issues: err.issues }, 400);
     console.error(err);
     return c.json({ error: "Something went wrong" }, 500);
@@ -425,7 +438,114 @@ export function createApp(opts: AppOptions) {
   app.get("/api/brands/:id/contrast", async (c) => c.json(checkContrast(await mustGet(c.req.param("id")))));
   app.get("/api/brands/:id/preview.html", async (c) => c.html(await previewHtml(await mustGet(c.req.param("id")))));
 
-  // Confirm: write the brand kit. In M4 this becomes a pull request into the company's repo.
+  // Phase 4: the publish gate, then a pull request into the company's site repo (or a Cloudflare Pages bundle).
+  let runner: Promise<GateRunner> | null = null;
+  const getRunner = () => (runner ??= opts.gateRunner ? opts.gateRunner() : serverRunner(browserGuard(opts.allowPrivateUrls)));
+  const repo = opts.publish?.github ? github(opts.publish.github) : null;
+  const relPath = z.string().regex(/^(?!\/)(?!.*(^|\/)\.\.(\/|$))[\w.\-/]*$/, "A path inside the repo");
+  const siteSettings = z.object({
+    origin: z.string().regex(/^https?:\/\/[^/]+$/, "The site's origin, like https://www.example.com"),
+    publicDir: relPath,
+    sourceDir: relPath.min(1),
+    functionsDir: relPath.min(1).nullable(),
+    formEndpoint: z.union([z.literal("site"), z.string().regex(/^https:\/\/[^/]+$/)]),
+  });
+  /** How the site repo is laid out: the defaults, then the repo's lph.json, then the server's settings. */
+  const siteConfig = async (brand: Brand): Promise<SiteConfig> => {
+    let fromRepo: Partial<SiteConfig> = {};
+    const text = repo ? await repo.read("lph.json").catch(() => null) : null;
+    try {
+      if (text) fromRepo = JSON.parse(text);
+    } catch {
+      throw new HTTPException(502, { message: "The site repo's lph.json isn't valid JSON." });
+    }
+    const merged = { ...DEFAULT_SITE, origin: new URL(brand.url).origin, ...fromRepo, ...opts.publish?.site };
+    const parsed = siteSettings.safeParse(merged);
+    if (!parsed.success) throw new HTTPException(502, { message: `The site settings aren't usable: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}` });
+    return parsed.data;
+  };
+  const targetsOf = (brief: Brief) => ({ keyword: brief.seo.primaryKeyword, questions: brief.seo.questions.map((q) => q.question) });
+  /** The latest report, when it's for the page as it is now. */
+  const freshGate = async (page: Page) => {
+    const report = await gates.latest(page.id);
+    return report && report.pageUpdatedAt === page.updatedAt ? report : null;
+  };
+
+  app.post("/api/pages/:id/gate", async (c) => {
+    const page = await mustGetPage(c.req.param("id"));
+    const brief = await mustGetBrief(page.briefId);
+    const brand = await mustGet(page.brandId);
+    const { job, done } = runJob(async (job) => {
+      job.step = "Rendering every version";
+      const config = await siteConfig(brand);
+      const versions = renderVersions(page, brand, await uiCss(), { origin: config.origin, formAction: formAction(page, config) });
+      const report = await runGate({ model: { page, brief, brand }, versions }, await getRunner(), { onProgress: (step) => (job.step = step) });
+      await gates.put(report);
+      return { pageId: page.id };
+    });
+    if (c.req.query("wait") === "true") {
+      const finished = await done;
+      if (finished.status === "failed") return c.json(finished, 502);
+      return c.json(await gates.latest(page.id));
+    }
+    return c.json(job, 202);
+  });
+  app.get("/api/pages/:id/gate", async (c) => {
+    const page = await mustGetPage(c.req.param("id"));
+    const report = await gates.latest(page.id);
+    return report ? c.json(report) : c.json({ error: "The checks haven't run on this page yet." }, 404);
+  });
+
+  /** What publishing would do now: the files, the risk, and the pull request's description. Writes nothing. */
+  const plan = async (page: Page) => {
+    const brand = await mustGet(page.brandId);
+    const brief = await mustGetBrief(page.briefId);
+    const config = await siteConfig(brand);
+    const gate = await freshGate(page);
+    const result = await planPublish({ page, brand, uiCss: await uiCss(), config, gate, targets: targetsOf(brief), read: repo ? repo.read : async () => null, previewUrl: opts.publish?.previewUrl });
+    return { brand, brief, config, gate, plan: result };
+  };
+  app.get("/api/pages/:id/publish", async (c) => {
+    const page = await mustGetPage(c.req.param("id"));
+    const { config, gate, plan: p } = await plan(page);
+    const { files: _, ...summary } = p;
+    const gh = opts.publish?.github;
+    return c.json({
+      target: gh ? { kind: "github", repo: gh.repo, base: gh.base, reviewers: gh.reviewers ?? [] } : null,
+      config,
+      gate,
+      report: gate ?? (await gates.latest(page.id)),
+      plan: summary,
+      published: page.published ?? null,
+    });
+  });
+  app.post("/api/pages/:id/publish", async (c) => {
+    const page = await mustGetPage(c.req.param("id"));
+    if (!repo) throw new HTTPException(400, { message: "No site repo is connected. Set LPH_GITHUB_REPO and LPH_GITHUB_TOKEN on the server, or download the page for Cloudflare Pages." });
+    const { gate, plan: p } = await plan(page);
+    if (!gate) return c.json({ error: "Run the checks on this version of the page first." }, 409);
+    if (gate.environment !== "server") return c.json({ error: "The checks have to run on the server before publishing." }, 409);
+    if (gate.verdict === "blocked") return c.json({ error: "The checks found errors. Fix them, run the checks again, then publish." }, 409);
+    if (p.unchanged) return c.json({ error: `${opts.publish!.github!.base} already has this version of the page.` }, 409);
+    const result = await repo.publish(p, { expectedHead: page.published?.branch === p.branch ? page.published.commit : null });
+    // Not an edit: updatedAt stays, so the checks stay current.
+    await pages.save({ ...page, published: { branch: result.branch, commit: result.commit, number: result.number, url: result.url, risk: p.classification.risk, at: new Date().toISOString() } });
+    return c.json({ ...result, risk: p.classification.risk, reasons: p.classification.reasons, previews: p.previews }, result.created ? 201 : 200);
+  });
+
+  // The fallback: the same files as a folder for Cloudflare Pages, with the form endpoint as a Pages Function.
+  app.get("/api/pages/:id/site.zip", async (c) => {
+    const page = await mustGetPage(c.req.param("id"));
+    const brand = await mustGet(page.brandId);
+    const gate = await freshGate(page);
+    if (!gate || gate.verdict === "blocked") return c.json({ error: gate ? "The checks found errors. Fix them before downloading the page to host." : "Run the checks on this version of the page first." }, 409);
+    const bytes = await cloudflareZip({ page, brand, uiCss: await uiCss(), config: await siteConfig(brand), gate, targets: targetsOf(await mustGetBrief(page.briefId)) });
+    c.header("content-type", "application/zip");
+    c.header("content-disposition", `attachment; filename="${page.slug}-cloudflare-pages.zip"`);
+    return c.body(bytes);
+  });
+
+  // Confirm: write the brand kit.
   app.post("/api/brands/:id/confirm", async (c) => {
     const brand = await mustGet(c.req.param("id"));
     const dir = join(opts.outputDir, slug(brand.name));

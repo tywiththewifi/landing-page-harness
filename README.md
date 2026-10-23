@@ -9,11 +9,11 @@ It works on any website because it reads the CSS a site actually renders, not a 
 | 1. Brand | Enter a URL; get a reviewed design system (tokens, Design.md, starter components) | **Built** |
 | 2. Brief | Describe a campaign; get an editable marketing brief grounded in the site and your SEO/AEO tools | **Built** |
 | 3. Page | Generate the landing page from the starter components, one version per persona, with a lead form wired to HubSpot or a webhook | **Built** |
-| 4. Publish | Brand, accessibility, performance and SEO checks, then a pull request with a preview | Planned |
+| 4. Publish | Brand, accessibility, performance and SEO checks, then a pull request with a preview; copy edits merge themselves, the rest goes to a reviewer | **Built** |
 
 See [docs/spec.md](docs/spec.md) for the full plan.
 
-**Try it:** the [live demo](https://tywiththewifi.github.io/landing-page-harness/) runs the studio in your browser. Import any public site, or Northloop, a fictional sample. A small [import service](docs/import-service.md) opens the site in a headless browser and hands the measurements back, keeping nothing; everything else (conflicts, contrast, Design.md, the preview, briefs, pages and checks) runs in the browser on the same code as the app, with briefs and page copy from the offline writer.
+**Try it:** the [live demo](https://tywiththewifi.github.io/landing-page-harness/) runs the studio in your browser. Import any public site, or Northloop, a fictional sample. A small [import service](docs/import-service.md) opens the site in a headless browser and hands the measurements back, keeping nothing; everything else (conflicts, contrast, Design.md, the preview, briefs, pages, the publish checks and the Cloudflare Pages download) runs in the browser on the same code as the app, with briefs and page copy from the offline writer.
 
 ## Phase 1: brand import
 
@@ -83,6 +83,21 @@ The preview renders exactly the HTML that gets published: one H1, canonical and 
 |---|---|
 | ![Leads](docs/screenshots/16-page-leads.png) | |
 
+## Phase 4: publish
+
+![The checks blocking an unfinished page](docs/screenshots/17-publish-blocked.png)
+
+1. **Check.** Every version is rendered as it will go live and checked: the page's content rules, brand (nothing styled outside the tokens, the brand's fonts load), SEO and answer engines, accessibility with axe (WCAG 2.2 AA, at phone and desktop widths) and a performance budget measured in Chromium at phone size with a slowed CPU. Errors block publishing and link back to the field in the editor.
+2. **Pull request.** The page goes into the company's own site repo as one commit on its own branch: each version's HTML, the page's source, its security headers and the form endpoint. The description has a preview link per version, the check results and performance per version.
+3. **Risk.** A copy change to a page that's already live, with no new warnings, is labelled `lph:content` and merges itself once the repo's checks pass. A new page, a new section, a new link target, new brand tokens or a new warning is labelled `lph:needs-review` and the reviewers are asked. A warning a reviewer accepted isn't asked about again, unless its text changes.
+4. **CI decides again.** The site repo's workflow ([template](templates/site)) runs the checks on the committed HTML and works out the risk from the diff itself, comparing the HTML with its words taken out, so neither a label added by hand nor an HTML file edited by hand can skip review.
+5. **No repo?** The same files download as a Cloudflare Pages project, with the form endpoint as a Pages Function.
+
+See [docs/publish.md](docs/publish.md) for the checks, the budget, the risk rules and setting up the site repo.
+
+| ![The pull request for a new page](docs/screenshots/18-publish-pr.png) | ![A copy edit that merges itself](docs/screenshots/19-publish-copy-only.png) |
+|---|---|
+
 ## Quick start
 
 ```bash
@@ -96,7 +111,7 @@ pnpm fixture
 LPH_ALLOW_PRIVATE_URLS=1 pnpm dev
 ```
 
-Open http://localhost:5173 and import `http://127.0.0.1:4319/`, or any public site. Confirm the brand, then choose **Plan a page** to write a brief, and **Build the page** to make it.
+Open http://localhost:5173 and import `http://127.0.0.1:4319/`, or any public site. Confirm the brand, then choose **Plan a page** to write a brief, **Build the page** to make it, and **Publish** to check it and open a pull request (or download it for Cloudflare Pages).
 
 Set `ANTHROPIC_API_KEY` for Claude-written briefs and page copy (see [.env.example](.env.example) for the other settings).
 
@@ -126,6 +141,12 @@ curl localhost:8787/api/briefs/<briefId>/brief.md
 curl -X POST 'localhost:8787/api/briefs/<briefId>/pages?wait=true'
 curl localhost:8787/api/pages/<pageId>/check
 curl 'localhost:8787/api/pages/<pageId>/page.html?version=<persona>'
+
+# Run the publish gate (blocking), see what publishing would do, then open the pull request
+curl -X POST 'localhost:8787/api/pages/<pageId>/gate?wait=true'
+curl localhost:8787/api/pages/<pageId>/publish
+curl -X POST localhost:8787/api/pages/<pageId>/publish
+curl -o site.zip localhost:8787/api/pages/<pageId>/site.zip   # or as a Cloudflare Pages project
 ```
 
 An MCP server over the same API is planned (M5), so Claude, Codex, Cursor or any other MCP client can read a brand directly.
@@ -135,7 +156,7 @@ An MCP server over the same API is planned (M5), so Claude, Codex, Cursor or any
 ```
 apps/
   api/          Hono API: import, brief and page jobs, edits, conflict resolution, checks,
-                exports and the form endpoint
+                exports, the form endpoint, the publish gate and publishing
                 (public.ts: the demo's stateless import service)
   studio/       React Router + Vite + SCSS Modules review UI (src/demo: the serverless demo build)
 packages/
@@ -145,10 +166,15 @@ packages/
   design-md/    DESIGN.md generator
   page/         Page schema, persona versions, Claude and offline writers, checks, renderer
   forms/        Lead form fields, submission parsing, HubSpot and webhook delivery (Web APIs only)
+  checks/       The publish gate: content, brand, SEO/AEO, axe and performance, in Node or the browser
+  publisher/    Site files, risk, pull requests through GitHub's API, the Cloudflare Pages bundle,
+                and lph-site, the CLI the site repo's CI runs
   ui/           Starter components and page blocks: framework-agnostic CSS classes plus React wrappers
   kit/          Writes the brand kit and renders preview.html
 fixtures/
   northloop/    A fictional B2B site used by the tests
+templates/
+  site/         The company's site repo: lph.json, the landing pages workflow, wrangler.toml
 ```
 
 ## Security notes
@@ -156,6 +182,7 @@ fixtures/
 - The API drives a real browser to user-supplied URLs, so it refuses private and internal addresses (SSRF), unless `LPH_ALLOW_PRIVATE_URLS=1` is set for local fixtures. The same rule holds inside the browser: every request the page makes is checked before it's sent, and redirects are caught from the address that answered, so a page can't redirect or load its way inside. The site's MCP server is checked the same way, and redirects from it are refused.
 - Site copy and SEO tool output reach the model as data in tagged blocks, separate from its instructions, and the brief comes back through a strict schema. The SEO endpoint is set by the operator, not by users.
 - The form endpoint keeps only the fields the form asks for, validates them, and drops honeypot posts silently. Webhook URLs get the same SSRF rule as imports, redirects aren't followed, and posts can be signed (HMAC-SHA256 with a timestamp). Every lead is stored with its delivery result, so a failed delivery isn't lost. Page links are limited to sections, site paths, https, `mailto:` and `tel:`.
+- Published pages get a Content Security Policy in `_headers`: nothing loads or runs but the page's own inline script (allowed by its hash), and the form can post only to its endpoint. The GitHub token needs only the site repo's contents and pull requests, and stays on the server. The site repo's CI decides what merges by itself from the diff, not from the label. The gate's browser refuses private addresses like the importer's.
 - SVG logos are sanitised in the page's own DOM at extraction time (scripts, event handlers, external links and `foreignObject` removed). Design.md is sanitised before rendering, and site-derived strings can't close the preview's `<style>` block or a page's JSON-LD.
 
 ## Development

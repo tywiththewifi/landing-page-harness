@@ -1,0 +1,13 @@
+.grid {
+  display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 20px; align-items: start;
+  @media (max-width: 1080px) { grid-template-columns: 1fr; }
+}
+.body { padding: 16px 20px 20px; }
+.empty { margin: 0; color: var(--ui-muted); }
+.running { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; color: var(--ui-muted); }
+.spinner {
+  width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--ui-line-strong); border-top-color: var(--ui-accent);
+  animation: spin 0.8s linear infinite;
+  @media (prefers-reduced-motion: reduce) { animation-duration: 2.4s; }
+}
+@keyframes spin { to { transform: rotate(360deg); } }

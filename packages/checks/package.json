@@ -1,0 +1,21 @@
+{
+  "name": "@lph/checks",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./browser": "./src/browser.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@lph/brief": "workspace:*",
+    "@lph/page": "workspace:*",
+    "@lph/tokens": "workspace:*",
+    "axe-core": "4.14.0",
+    "linkedom": "0.18.13",
+    "playwright": "^1.64.1"
+  }
+}

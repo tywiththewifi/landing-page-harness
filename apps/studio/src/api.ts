@@ -1,6 +1,8 @@
 import type { Brief } from "@lph/brief/schema";
+import type { GateReport } from "@lph/checks/browser";
 import type { Submission } from "@lph/forms";
 import type { Page } from "@lph/page/browser";
+import type { PublishPlan, SiteConfig } from "@lph/publisher/browser";
 import type { Brand, ContrastCheck } from "@lph/tokens";
 
 export interface Job {
@@ -25,6 +27,29 @@ export interface Lead extends Submission {
   id: string;
   receivedAt: string;
   delivery: { status: "sent" | "stored" | "failed"; connector: string; detail?: string };
+}
+/** What publishing would do now, as the API works it out. Nothing is written. */
+export interface PublishInfo {
+  /** The site repo pull requests go to. Null when none is connected (and in the demo). */
+  target: { kind: "github"; repo: string; base: string; reviewers: string[] } | null;
+  config: SiteConfig;
+  /** The latest gate report, when it's for the page as it is now. Publishing needs one. */
+  gate: GateReport | null;
+  /** The latest gate report, current or not. Null before the checks have run. */
+  report: GateReport | null;
+  plan: Omit<PublishPlan, "files">;
+  published: Page["published"] | null;
+}
+export interface PublishResult {
+  number: number;
+  url: string;
+  branch: string;
+  commit: string;
+  created: boolean;
+  unchanged: boolean;
+  risk: "content" | "review";
+  reasons: string[];
+  previews: PublishPlan["previews"];
 }
 export interface SeoProviderInfo {
   id: string;
@@ -89,6 +114,16 @@ export const api = {
   page: (id: string) => request<Page>(`/api/pages/${id}`),
   savePage: (page: Page) => request<Page>(`/api/pages/${page.id}`, { method: "PUT", body: JSON.stringify(page) }),
   leads: (pageId: string) => request<Lead[]>(`/api/pages/${pageId}/submissions`),
+
+  runGate: (pageId: string) => request<Job>(`/api/pages/${pageId}/gate`, { method: "POST" }),
+  publishInfo: (pageId: string) => request<PublishInfo>(`/api/pages/${pageId}/publish`),
+  publish: (pageId: string) => request<PublishResult>(`/api/pages/${pageId}/publish`, { method: "POST" }),
+  /** The page as a folder for Cloudflare Pages. */
+  siteZip: async (pageId: string): Promise<Blob> => {
+    const res = await fetch(`/api/pages/${pageId}/site.zip`);
+    if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? `Download failed (${res.status})`);
+    return res.blob();
+  },
 };
 
 /** Polls a job until it finishes, reporting each step. */
