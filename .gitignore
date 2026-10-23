@@ -12,4 +12,4 @@ test-results
 playwright-report
 coverage
 .vite
-/runs
+runs/
