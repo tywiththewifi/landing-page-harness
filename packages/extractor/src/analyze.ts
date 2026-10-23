@@ -186,7 +186,8 @@ function analyzeColors(pages: PageCapture[], buttons: ButtonStyle[]) {
     chromaticBgs.find((b) => b.weight >= 1) ??
     ctaSorted.find((b) => isChromatic(b.key));
   if (brandBucket) {
-    const share = brandBucket.weight / Math.max(1, chromaticBgs.reduce((s, b) => s + b.weight, 0));
+    // When the brand comes from the buttons, its weight isn't on the bands' scale, so the share is capped.
+    const share = Math.min(1, brandBucket.weight / Math.max(1, chromaticBgs.reduce((s, b) => s + b.weight, 0)));
     const usage = placesFor(brandBucket.key);
     push(brandBucket.key, "brand", usage.length ? usage : ["calls to action"], brandBucket, 0.5 + share / 2);
   }
