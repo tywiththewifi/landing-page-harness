@@ -1,4 +1,4 @@
-import { contrastRatio, semanticColors, type Brand, type ButtonStyle } from "@lph/tokens";
+import { contrastRatio, normalizeColor, semanticColors, type Brand, type ButtonStyle } from "@lph/tokens";
 import type { Tone } from "./schema.ts";
 
 /**
@@ -41,6 +41,21 @@ const labelMin = (b: ButtonStyle) => (b.fontSize >= 24 || (b.fontSize >= 18.66 &
 export const heroTone = (brand: Brand, tone?: Tone): "brand" | "subtle" =>
   tone === "subtle" || (brand.buttons.length && !buttonsFor(brand, "brand").visible) ? "subtle" : "brand";
 
-/** Match where the site puts its header: a logo drawn in the brand colour vanishes on a brand band. */
-export const navTone = (brand: Brand): "brand" | "surface" =>
-  brand.colors.find((c) => c.role === "brand")?.usage.includes("navigation") ? "brand" : "surface";
+/**
+ * Match where the site puts its header: a logo drawn in the brand colour vanishes on a brand
+ * band. A logo drawn for a dark header (SCAYLE's white and mint wordmark) vanishes on the page
+ * background, so it takes the brand band when it shows up better there.
+ */
+export function navTone(brand: Brand): "brand" | "surface" {
+  const sem = semanticColors(brand);
+  const inks = logoColors(brand);
+  const worst = (bg: string) => Math.min(...inks.map((c) => contrastRatio(c, bg)));
+  if (inks.length && worst(sem.surface) < 1.5 && worst(sem.brand) > worst(sem.surface)) return "brand";
+  return brand.colors.find((c) => c.role === "brand")?.usage.includes("navigation") ? "brand" : "surface";
+}
+
+/** The colours an SVG logo paints with. currentColor follows the header, so it doesn't count. */
+const logoColors = (brand: Brand): string[] =>
+  brand.logo?.kind === "svg" && brand.logo.svg
+    ? [...new Set([...brand.logo.svg.matchAll(/\b(?:fill|stroke)(?:="|:\s*)([^";]+)/g)].map((m) => normalizeColor(m[1])).filter((c): c is string => !!c))]
+    : [];

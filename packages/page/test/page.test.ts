@@ -12,6 +12,7 @@ import {
   emptyBlock,
   heroTone,
   keyLabel,
+  navTone,
   pageEdit,
   pruneOverrides,
   renderPage,
@@ -288,6 +289,21 @@ describe("renderPage", () => {
     // Northloop's hero keeps its brand colour, unless a person picks the subtle band.
     expect(heroTone(brand, "default")).toBe("brand");
     expect(heroTone(brand, "subtle")).toBe("subtle");
+  });
+
+  it("lets keyboard users scroll a comparison table", async () => {
+    const { page } = await finishedPage();
+    const table = { ...emptyBlock("comparison", "compare", {}), heading: "Northloop or spreadsheets" };
+    expect(renderPage({ ...page, blocks: [table] }, brand, css)).toMatch(/<div class="lph-table-wrap" tabindex="0" role="region" aria-label="[^"]+">/);
+  });
+
+  it("puts the header on the brand colour when the logo is drawn for a dark one", () => {
+    // SCAYLE: a white and mint wordmark that vanishes on a white header.
+    const light = { ...brand, colors: brand.colors.map((c) => (c.role === "brand" ? { ...c, value: "#032819" } : c)), logo: { kind: "svg", svg: '<svg><path fill="#fff"/><path fill="#14ffa8"/></svg>' } } as Brand;
+    expect(navTone(light)).toBe("brand");
+    // A dark mark, or one in currentColor, keeps the header where the site has it.
+    expect(navTone({ ...light, logo: { kind: "svg", svg: '<svg><path fill="#0f0f0f"/></svg>' } } as Brand)).toBe(navTone(brand));
+    expect(navTone({ ...light, logo: { kind: "svg", svg: '<svg><path fill="currentColor"/></svg>' } } as Brand)).toBe(navTone(brand));
   });
 
   it("previews the form without sending when there's no action", async () => {
