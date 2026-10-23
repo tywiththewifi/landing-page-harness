@@ -1,0 +1,51 @@
+name: Smoke test
+
+# Imports real sites through the live import service, from GitHub's network, the way
+# the demo does. Runs after each deploy, by hand, and when this check itself changes.
+on:
+  workflow_run:
+    workflows: [Import service]
+    types: [completed]
+    branches: [main]
+  pull_request:
+    paths:
+      - scripts/smoke-import.mjs
+      - .github/workflows/smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  smoke:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the setup
+        id: gcp
+        env:
+          SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$SERVICE_ACCOUNT" ]; then
+            echo "project=$(echo "$SERVICE_ACCOUNT" | sed -E 's/.*@([^.]+)\.iam\.gserviceaccount\.com$/\1/')" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No import service is set up, so there's nothing to test."
+          fi
+      - uses: google-github-actions/auth@v2
+        if: steps.gcp.outputs.project
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ steps.gcp.outputs.project }}
+      - uses: google-github-actions/setup-gcloud@v2
+        if: steps.gcp.outputs.project
+      - name: Import real sites
+        if: steps.gcp.outputs.project
+        run: |
+          URL=$(gcloud run services describe lph-import --region europe-west1 --format 'value(status.url)')
+          node scripts/smoke-import.mjs "$URL" https://linear.app https://example.com
