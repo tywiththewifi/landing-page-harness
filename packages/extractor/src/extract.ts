@@ -54,9 +54,49 @@ export function pickProductPage(links: PageSample["navLinks"], homeUrl: string):
   return scored[0]?.href ?? null;
 }
 
+/**
+ * Bot checks (Cloudflare, DataDome, PerimeterX, Akamai and the like) that stand in for the
+ * site. Measuring one would give a brand made of the check's colours, so the import stops.
+ */
+const BOT_CHECKS: [string, RegExp][] = [
+  ["Cloudflare", /^(just a moment|attention required|one more step)\b|cloudflare ray id|cf-chl|challenges\.cloudflare\.com/i],
+  ["DataDome", /captcha-delivery\.com|datadome/i],
+  ["PerimeterX", /px-captcha|perimeterx/i],
+  ["Akamai", /^access denied$|reference #\d+\.[0-9a-f]+/i],
+  ["a bot check", /checking (if the site connection is secure|your browser)|verify(ing)? (that )?you are (a )?human|are you a robot/i],
+];
+
+export class BlockedByBotCheck extends Error {}
+
+/** Which bot check the page is, if it is one. */
+export async function botCheck(page: Page): Promise<string | null> {
+  const probe = await page
+    .evaluate(() => {
+      const scripts = [...document.querySelectorAll("script[src], iframe[src]")].map((e) => e.getAttribute("src")).join(" ");
+      return { title: document.title.trim(), text: (document.body?.innerText ?? "").slice(0, 2000), scripts, size: document.body?.querySelectorAll("*").length ?? 0 };
+    })
+    .catch(() => null);
+  if (!probe) return null;
+  // A real page can mention a bot check in passing; a check page is small and says little else.
+  if (probe.size > 400) return null;
+  const hay = `${probe.title}\n${probe.text}\n${probe.scripts}`;
+  return BOT_CHECKS.find(([, re]) => re.test(probe.title) || re.test(hay))?.[0] ?? null;
+}
+
 async function capture(page: Page, url: string, timeoutMs: number): Promise<PageSample> {
   await page.goto(url, { waitUntil: "load", timeout: timeoutMs });
   await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
+  // Some checks pass by themselves after a few seconds and reload the page.
+  for (let i = 0; i < 4 && (await botCheck(page)); i++) {
+    await page.waitForTimeout(2500);
+    await page.waitForLoadState("load").catch(() => {});
+  }
+  const check = await botCheck(page);
+  if (check) {
+    throw new BlockedByBotCheck(
+      `${new URL(url).hostname} showed ${check === "a bot check" ? check : `a ${check} bot check`} instead of the page, so it can't be measured. Sites that block automated browsers need importing from a browser that has passed the check.`,
+    );
+  }
   await page.evaluate(() => document.fonts?.ready).catch(() => {});
   await page.evaluate(removeOverlays).catch(() => 0);
   // Trigger lazy-loaded sections, then return to the top.

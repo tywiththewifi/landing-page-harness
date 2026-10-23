@@ -12,7 +12,8 @@ export function buttonsFor(brand: Brand, tone: Tone | "hero"): { primary: string
   const bg = tone === "brand" || tone === "hero" ? sem.brand : tone === "subtle" ? sem.subtle : sem.surface;
   const edge = (b: ButtonStyle) => (b.kind === "filled" ? b.background : b.borderColor) ?? b.color;
   const visible = (b: ButtonStyle) =>
-    b.kind === "text" ? contrastRatio(b.color, bg) >= 3 : contrastRatio(edge(b), bg) >= 1.4 && contrastRatio(b.color, b.background ?? bg) >= 3;
+    // Labels are normal-size text, so they need WCAG AA's 4.5:1 to pass the publish checks.
+    b.kind === "text" ? contrastRatio(b.color, bg) >= 4.5 : contrastRatio(edge(b), bg) >= 1.4 && contrastRatio(b.color, b.background ?? bg) >= 4.5;
   const here = (b: ButtonStyle) => (tone === "subtle" ? b.context === sem.surface || b.context === bg : b.context === bg);
 
   const boxed = brand.buttons.filter((b) => b.kind !== "text" && visible(b));

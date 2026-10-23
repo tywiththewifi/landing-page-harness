@@ -6,7 +6,9 @@ import { generateDesignMd } from "@lph/design-md";
 import { brandKitFiles } from "@lph/kit";
 import { checkContrast, resolveConflict, toCss, toDtcg, type Brand } from "@lph/tokens";
 import { serveFixture } from "../../../scripts/serve-fixture.mjs";
+import { brandName } from "../src/analyze.ts";
 import { extractBrand, pickProductPage } from "../src/extract.ts";
+import type { PageSample } from "../src/collect.ts";
 
 describe("pickProductPage", () => {
   it("prefers product-like links and skips pricing, blog and auth pages", () => {
@@ -23,6 +25,16 @@ describe("pickProductPage", () => {
 
   it("returns null when nothing qualifies", () => {
     expect(pickProductPage([{ href: "https://x.com/pricing", text: "Pricing" }], "https://x.com/")).toBeNull();
+  });
+});
+
+describe("brandName", () => {
+  const sample = (url: string, title: string, siteName: string | null = null) => ({ url, title, siteName, logo: null }) as unknown as PageSample;
+
+  it("drops the tagline from the title or og:site_name", () => {
+    expect(brandName(sample("https://webflow.com/", "Webflow: Build a website", "Webflow: The agentic web platform for modern businesses"))).toBe("Webflow");
+    expect(brandName(sample("https://stripe.com/", "Stripe | Financial Infrastructure to Grow Your Revenue"))).toBe("Stripe");
+    expect(brandName(sample("https://linear.app/", "Linear – Plan and build products", "Linear"))).toBe("Linear");
   });
 });
 
@@ -78,6 +90,17 @@ describe("extractBrand (fixture site)", () => {
     expect(secondary).toMatchObject({ name: "secondary", kind: "filled", background: "#c6f29d", color: "#1b2a22" });
     expect(tertiary).toMatchObject({ name: "tertiary", kind: "outline", borderColor: "#c6f29d" });
     expect(brand.buttons.at(-1)).toMatchObject({ name: "link", kind: "text" });
+  });
+
+  it("reads a hover-roll button's label once, in the colour it shows", () => {
+    // The hero's "Start free" stacks a clipped second label, and its colour is on the spans.
+    expect(brand.buttons.map((b) => b.sampleText)).not.toContain("Start free Start free");
+    expect(brand.buttons.find((b) => b.name === "secondary")).toMatchObject({ sampleText: "Start free", color: "#1b2a22" });
+  });
+
+  it("reads a button drawn by a wrapper inside the link", () => {
+    // <a class="plain"><div class="btn btn--primary">Start free</div></a>
+    expect(brand.buttons.find((b) => b.name === "primary")?.sources.some((s) => s.selector.includes("div.btn"))).toBe(true);
   });
 
   it("finds card styles, inputs, radii and the logo", () => {
@@ -156,6 +179,13 @@ describe("extractBrand with allowAddress", () => {
   };
   afterAll(() => servers.forEach((s) => s.close()));
   const allowAddress = (ip: string) => ip !== "127.0.0.2";
+
+  it("stops at a bot check instead of measuring it", async () => {
+    const check = await listen("127.0.0.1", (_, res) =>
+      res.writeHead(403, { "content-type": "text/html" }).end(`<title>Just a moment...</title><body style="background:#222"><h1>example.com</h1><p>Verifying you are human. This may take a few seconds.</p></body>`),
+    );
+    await expect(extractBrand({ url: `${check}/` })).rejects.toThrow(/showed a Cloudflare bot check/);
+  });
 
   it("fails when the page redirects to a refused address", async (ctx) => {
     const inside = await listen("127.0.0.2", (_, res) => res.end("<h1>Inside</h1>")).catch(() => ctx.skip());

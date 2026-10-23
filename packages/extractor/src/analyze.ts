@@ -667,9 +667,12 @@ function summarize(brand: Omit<Brand, "usageRules" | "summary">): string {
 // --- Entry point ----------------------------------------------------------------------------------
 
 export function brandName(home: PageSample): string {
-  if (home.siteName) return home.siteName.trim();
+  // Titles and some og:site_name values carry a tagline: "Webflow: The agentic web platform".
+  const split = (s: string) => s.split(/\s[|–—-]\s|:\s|\s·\s/).map((p) => p.trim()).filter(Boolean);
+  const site = split(home.siteName ?? "");
+  if (site.length === 1) return site[0]!;
   const host = new URL(home.url).hostname.replace(/^www\./, "");
-  const parts = home.title.split(/\s[|–—-]\s/).map((s) => s.trim()).filter(Boolean);
+  const parts = [...site, ...split(home.title)];
   const hostWord = host.split(".")[0]!.toLowerCase();
   const match = parts.find((p) => p.toLowerCase().replace(/\s+/g, "").includes(hostWord));
   if (match) return match;

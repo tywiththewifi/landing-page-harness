@@ -38,8 +38,9 @@ export function semanticColors(brand: Brand) {
   });
   const muted = (mutedCandidates.find((c) => c.usage.includes("text")) ?? mutedCandidates[0])?.value ?? ink;
   const subtle = byContrast.find((c) => contrastRatio(c.value, surface) > 1.05)?.value ?? surface;
-  // What the site actually puts on its brand colour wins; otherwise the more readable of white and ink.
-  const measuredOnBrand = brand.buttons.find((b) => b.kind === "filled" && b.background === brandColor)?.color;
+  // What the site actually puts on its brand colour wins when body text can be read in it
+  // (a button label can get away with less); otherwise the more readable of white and ink.
+  const measuredOnBrand = brand.buttons.find((b) => b.kind === "filled" && b.background === brandColor && contrastRatio(b.color, brandColor) >= 4.5)?.color;
   const onBrand =
     measuredOnBrand ?? (contrastRatio("#ffffff", brandColor) >= contrastRatio(ink, brandColor) ? "#ffffff" : ink);
   return { surface, ink, brand: brandColor, accent, border, muted, subtle, onBrand };
