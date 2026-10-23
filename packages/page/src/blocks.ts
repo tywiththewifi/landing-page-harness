@@ -16,12 +16,13 @@ const todo = (what: string) => `${PLACEHOLDER} ${what}`;
 const items = (n: number, what: string) => Array.from({ length: n }, (_, i) => ({ title: todo(`${what} ${i + 1}`), body: PLACEHOLDER }));
 
 /** A new block with placeholders for every piece of copy, as the editor's "Add block" creates it. */
-export function emptyBlock<T extends BlockType>(type: T, id: string, opts: { cardVariant?: string; cta?: string } = {}): BlockOf<T> {
+export function emptyBlock<T extends BlockType>(type: T, id: string, opts: { cardVariant?: string; cta?: string; customers?: string[] } = {}): BlockOf<T> {
   const cta = { label: opts.cta ?? todo("Button"), href: "#form" };
   const none = { label: "", href: "" };
   const blocks: { [K in BlockType]: Omit<BlockOf<K>, "id" | "tone"> } = {
     hero: { type: "hero", eyebrow: "", heading: todo("Headline"), lead: todo("Subheadline"), primaryCta: cta, secondaryCta: none },
-    logos: { type: "logos", heading: todo("Heading"), items: Array.from({ length: 5 }, (_, i) => todo(`Customer ${i + 1}`)) },
+    // The site's own logo strip when it has one (see Brand.customers): those names show as their logos.
+    logos: { type: "logos", heading: todo("Heading"), items: (opts.customers?.length ?? 0) >= 3 ? opts.customers!.slice(0, 8) : Array.from({ length: 5 }, (_, i) => todo(`Customer ${i + 1}`)) },
     features: { type: "features", eyebrow: "", heading: todo("Heading"), intro: "", items: items(3, "Benefit"), cardVariant: opts.cardVariant ?? "" },
     steps: { type: "steps", heading: todo("Heading"), intro: "", items: items(3, "Step") },
     stats: { type: "stats", heading: "", items: Array.from({ length: 3 }, () => ({ value: PLACEHOLDER, label: todo("What it measures") })) },

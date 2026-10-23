@@ -10,6 +10,7 @@ import {
   type ButtonStyle,
   type CardStyle,
   type ColorToken,
+  type CustomerLogo,
   type Conflict,
   type InputStyle,
   type SizeToken,
@@ -681,6 +682,19 @@ export function brandName(home: PageSample): string {
   return hostWord.charAt(0).toUpperCase() + hostWord.slice(1);
 }
 
+/** The logo strips the pages show, once per name, without the brand's own. */
+export function customersOf(pages: PageCapture[], brand: string): CustomerLogo[] {
+  const out = new Map<string, CustomerLogo>();
+  const key = (name: string) => name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+  for (const { desktop: p } of pages) {
+    for (const l of p.customerLogos ?? []) {
+      if (!key(l.name) || key(l.name) === key(brand) || out.has(key(l.name))) continue;
+      out.set(key(l.name), { name: l.name, ...(l.svg ? { svg: l.svg } : { src: l.src }), source: { page: p.url, selector: l.selector, count: 1 } });
+    }
+  }
+  return [...out.values()].slice(0, 16);
+}
+
 export function analyze(pages: PageCapture[], opts: { id: string; now?: Date }): Brand {
   const home = pages[0]!.desktop;
   const now = (opts.now ?? new Date()).toISOString();
@@ -727,6 +741,7 @@ export function analyze(pages: PageCapture[], opts: { id: string; now?: Date }):
       faces: [...new Set(pages.flatMap((p) => p.desktop.fontFaces ?? []))],
       stylesheets: [...new Set(pages.flatMap((p) => p.desktop.fontStylesheets ?? []))],
     },
+    customers: customersOf(pages, brandName(home)),
     content: pages.map(({ desktop: p }) => ({ url: p.url, title: p.title, ...p.content })),
   };
   return { ...draft, usageRules: usageRules(draft), summary: summarize(draft) };

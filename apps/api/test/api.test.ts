@@ -97,6 +97,21 @@ describe("API", () => {
     expect(bad.status).toBe(400);
   });
 
+  it("lets customer logos be renamed or removed, but not replaced", async () => {
+    const current: Brand = await (await app.request(`/api/brands/${brand.id}`)).json();
+    expect(current.customers?.map((c) => c.name)).toEqual(["Halcyon", "Brightwave", "Ferro", "Tallyho", "Orbit"]);
+    const [halcyon, brightwave, ...rest] = current.customers!;
+    const edited = {
+      ...current,
+      customers: [{ ...brightwave, name: "BrightWave" }, { ...halcyon, svg: '<svg onload="alert(1)"></svg>' }, { name: "Injected", src: "https://evil.example/x.svg" }, ...rest],
+    };
+    const saved: Brand = await (await app.request(`/api/brands/${brand.id}`, { ...json(edited), method: "PUT" })).json();
+    expect(saved.customers?.map((c) => c.name)).toEqual(["BrightWave", "Ferro", "Tallyho", "Orbit"]);
+    expect(saved.customers![0]!.svg).toBe(brightwave!.svg);
+    // Put them back for the tests that follow.
+    await app.request(`/api/brands/${brand.id}`, { ...json(current), method: "PUT" });
+  });
+
   it("resolves conflicts", async () => {
     const res = await app.request(`/api/brands/${brand.id}/conflicts/fonts.body`, json({ value: "Inter" }));
     expect(res.status).toBe(200);

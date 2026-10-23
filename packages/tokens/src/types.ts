@@ -107,6 +107,16 @@ export interface Logo {
   source: Source;
 }
 
+/** A customer's or partner's logo, from a strip of them on the site. Logo rows show it by name. */
+export interface CustomerLogo {
+  name: string;
+  /** Sanitised inline SVG. A one-colour drawing uses currentColor, so it takes the text colour around it. */
+  svg?: string;
+  /** Absolute URL of the image, when it isn't an inline SVG. */
+  src?: string;
+  source: Source;
+}
+
 /** Two or more measured values competing for the same slot. The user picks one. */
 export interface Conflict {
   id: string;
@@ -186,6 +196,8 @@ export interface Brand {
   declaredVariables: Record<string, string>;
   /** How to load the brand's web fonts: @font-face rules and hosted stylesheet URLs. */
   fontSources: { faces: string[]; stylesheets: string[] };
+  /** Customer and partner logos from the site, for logo rows. Optional: older brands don't have them. */
+  customers?: CustomerLogo[];
   /** Copy from the sampled pages. Optional because brands imported before phase 2 don't have it. */
   content?: PageContent[];
   /** The site's MCP server, when one is connected. Briefs read plans, prices and help articles from it. */

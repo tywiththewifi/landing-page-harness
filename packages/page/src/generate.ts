@@ -25,7 +25,7 @@ export const pageCopy = z.object({
         items: z
           .array(z.object({ title: z.string(), body: z.string(), extra: z.string() }))
           .describe(
-            "features and steps: title and body. stats: title is the number, body its label. logos: title is a customer name from the site copy. faq: title is the question, body the answer. comparison: title is the row, body our side, extra theirs. Empty for the rest; extra is empty unless comparison.",
+            "features and steps: title and body. stats: title is the number, body its label. logos: title is a customer name from <customer_logos> (the page shows their logos), or else from the site copy. faq: title is the question, body the answer. comparison: title is the row, body our side, extra theirs. Empty for the rest; extra is empty unless comparison.",
           ),
         quote: z.object({ text: z.string(), name: z.string(), role: z.string(), company: z.string() }).describe("testimonial only. Empty strings otherwise."),
         primaryCta: z.string().describe("hero and cta: the main button label. form: the submit button label. Empty otherwise."),
@@ -148,6 +148,7 @@ export function claudePageGenerator(opts: { client?: Anthropic; model?: string }
               `<brief>\n${briefToMarkdown(brief)}\n</brief>`,
               `<outline>\n${draft.blocks.map((b, i) => `${i + 1}. ${b.type}`).join("\n")}\n</outline>`,
               `<personas>\n${brief.personas.map((p) => `- ${p.id}: ${p.name}`).join("\n")}\n</personas>`,
+              ...(brand.customers?.length ? [`<customer_logos>\nThe site shows these customers' logos: ${brand.customers.map((c) => c.name).join(", ")}\n</customer_logos>`] : []),
               `Write the copy for each section of the outline${casing ? `, with headings in ${casing === "title" ? "Title Case" : "sentence case"}` : ""}, one hero version per persona, and the SEO title and meta description.`,
             ].join("\n\n"),
           },

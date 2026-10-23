@@ -20,7 +20,7 @@ See [docs/spec.md](docs/spec.md) for the full plan.
 ![Review screen](docs/screenshots/2-review-overview.png)
 
 1. **Sample.** A headless browser opens the home page and the main product page (picked from the navigation, or chosen by the user) at desktop and mobile widths.
-2. **Measure.** It reads computed styles for headings, body text, buttons, cards, inputs, section backgrounds, the logo and any `:root` variables, and records where each value came from.
+2. **Measure.** It reads computed styles for headings, body text, buttons, cards, inputs, section backgrounds, the logo (inline SVG, an image, or one drawn with a CSS background or mask) and any `:root` variables, plus the site's strip of customer logos for logo rows, and records where each value came from.
 3. **Cluster.** Colours are grouped by role (brand, accent, ink, surface, neutrals) and weighted by area and frequency. Type, buttons, cards, radius and spacing are grouped by repeated values.
 4. **Review.** The user checks everything in the Theme tab. Every value shows a confidence level and the page and selector it came from. Conflicts, such as two body fonts across pages, are flagged for a decision instead of being guessed. Contrast is checked against WCAG as you edit.
 5. **Confirm.** This writes the brand kit:
@@ -196,7 +196,7 @@ templates/
 - Site copy and SEO tool output reach the model as data in tagged blocks, separate from its instructions, and the brief comes back through a strict schema. The SEO endpoint is set by the operator, not by users.
 - The form endpoint keeps only the fields the form asks for, validates them, and drops honeypot posts silently. Webhook URLs get the same SSRF rule as imports, redirects aren't followed, and posts can be signed (HMAC-SHA256 with a timestamp). Every lead is stored with its delivery result, so a failed delivery isn't lost. Page links are limited to sections, site paths, https, `mailto:` and `tel:`.
 - Published pages get a Content Security Policy in `_headers`: nothing loads or runs but the page's own inline script (allowed by its hash), and the form can post only to its endpoint. The GitHub token needs only the site repo's contents and pull requests, and stays on the server. The site repo's CI decides what merges by itself from the diff, not from the label. The gate's browser refuses private addresses like the importer's.
-- SVG logos are sanitised in the page's own DOM at extraction time (scripts, event handlers, external links and `foreignObject` removed). Design.md is sanitised before rendering, and site-derived strings can't close the preview's `<style>` block or a page's JSON-LD.
+- SVG logos, the header's and customers', are sanitised in the page's own DOM at extraction time (scripts, event handlers, external links, link-setting animations and `foreignObject` removed). A brand edit can rename or remove a customer logo but not change its markup. Design.md is sanitised before rendering, and site-derived strings can't close the preview's `<style>` block or a page's JSON-LD.
 
 ## Development
 

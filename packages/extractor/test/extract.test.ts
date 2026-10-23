@@ -114,6 +114,18 @@ describe("extractBrand (fixture site)", () => {
     expect(brand.logo?.svg).not.toMatch(/<script|onload=/i);
   });
 
+  it("finds the customer logo strip, with names from the markup", () => {
+    const logos = brand.customers ?? [];
+    expect(logos.map((l) => l.name)).toEqual(["Halcyon", "Brightwave", "Ferro", "Tallyho", "Orbit"]);
+    // A one-colour drawing follows the text colour around it, even one the site coloured with a class.
+    expect(logos[0]!.svg).toMatch(/fill="currentColor"/);
+    // A <use> brings the sprite's shapes with it.
+    expect(logos[1]!.svg).toMatch(/<symbol id="brightwave"/);
+    expect(logos[2]!.src).toMatch(/\/logos\/ferro-logo-dark\.svg$/);
+    expect(logos.every((l) => !/<script|onload=/i.test(l.svg ?? ""))).toBe(true);
+    expect(logos[0]!.source.page).toBe(brand.url);
+  });
+
   it("ignores cookie banners", () => {
     const values = brand.colors.map((c) => c.value);
     expect(values).not.toContain("#ff00aa");

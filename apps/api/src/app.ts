@@ -108,7 +108,16 @@ const brandEdit = z.object({
   buttons: z.array(z.object({ name: z.string().regex(/^[a-z0-9-]+$/), color: hex, background: hex.nullable(), radius: z.number().min(0) }).passthrough()),
   cards: z.array(z.object({ name: z.string().regex(/^[a-z0-9-]+$/), background: hex, radius: z.number().min(0) }).passthrough()),
   usageRules: z.array(z.string().max(500)),
+  /** Customer logos can be renamed, reordered or removed; only the ones imported from the site are kept (see keepCustomers). */
+  customers: z.array(z.object({ name: z.string().trim().max(80), svg: z.string().optional(), src: z.string().optional() })).optional(),
 });
+
+/** The edited list of customer logos, each matched to one the site gave by its image, so markup can't come in through an edit. */
+const keepCustomers = (current: Brand, edited: { name: string; svg?: string; src?: string }[]) =>
+  edited.flatMap((e) => {
+    const known = current.customers?.find((c) => (e.svg ? c.svg === e.svg : !!e.src && c.src === e.src));
+    return known ? [{ ...known, name: e.name || known.name }] : [];
+  });
 
 const briefRequest = z.object({
   prompt: z.string().trim().min(3, "Describe the page or campaign").max(2000),
@@ -250,10 +259,11 @@ export function createApp(opts: AppOptions) {
   // Save edits from the Theme tab. Provenance and ids come from the stored brand.
   app.put("/api/brands/:id", async (c) => {
     const current = await mustGet(c.req.param("id"));
-    const edit = brandEdit.parse(await c.req.json());
+    const { customers, ...edit } = brandEdit.parse(await c.req.json());
     const next: Brand = {
       ...current,
       ...(edit as unknown as Partial<Brand>),
+      ...(customers && { customers: keepCustomers(current, customers) }),
       id: current.id,
       url: current.url,
       pages: current.pages,

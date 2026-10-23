@@ -45,6 +45,6 @@
   small { color: var(--ui-muted); font-size: 13px; line-height: 1.45; }
 }
 .reason { display: grid; gap: 4px; textarea { width: 100%; resize: vertical; } }
-.danger { background: var(--ui-bad); border-color: var(--ui-bad); color: #fff; }
+.actions .danger { background: var(--ui-bad); border-color: var(--ui-bad); color: #fff; &:hover:not(:disabled) { background: #b91c1c; border-color: #b91c1c; } }
 .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .why { color: var(--ui-muted); font-size: 13px; }

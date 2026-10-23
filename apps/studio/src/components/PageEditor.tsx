@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, Fragment, useContext, useState, type ReactNode } from "react";
 import { FIELD_NAMES, FIELDS, type FieldName } from "@lph/forms";
 import {
   BLOCK_NAMES,
@@ -14,7 +14,9 @@ import {
   type PageIssue,
   type Variant,
 } from "@lph/page/browser";
-import type { Brand } from "@lph/tokens";
+import { PLACEHOLDER } from "@lph/brief/browser";
+import type { Brand, CustomerLogo } from "@lph/tokens";
+import { logoKey } from "@lph/ui";
 import { SelectField, TextAreaField, TextField } from "./Fields.tsx";
 import { ListEditor } from "./ListEditor.tsx";
 import styles from "./PageEditor.module.scss";
@@ -34,6 +36,8 @@ export interface EditorApi {
   resetText: (key: string) => void;
   /** Changes shared structure or props. The general page only. */
   update: (fn: (draft: Page) => void) => void;
+  /** Leaves a persona's version for the general page, where sections are added and removed. */
+  toGeneral?: () => void;
 }
 
 const Editor = createContext<EditorApi | null>(null);
@@ -133,7 +137,15 @@ function BlockFields({ block }: { block: Block }) {
           </div>
         </>
       );
-    case "logos":
+    case "logos": {
+      const logos = brand.customers ?? [];
+      const unused = logos.filter((l) => !block.items.some((name) => logoKey(name) === logoKey(l.name)));
+      const use = (logo: CustomerLogo) =>
+        editBlock(api, block, (b) => {
+          const gap = b.items.findIndex((name) => !name.trim() || name.includes(PLACEHOLDER));
+          if (gap >= 0) b.items[gap] = logo.name;
+          else b.items.push(logo.name);
+        });
       return (
         <>
           <CopyField k={`${id}.heading`} label="Heading" />
@@ -143,10 +155,30 @@ function BlockFields({ block }: { block: Block }) {
             create={() => ""}
             addLabel="Add customer"
             label={(i) => `Customer ${i + 1}`}
-            render={(i) => <CopyField k={`${id}.items.${i}`} label="Customer name" />}
+            render={(i) => (
+              <>
+                <CopyField k={`${id}.items.${i}`} label="Customer name" />
+                <LogoHint name={valueIn(api.page, variant, `${id}.items.${i}`) ?? ""} logos={logos} />
+              </>
+            )}
           />
+          {!variant && unused.length ? (
+            <div className={styles.siteLogos}>
+              <span className="ui-label">Logos from the site</span>
+              <div>
+                {unused.map((l) => (
+                  <button key={l.name} type="button" className={styles.siteLogo} onClick={() => use(l)} title={`Add ${l.name}`}>
+                    <LogoThumb logo={l} />
+                    <span>{l.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {!logos.length ? <p className={styles.hint}>No logo strip was found on the site, so customers show as their names. Names that match a logo from the site show as the logo.</p> : null}
         </>
       );
+    }
     case "features":
       return (
         <>
@@ -335,7 +367,29 @@ function BlockFields({ block }: { block: Block }) {
 
 const TONE_NAMES: Record<(typeof TONES)[number], string> = { default: "Plain", subtle: "Subtle band", brand: "Brand colour" };
 
-function BlockCard({ block, index, count, open, onToggle, issues }: { block: Block; index: number; count: number; open: boolean; onToggle: () => void; issues: number }) {
+/** A customer's logo as imported. The SVG was sanitised then (no scripts, handlers or outside links). */
+function LogoThumb({ logo }: { logo: CustomerLogo }) {
+  return logo.svg ? <span className={styles.logoThumb} aria-hidden="true" dangerouslySetInnerHTML={{ __html: logo.svg }} /> : <img className={styles.logoThumb} src={logo.src} alt="" />;
+}
+
+/** Whether a name in a logo row shows as a logo. */
+function LogoHint({ name, logos }: { name: string; logos: CustomerLogo[] }) {
+  if (!name.trim() || name.includes(PLACEHOLDER)) return null;
+  const logo = logos.find((l) => logoKey(l.name) === logoKey(name));
+  return (
+    <span className={styles.logoHint}>
+      {logo ? (
+        <>
+          <LogoThumb logo={logo} /> Shows the logo from the site
+        </>
+      ) : (
+        "Shown as text: no logo from the site has this name"
+      )}
+    </span>
+  );
+}
+
+function BlockCard({ block, index, count, open, onToggle, onRemove, issues }: { block: Block; index: number; count: number; open: boolean; onToggle: () => void; onRemove: () => void; issues: number }) {
   const api = useEditor();
   const move = (to: number) =>
     api.update((d) => {
@@ -375,9 +429,12 @@ function BlockCard({ block, index, count, open, onToggle, issues }: { block: Blo
             <button type="button" onClick={() => move(index + 1)} disabled={index === count - 1} aria-label={`Move ${BLOCK_NAMES[block.type]} down`} title="Move down">
               ↓
             </button>
-            <button type="button" onClick={() => api.update((d) => void d.blocks.splice(index, 1))} aria-label={`Remove ${BLOCK_NAMES[block.type]}`} title="Remove">
-              ✕
-            </button>
+            {/* The hero holds the page's H1, and can't be added back. */}
+            {block.type === "hero" ? null : (
+              <button type="button" className={styles.remove} onClick={onRemove} aria-label={`Remove ${BLOCK_NAMES[block.type]}`}>
+                <span aria-hidden="true">✕</span> Remove
+              </button>
+            )}
           </div>
         )}
       </header>
@@ -395,6 +452,36 @@ const ADDABLE = Object.keys(BLOCK_NAMES).filter((t) => t !== "hero") as BlockTyp
 export function PageEditor({ api, issues, open, setOpen }: { api: EditorApi; issues: PageIssue[]; open: Set<string>; setOpen: (next: Set<string>) => void }) {
   const { page, variant } = api;
   const [adding, setAdding] = useState<BlockType>("features");
+  // The last section removed, to put back.
+  const [removed, setRemoved] = useState<{ block: Block; index: number } | null>(null);
+  const remove = (index: number) => {
+    const block = page.blocks[index]!;
+    api.update((d) => void d.blocks.splice(index, 1));
+    setRemoved({ block, index });
+  };
+  const undo = () => {
+    if (!removed) return;
+    api.update((d) => {
+      // A section added since may have taken its id.
+      const taken = d.blocks.map((b) => b.id);
+      const block = taken.includes(removed.block.id) ? { ...removed.block, id: nextBlockId(removed.block.type, taken) } : removed.block;
+      d.blocks.splice(Math.min(removed.index, d.blocks.length), 0, block);
+    });
+    setRemoved(null);
+  };
+  const removedBar = removed ? (
+    <div className={styles.removed} role="status">
+      <span>
+        Removed <strong>{BLOCK_NAMES[removed.block.type]}</strong>.
+      </span>
+      <button type="button" className="ui-button ui-button--small" onClick={undo}>
+        Undo
+      </button>
+      <button type="button" className={styles.dismiss} onClick={() => setRemoved(null)} aria-label="Dismiss">
+        ✕
+      </button>
+    </div>
+  ) : null;
   const toggle = (id: string) => {
     const next = new Set(open);
     if (next.has(id)) next.delete(id);
@@ -404,7 +491,7 @@ export function PageEditor({ api, issues, open, setOpen }: { api: EditorApi; iss
   const add = () => {
     const id = nextBlockId(adding, page.blocks.map((b) => b.id));
     const hero = page.blocks.find((b) => b.type === "hero");
-    api.update((d) => void d.blocks.push(emptyBlock(adding, id, { cardVariant: api.brand.cards[0]?.name, cta: hero?.type === "hero" ? hero.primaryCta.label : undefined })));
+    api.update((d) => void d.blocks.push(emptyBlock(adding, id, { cardVariant: api.brand.cards[0]?.name, cta: hero?.type === "hero" ? hero.primaryCta.label : undefined, customers: api.brand.customers?.map((c) => c.name) })));
     setOpen(new Set(open).add(id));
   };
   const counted = (area: string) => issues.filter((i) => i.area === area && i.severity !== "info" && (i.variant ?? null) === (variant?.id ?? null)).length;
@@ -420,7 +507,15 @@ export function PageEditor({ api, issues, open, setOpen }: { api: EditorApi; iss
       </datalist>
       {variant ? (
         <p className={styles.variantNote}>
-          Editing <strong>{variant.name}</strong>. Text you change here is personalised for this version; everything else is shared with the general page. Sections, items and links can be changed in the general page.
+          Editing <strong>{variant.name}</strong>. Text you change here is personalised for this version; everything else is shared with the general page. Sections, items and links are added, removed and moved in the general page.
+          {api.toGeneral ? (
+            <>
+              {" "}
+              <button type="button" className={styles.linkButton} onClick={api.toGeneral}>
+                Edit the general page
+              </button>
+            </>
+          ) : null}
         </p>
       ) : null}
       <section id="block-seo" className={styles.block} aria-label="Page and SEO">
@@ -447,8 +542,12 @@ export function PageEditor({ api, issues, open, setOpen }: { api: EditorApi; iss
         ) : null}
       </section>
       {page.blocks.map((b, i) => (
-        <BlockCard key={b.id} block={b} index={i} count={page.blocks.length} open={open.has(b.id)} onToggle={() => toggle(b.id)} issues={counted(b.id)} />
+        <Fragment key={b.id}>
+          {removed && removed.index === i && !variant ? removedBar : null}
+          <BlockCard block={b} index={i} count={page.blocks.length} open={open.has(b.id)} onToggle={() => toggle(b.id)} onRemove={() => remove(i)} issues={counted(b.id)} />
+        </Fragment>
       ))}
+      {removed && removed.index >= page.blocks.length && !variant ? removedBar : null}
       {variant ? null : (
         <div className={styles.add}>
           <select className="ui-input" aria-label="Section to add" value={adding} onChange={(e) => setAdding(e.target.value as BlockType)}>
