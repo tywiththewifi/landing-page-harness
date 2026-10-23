@@ -118,9 +118,13 @@ Set `ANTHROPIC_API_KEY` for Claude-written briefs and page copy (see [.env.examp
 From the command line (no UI):
 
 ```bash
-pnpm extract https://example.com --out brands/example
+pnpm try stripe.com                      # every phase, report and outputs in runs/
+pnpm try webflow.com qonto.com --prompt "Landing page for our accounting integration for finance teams"
+pnpm extract https://example.com --out brands/example   # the brand kit only
 pnpm extract https://example.com --product https://example.com/platform
 ```
+
+`pnpm try` imports the brand, writes the brief, builds the page and runs the publish checks, then writes `report.md` and each step's output to a folder. See [docs/mcp.md](docs/mcp.md), which also lists what runs against a dozen live sites found.
 
 ## For agents
 
@@ -149,7 +153,15 @@ curl -X POST localhost:8787/api/pages/<pageId>/publish
 curl -o site.zip localhost:8787/api/pages/<pageId>/site.zip   # or as a Cloudflare Pages project
 ```
 
-An MCP server over the same API is planned (M5), so Claude, Codex, Cursor or any other MCP client can read a brand directly.
+### MCP server
+
+The same calls as MCP tools, for Claude Desktop, Claude Code, Cursor or any MCP client. `launch_from_url` runs a site through every phase in one call; the other tools go step by step (`import_brand`, `write_brief`, `update_brief`, `build_page`, `update_page`, `run_checks`, `publish_plan`, `publish_page`), and each brand's DESIGN.md is a resource. Without `LPH_API_URL` it runs the API in its own process.
+
+```bash
+claude mcp add landing-page-harness -- pnpm --silent --dir /path/to/landing-page-harness mcp
+```
+
+See [docs/mcp.md](docs/mcp.md) for Claude Desktop and the tool list.
 
 ## Repository layout
 
@@ -159,6 +171,7 @@ apps/
                 exports, the form endpoint, the publish gate and publishing
                 (public.ts: the demo's stateless import service)
   studio/       React Router + Vite + SCSS Modules review UI (src/demo: the serverless demo build)
+  mcp/          The MCP server over the API, and `pnpm try`: any URL through every phase
 packages/
   extractor/    Playwright sampling (collect.ts runs in the page) and analysis (analyze.ts)
   brief/        Brief schema, Claude and offline writers, SEO/AEO providers, consistency check

@@ -66,7 +66,6 @@
 .lph-hero { background: var(--color-brand); color: var(--color-on-brand, #fff); padding: clamp(64px, 10vw, 120px) 0; }
 .lph-hero__inner { display: grid; gap: clamp(32px, 5vw, 64px); align-items: center; }
 .lph-hero--split .lph-hero__inner { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); }
-.lph-hero .lph-lead { opacity: 0.9; }
 @media (max-width: 860px) { .lph-hero--split .lph-hero__inner { grid-template-columns: 1fr; } }
 
 /* Navigation and footer */
@@ -103,11 +102,12 @@ textarea.lph-input { min-height: 112px; resize: vertical; }
 .lph-visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .lph-section--center .lph-section__intro { margin-left: auto; margin-right: auto; text-align: center; }
 .lph-section--center .lph-actions { justify-content: center; }
-.lph-section--brand .lph-muted, .lph-hero .lph-muted { color: inherit; opacity: 0.85; }
-.lph-section--brand .lph-button--link { color: inherit; }
+/* Text on a band takes the band's text colour at full strength: faded text fails contrast on many brand colours. */
+.lph-section--brand .lph-muted, .lph-hero .lph-muted { color: inherit; }
+.lph-section--brand .lph-button--link, .lph-hero .lph-button--link, .lph-nav .lph-button--link { color: inherit; }
 .lph-card .lph-muted { color: var(--color-muted, #555); opacity: 1; }
 
-.lph-logos { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 48px; margin: 0; padding: 0; list-style: none; font-family: var(--font-heading, inherit); font-size: calc(var(--text-body-size, 16px) * 1.25); font-weight: 700; opacity: 0.7; }
+.lph-logos { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px 48px; margin: 0; padding: 0; list-style: none; font-family: var(--font-heading, inherit); font-size: calc(var(--text-body-size, 16px) * 1.25); font-weight: 700; }
 
 .lph-steps { counter-reset: lph-step; display: grid; gap: var(--space-md, 24px); grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 0; padding: 0; list-style: none; }
 .lph-steps > li { counter-increment: lph-step; }
@@ -120,13 +120,13 @@ textarea.lph-input { min-height: 112px; resize: vertical; }
 .lph-stats { display: grid; gap: var(--space-md, 24px); grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: 0; }
 .lph-stats > div { display: flex; flex-direction: column-reverse; gap: 4px; }
 .lph-stats dt { color: var(--color-muted, #555); }
-.lph-section--brand .lph-stats dt { color: inherit; opacity: 0.85; }
+.lph-section--brand .lph-stats dt { color: inherit; }
 .lph-stats dd { margin: 0; font-family: var(--font-heading, inherit); font-size: var(--text-h2-size, 40px); font-weight: var(--text-h2-weight, 700); line-height: 1.1; }
 
 .lph-quote { max-width: 48em; margin: 0 auto; text-align: center; }
 .lph-quote blockquote { margin: 0 0 24px; font-family: var(--font-heading, inherit); font-size: var(--text-h3-size, 24px); line-height: 1.4; }
 .lph-quote blockquote p { margin: 0; }
-.lph-quote figcaption { opacity: 0.85; }
+.lph-quote figcaption { font-size: 0.9em; }
 .lph-quote cite { font-style: normal; font-weight: 600; }
 
 .lph-table-wrap { overflow-x: auto; }

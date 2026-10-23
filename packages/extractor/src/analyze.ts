@@ -186,7 +186,8 @@ function analyzeColors(pages: PageCapture[], buttons: ButtonStyle[]) {
     chromaticBgs.find((b) => b.weight >= 1) ??
     ctaSorted.find((b) => isChromatic(b.key));
   if (brandBucket) {
-    const share = brandBucket.weight / Math.max(1, chromaticBgs.reduce((s, b) => s + b.weight, 0));
+    // When the brand comes from the buttons, its weight isn't on the bands' scale, so the share is capped.
+    const share = Math.min(1, brandBucket.weight / Math.max(1, chromaticBgs.reduce((s, b) => s + b.weight, 0)));
     const usage = placesFor(brandBucket.key);
     push(brandBucket.key, "brand", usage.length ? usage : ["calls to action"], brandBucket, 0.5 + share / 2);
   }
@@ -667,9 +668,12 @@ function summarize(brand: Omit<Brand, "usageRules" | "summary">): string {
 // --- Entry point ----------------------------------------------------------------------------------
 
 export function brandName(home: PageSample): string {
-  if (home.siteName) return home.siteName.trim();
+  // Titles and some og:site_name values carry a tagline: "Webflow: The agentic web platform".
+  const split = (s: string) => s.split(/\s[|–—-]\s|:\s|\s·\s/).map((p) => p.trim()).filter(Boolean);
+  const site = split(home.siteName ?? "");
+  if (site.length === 1) return site[0]!;
   const host = new URL(home.url).hostname.replace(/^www\./, "");
-  const parts = home.title.split(/\s[|–—-]\s/).map((s) => s.trim()).filter(Boolean);
+  const parts = [...site, ...split(home.title)];
   const hostWord = host.split(".")[0]!.toLowerCase();
   const match = parts.find((p) => p.toLowerCase().replace(/\s+/g, "").includes(hostWord));
   if (match) return match;

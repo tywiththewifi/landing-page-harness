@@ -111,6 +111,42 @@ export function collectPage(): PageSample {
 
   const ownText = (el: Element) => (el.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
 
+  /**
+   * The text a visitor sees in a control. Hover effects often stack a second copy of the
+   * label outside the box (clipped until hover), and the label's colour is often set on an
+   * inner span rather than the link itself, so both are read from the text that shows.
+   */
+  const shownText = (el: Element) => {
+    const box = el.getBoundingClientRect();
+    let text = "";
+    let color: string | null = null;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const parent = n.parentElement;
+      if (!parent || !n.textContent?.trim() || parent.closest("svg, script, style")) continue;
+      const cs = getComputedStyle(parent);
+      if (cs.visibility === "hidden" || parseFloat(cs.opacity) <= 0.1) continue;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      const r = range.getBoundingClientRect();
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      // Shown means inside the control and inside every clipping box between them.
+      let shown = r.width >= 1;
+      for (let cur: Element | null = parent; shown && cur; cur = cur === el ? null : cur.parentElement) {
+        const clip = cur === el ? box : getComputedStyle(cur).overflow !== "visible" ? cur.getBoundingClientRect() : null;
+        if (clip && (x < clip.left || x > clip.right || y < clip.top || y > clip.bottom)) shown = false;
+      }
+      if (!shown) continue;
+      text += ` ${n.textContent}`;
+      color ??= cs.color;
+    }
+    text = text.replace(/\s+/g, " ").trim();
+    // A doubled label that is laid out inside the box (no clipping to tell them apart).
+    const doubled = /^(.{2,}?) ?\1$/.exec(text);
+    return { text: (doubled ? doubled[1]! : text).slice(0, 80), color };
+  };
+
   const contextBg = (el: Element) => {
     let cur: Element | null = el.parentElement;
     while (cur) {
@@ -236,12 +272,13 @@ export function collectPage(): PageSample {
     const cs = getComputedStyle(el);
     const r = el.getBoundingClientRect();
     const bw = px(cs.borderTopWidth);
+    const shown = shownText(el);
     return {
       selector: path(el),
       tag: el.tagName.toLowerCase(),
-      text: ownText(el),
+      text: shown.text || ownText(el),
       bg: cs.backgroundColor,
-      color: cs.color,
+      color: shown.color ?? cs.color,
       borderColor: bw > 0 && cs.borderTopStyle !== "none" ? cs.borderTopColor : "transparent",
       borderWidth: cs.borderTopStyle === "none" ? 0 : bw,
       radius: px(cs.borderTopLeftRadius),
@@ -257,13 +294,32 @@ export function collectPage(): PageSample {
     };
   };
 
+  /**
+   * The element that draws a control. Some sites style a wrapper inside the link
+   * (<a><div class="button">…</div></a>), so a bare link that one child fills is read from that child.
+   */
+  const styledBox = (el: Element): Element => {
+    let cur = el;
+    for (let i = 0; i < 3; i++) {
+      const cs = getComputedStyle(cur);
+      const bare = isTransparent(cs.backgroundColor) && (cs.borderTopStyle === "none" || px(cs.borderTopWidth) === 0);
+      const only = cur.children.length === 1 ? cur.children[0]! : null;
+      if (!bare || !only) break;
+      const a = cur.getBoundingClientRect();
+      const r = only.getBoundingClientRect();
+      if (Math.abs(a.width - r.width) > 2 || Math.abs(a.height - r.height) > 2) break;
+      cur = only;
+    }
+    return cur;
+  };
+
   const buttons: BoxSample[] = [];
   const links: BoxSample[] = [];
   for (const el of document.body.querySelectorAll(
     "a, button, input[type=submit], input[type=button], [role=button]",
   )) {
     if (!visible(el)) continue;
-    const b = box(el);
+    const b = box(styledBox(el));
     if (el instanceof HTMLInputElement) b.text = el.value;
     if (b.text.length < 1 || b.text.length > 40) continue;
     const hasBg = !isTransparent(b.bg) && b.bg !== b.contextBg;

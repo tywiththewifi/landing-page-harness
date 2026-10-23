@@ -30,18 +30,22 @@ export function semanticColors(brand: Brand) {
     brand.cards.find((c) => c.borderColor)?.borderColor ??
     byContrast.find((c) => contrastRatio(c.value, surface) > 1.05)?.value ??
     "#e5e7eb";
+  const subtle = byContrast.find((c) => contrastRatio(c.value, surface) > 1.05)?.value ?? surface;
   // Muted text: readable, but softer than ink. Colours seen on text win over ones that aren't.
+  // It has to stay readable wherever the components put it: the surface, subtle bands and cards.
   const inkContrast = contrastRatio(ink, surface);
+  const backdrops = [surface, subtle, ...brand.cards.map((c) => c.background).filter((bg) => contrastRatio(ink, bg) >= 4.5)];
   const mutedCandidates = byContrast.filter((c) => {
     const ratio = contrastRatio(c.value, surface);
-    return ratio >= 4.5 && ratio < inkContrast;
+    return ratio < inkContrast && backdrops.every((bg) => contrastRatio(c.value, bg) >= 4.5);
   });
   const muted = (mutedCandidates.find((c) => c.usage.includes("text")) ?? mutedCandidates[0])?.value ?? ink;
-  const subtle = byContrast.find((c) => contrastRatio(c.value, surface) > 1.05)?.value ?? surface;
-  // What the site actually puts on its brand colour wins; otherwise the more readable of white and ink.
-  const measuredOnBrand = brand.buttons.find((b) => b.kind === "filled" && b.background === brandColor)?.color;
+  // What the site actually puts on its brand colour wins when body text can be read in it
+  // (a button label can get away with less); otherwise the most readable of white, ink and the
+  // surface. The surface matters on a monochrome dark site, where the brand falls back to light ink.
+  const measuredOnBrand = brand.buttons.find((b) => b.kind === "filled" && b.background === brandColor && contrastRatio(b.color, brandColor) >= 4.5)?.color;
   const onBrand =
-    measuredOnBrand ?? (contrastRatio("#ffffff", brandColor) >= contrastRatio(ink, brandColor) ? "#ffffff" : ink);
+    measuredOnBrand ?? ["#ffffff", ink, surface].reduce((best, c) => (contrastRatio(c, brandColor) > contrastRatio(best, brandColor) ? c : best));
   return { surface, ink, brand: brandColor, accent, border, muted, subtle, onBrand };
 }
 

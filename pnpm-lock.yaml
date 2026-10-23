@@ -69,6 +69,33 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
 
+  apps/mcp:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^2.1.5
+        version: 2.1.5(hono@4.13.13)
+      '@lph/api':
+        specifier: workspace:*
+        version: link:../api
+      '@lph/brief':
+        specifier: workspace:*
+        version: link:../../packages/brief
+      '@lph/checks':
+        specifier: workspace:*
+        version: link:../../packages/checks
+      '@lph/page':
+        specifier: workspace:*
+        version: link:../../packages/page
+      '@lph/tokens':
+        specifier: workspace:*
+        version: link:../../packages/tokens
+      '@modelcontextprotocol/sdk':
+        specifier: 1.32.1
+        version: 1.32.1(zod@4.6.7)
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
   apps/studio:
     dependencies:
       '@lph/brief':

@@ -49,3 +49,33 @@ describe("replaceColor", async () => {
     expect(next.usageRules[0]).toContain("#b8f07a");
   });
 });
+
+describe("semanticColors", async () => {
+  const { semanticColors } = await import("../src/output.ts");
+  const color = (name: string, value: string, role: string, usage: string[] = []) => ({ name, value, role, usage, sources: [], confidence: 1 });
+  const brand = (over: Record<string, unknown> = {}) =>
+    ({
+      colors: [color("surface", "#ffffff", "surface"), color("ink", "#000000", "ink"), color("orange", "#f54e00", "brand"), color("grey-50", "#f7f7f7", "neutral"), color("grey-500", "#757575", "neutral", ["text"]), color("grey-600", "#616161", "neutral", ["text"])],
+      buttons: [{ kind: "filled", background: "#f54e00", color: "#ffffff" }],
+      cards: [],
+      ...over,
+    }) as unknown as Parameters<typeof semanticColors>[0];
+
+  it("keeps muted text readable on subtle bands and cards, not just the surface", () => {
+    // #757575 passes on white (4.6:1) but not on the #f7f7f7 subtle band (4.3:1).
+    expect(semanticColors(brand()).muted).toBe("#616161");
+  });
+
+  it("uses the site's text colour on the brand only when body text can be read in it", () => {
+    // White on PostHog orange is 3.5:1: fine on a bold button, not for a hero's paragraph.
+    expect(semanticColors(brand()).onBrand).toBe("#000000");
+    const readable = brand({ colors: [color("surface", "#ffffff", "surface"), color("ink", "#111111", "ink"), color("navy", "#0d1738", "brand")], buttons: [{ kind: "filled", background: "#0d1738", color: "#e0e7ff" }] });
+    expect(semanticColors(readable).onBrand).toBe("#e0e7ff");
+  });
+
+  it("puts the surface on the brand band of a monochrome dark site", () => {
+    // No brand colour, so the band is the light ink; white on it would be invisible.
+    const dark = brand({ colors: [color("surface", "#08090a", "surface"), color("ink", "#f7f8f8", "ink")], buttons: [] });
+    expect(semanticColors(dark)).toMatchObject({ brand: "#f7f8f8", onBrand: "#08090a" });
+  });
+});

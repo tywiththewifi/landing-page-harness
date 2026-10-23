@@ -22,7 +22,7 @@ export function emptyBlock<T extends BlockType>(type: T, id: string, opts: { car
   const blocks: { [K in BlockType]: Omit<BlockOf<K>, "id" | "tone"> } = {
     hero: { type: "hero", eyebrow: "", heading: todo("Headline"), lead: todo("Subheadline"), primaryCta: cta, secondaryCta: none },
     logos: { type: "logos", heading: todo("Heading"), items: Array.from({ length: 5 }, (_, i) => todo(`Customer ${i + 1}`)) },
-    features: { type: "features", eyebrow: "", heading: todo("Heading"), intro: "", items: items(3, "Benefit"), cardVariant: opts.cardVariant ?? "default" },
+    features: { type: "features", eyebrow: "", heading: todo("Heading"), intro: "", items: items(3, "Benefit"), cardVariant: opts.cardVariant ?? "" },
     steps: { type: "steps", heading: todo("Heading"), intro: "", items: items(3, "Step") },
     stats: { type: "stats", heading: "", items: Array.from({ length: 3 }, () => ({ value: PLACEHOLDER, label: todo("What it measures") })) },
     testimonial: { type: "testimonial", quote: todo("A real customer quote, with permission"), name: PLACEHOLDER, role: PLACEHOLDER, company: PLACEHOLDER },

@@ -37,6 +37,12 @@ a { color: var(--nl-forest); }
 .btn { display: inline-flex; align-items: center; padding: 14px 24px; border-radius: 12px; font-size: 16px; font-weight: 600; text-decoration: none; border: 0; cursor: pointer; font-family: inherit; }
 .btn--primary { background: var(--nl-ink); color: #ecf5f1; }
 .btn--secondary { background: var(--nl-lime); color: #1b2a22; }
+/* A hover roll: the label's colour is on the spans, and a second copy waits below, clipped. */
+.btn--secondary.roll { color: #0000ee; }
+.roll__inner { display: block; position: relative; overflow: hidden; }
+.roll__inner > span { display: block; color: #1b2a22; transition: transform 0.2s; }
+.roll__inner > span + span { position: absolute; top: 100%; left: 0; }
+.roll:hover .roll__inner > span { transform: translateY(-100%); }
 .btn--tertiary { background: transparent; color: var(--nl-lime); border: 1.5px solid var(--nl-lime); }
 .card { background: #fff; border: 1px solid var(--nl-line); border-radius: 16px; padding: 32px; }
 .card--feature { background: #ffffff; border: 0; border-radius: 16px; padding: 32px; box-shadow: 0 8px 24px rgba(26, 62, 53, 0.08); }

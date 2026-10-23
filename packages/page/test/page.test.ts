@@ -196,6 +196,18 @@ describe("checkPage", () => {
 });
 
 describe("renderPage", () => {
+  it("draws cards from the tokens when the brand has no card styles", async () => {
+    const plain = { ...brand, cards: [] } as Brand;
+    const features = emptyBlock("features", "features", {});
+    expect(features.cardVariant).toBe("");
+    const { page } = await finishedPage();
+    const html = renderPage({ ...page, blocks: [features] }, plain, css);
+    expect(html).toContain('class="lph-card"');
+    // The lead form's card too.
+    expect(renderPage({ ...page, blocks: page.blocks.filter((b) => b.type === "form") }, plain, css)).not.toMatch(/lph-card--/);
+    expect(html).not.toMatch(/lph-card--default/);
+  });
+
   it("renders one H1, SEO tags and structured data for the general page", async () => {
     const { page, brief } = await finishedPage();
     const html = renderPage(page, brand, css, { origin: "https://northloop.example" });
