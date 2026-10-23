@@ -52,4 +52,6 @@ packages/
 
 Forms (webhook + HubSpot) shipped with M3, so a page can be tried end to end before the publish gate exists. See [pages.md](pages.md).
 
+M4 ships the gate, the pull request publisher with risk labels and the site repo's CI template, plus a Cloudflare Pages bundle for sites without a repo. Previews come from the site repo's host (Cloudflare Pages branch previews); a public demo site repo wired to the live demo is still to set up, since it needs a GitHub repo, a token and a Cloudflare project. See [publish.md](publish.md).
+
 Run M1 against genki.world as the first case study, and against one more site to show portability.

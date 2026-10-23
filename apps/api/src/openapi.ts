@@ -140,9 +140,9 @@ export const openApi = {
       },
     },
     "/api/pages/{id}/publish": {
-      get: { summary: "What publishing would do, without doing it: the target repo, the files and how they change, the risk (content or review) and why, and the pull request's title and description", parameters: [brandId], responses: ok("Publish plan") },
+      get: { summary: "What publishing would do, without doing it: the target repo, the files and how they change, the risk (content or review) and why, the pull request's title and description, and the latest gate report (gate when it's for the page as it is now, report either way)", parameters: [brandId], responses: ok("Publish plan") },
       post: {
-        summary: "Publish as a pull request into the site repo (LPH_GITHUB_REPO). Needs a gate report for this version of the page with no errors. Low-risk copy changes are labelled lph:content and merge themselves once the repo's checks pass; anything else is labelled lph:needs-review",
+        summary: "Publish as a pull request into the site repo (LPH_GITHUB_REPO). Needs a gate report for this version of the page with no errors. Low-risk changes (copy only, on a page that's already live, with no errors and no warnings a reviewer hasn't accepted on the live page) are labelled lph:content and merge themselves once the repo's checks pass; anything else is labelled lph:needs-review",
         parameters: [brandId],
         responses: { 201: { description: "Pull request opened" }, 200: { description: "Open pull request updated" }, 400: { description: "No repo connected" }, 409: { description: "Run the checks first, fix their errors, or nothing changed" } },
       },

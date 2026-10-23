@@ -1,5 +1,5 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import type { Brief } from "@lph/brief/schema";
 import { baseValue, checkPage, renderPage, versionPath, writeText, type Page, type PageIssue } from "@lph/page/browser";
 import type { Brand } from "@lph/tokens";
@@ -122,6 +122,17 @@ export function PagePage() {
     }, 60);
   };
 
+  // The publish screen links an issue here (?issue=<id>): open its field once the page is loaded.
+  const [params, setParams] = useSearchParams();
+  const wanted = params.get("issue");
+  useEffect(() => {
+    if (!wanted || !page) return;
+    const issue = issues.find((i) => i.id === wanted);
+    setParams({}, { replace: true });
+    if (issue) jump(issue);
+    // jump only reads state setters and refs.
+  }, [wanted, page, issues]);
+
   if (error) {
     return (
       <div className={review.state}>
@@ -154,9 +165,9 @@ export function PagePage() {
               Open preview
             </a>
           )}
-          <button className="ui-button ui-button--primary" disabled title={errors ? "Fix the issues marked Must fix first" : "Publishing arrives in the next step"}>
+          <Link className="ui-button ui-button--primary" to={`/pages/${page.id}/publish`} title={errors ? "The checks will block publishing until the issues marked Must fix are fixed" : undefined}>
             Publish
-          </button>
+          </Link>
         </div>
       </div>
 

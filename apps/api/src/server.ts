@@ -28,7 +28,14 @@ const seoProviders = providersFromEnv();
 const env = process.env;
 const githubTarget =
   env.LPH_GITHUB_REPO && env.LPH_GITHUB_TOKEN
-    ? { repo: env.LPH_GITHUB_REPO, token: env.LPH_GITHUB_TOKEN, base: env.LPH_GITHUB_BASE || "main", reviewers: env.LPH_GITHUB_REVIEWERS?.split(",").map((r) => r.trim()).filter(Boolean) }
+    ? {
+        repo: env.LPH_GITHUB_REPO,
+        token: env.LPH_GITHUB_TOKEN,
+        base: env.LPH_GITHUB_BASE || "main",
+        reviewers: env.LPH_GITHUB_REVIEWERS?.split(",").map((r) => r.trim()).filter(Boolean),
+        // GitHub Enterprise Server: https://github.example.com/api/v3
+        apiUrl: env.LPH_GITHUB_API_URL || undefined,
+      }
     : undefined;
 const site = {
   ...(env.LPH_SITE_ORIGIN && { origin: env.LPH_SITE_ORIGIN.replace(/\/+$/, "") }),

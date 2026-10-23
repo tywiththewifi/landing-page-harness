@@ -5,7 +5,7 @@ const SEVERITY = { error: "❌", warning: "⚠️", info: "ℹ️" } as const;
 
 export const VERDICT_TEXT: Record<GateReport["verdict"], string> = {
   blocked: "Blocked: fix the errors before publishing.",
-  review: "Needs a reviewer: the checks found warnings a person has to accept.",
+  review: "Passed with warnings: nothing blocks publishing.",
   ready: "Ready: every check passed.",
 };
 

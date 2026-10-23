@@ -4,12 +4,13 @@
 # - check: re-runs the publish gate on the changed pages (SEO and answer engines, brand,
 #   accessibility with axe, the performance budget) and decides the risk from the diff
 #   itself, so adding a label by hand can't skip review.
-# - auto-merge: only a copy change to a page that's already live, with every check
-#   passing, and labelled lph:content by the publisher. Everything else waits for a
-#   reviewer.
+# - auto-merge: only a copy change to a page that's already live, with no errors and no
+#   warnings a reviewer hasn't already accepted on the live page, and labelled
+#   lph:content by the publisher. Everything else waits for a reviewer.
 #
 # Make "check" a required status check on the default branch, and turn on "Allow
-# auto-merge" in the repo's settings.
+# auto-merge" in the repo's settings. If the branch also requires an approval, copy-only
+# pull requests wait for a reviewer's click instead: this workflow never approves.
 name: Landing pages
 
 on:
@@ -59,7 +60,7 @@ jobs:
     needs: check
     if: >-
       needs.check.outputs.risk == 'content' &&
-      needs.check.outputs.verdict == 'ready' &&
+      needs.check.outputs.verdict != 'blocked' &&
       contains(github.event.pull_request.labels.*.name, 'lph:content') &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest

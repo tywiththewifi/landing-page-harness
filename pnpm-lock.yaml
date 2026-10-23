@@ -74,6 +74,9 @@ importers:
       '@lph/brief':
         specifier: workspace:*
         version: link:../../packages/brief
+      '@lph/checks':
+        specifier: workspace:*
+        version: link:../../packages/checks
       '@lph/design-md':
         specifier: workspace:*
         version: link:../../packages/design-md
@@ -86,12 +89,18 @@ importers:
       '@lph/page':
         specifier: workspace:*
         version: link:../../packages/page
+      '@lph/publisher':
+        specifier: workspace:*
+        version: link:../../packages/publisher
       '@lph/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens
       '@lph/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      axe-core:
+        specifier: 4.14.0
+        version: 4.14.0
       dompurify:
         specifier: ^3.4.17
         version: 3.4.17

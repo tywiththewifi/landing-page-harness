@@ -7,9 +7,6 @@
     ".": "./src/index.ts",
     "./browser": "./src/browser.ts"
   },
-  "bin": {
-    "lph-gate": "./src/cli.ts"
-  },
   "scripts": {
     "typecheck": "tsc -p ."
   },

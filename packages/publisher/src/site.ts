@@ -1,4 +1,4 @@
-import type { GateReport } from "@lph/checks/browser";
+import type { GateIssue, GateReport } from "@lph/checks/browser";
 import { FORM_SCRIPT, renderVersions, type Page } from "@lph/page/browser";
 import { toCss, type Brand } from "@lph/tokens";
 import type { FormConfig } from "./runtime/handler.ts";
@@ -40,8 +40,23 @@ export interface PageSource {
   /** The brief's search targets, so the site's CI can run the same SEO checks. */
   targets: { keyword: string; questions: string[] };
   /** What the gate found when the page was published from the studio. */
-  gate: { verdict: GateReport["verdict"]; environment: GateReport["environment"]; checks: { id: string; status: string; summary: string }[] } | null;
+  gate: {
+    verdict: GateReport["verdict"];
+    environment: GateReport["environment"];
+    checks: { id: string; status: string; summary: string }[];
+    /** Each warning, by what it's about. Once this source is merged, a reviewer has accepted them (see classify). */
+    warnings: WarningRef[];
+  } | null;
 }
+
+/** A warning the gate found, by what it's about rather than its wording. */
+export type WarningRef = Pick<GateIssue, "check" | "id" | "path" | "field" | "variant">;
+
+export const warningsOf = (report: GateReport): WarningRef[] =>
+  report.checks
+    .flatMap((c) => c.issues)
+    .filter((i) => i.severity === "warning")
+    .map(({ check, id, path, field, variant }) => ({ check, id, ...(path && { path }), ...(field && { field }), ...(variant && { variant }) }));
 
 const join = (...parts: string[]) => parts.filter(Boolean).join("/").replace(/\/+/g, "/");
 
@@ -173,7 +188,9 @@ export async function siteFiles(input: SiteInput): Promise<SiteFile[]> {
     page: clean,
     build: { tokens: await sha256(toCss(brand)), components: await sha256(uiCss), brand: { id: brand.id, name: brand.name } },
     targets: input.targets ?? { keyword: "", questions: [] },
-    gate: input.gate ? { verdict: input.gate.verdict, environment: input.gate.environment, checks: input.gate.checks.map(({ id, status, summary }) => ({ id, status, summary })) } : null,
+    gate: input.gate
+      ? { verdict: input.gate.verdict, environment: input.gate.environment, checks: input.gate.checks.map(({ id, status, summary }) => ({ id, status, summary })), warnings: warningsOf(input.gate) }
+      : null,
   };
   files.push({ path: sourceFile(config, page), content: `${JSON.stringify(source, null, 2)}\n`, kind: "source" });
 

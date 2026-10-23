@@ -20,8 +20,12 @@ import {
   planPublish,
   previewFor,
   siteFiles,
+  beyondCopy,
+  htmlSkeleton,
+  warningsOf,
   zip,
   type FormConfig,
+  type GateFindings,
   type PageSource,
   type SiteConfig,
 } from "../src/index.ts";
@@ -41,7 +45,8 @@ async function gateFor(page: Page, brief: Awaited<ReturnType<typeof finishedPage
   return runGate({ model: { page, brief, brand }, versions }, { environment: "browser", parse: parseDocument });
 }
 
-const sourceOf = async (page: Page): Promise<PageSource> => parseSource((await siteFiles({ page, brand, uiCss: css, config })).find((f) => f.kind === "source")!.content)!;
+const sourceOf = async (page: Page, gate?: GateReport): Promise<PageSource> => parseSource((await siteFiles({ page, brand, uiCss: css, config, gate })).find((f) => f.kind === "source")!.content)!;
+const READY: GateFindings = { verdict: "ready", warnings: [] };
 
 describe("siteFiles", () => {
   it("writes each version's HTML at its URL, the page's source and the shared files", async () => {
@@ -115,12 +120,12 @@ describe("classify", () => {
     edited.variants[0]!.overrides["hero.heading"] = "A new H1 for RevOps";
     edited.seo.title = "A new title for the HubSpot integration page";
     const pageFile = { path: "site/hubspot-integration.html", kind: "page" as const, status: "changed" as const };
-    expect(classify(before, await sourceOf(edited), [pageFile], "ready").risk).toBe("content");
+    expect(classify(before, await sourceOf(edited), [pageFile], READY).risk).toBe("content");
 
     const reason = async (change: (p: Page) => void, verdict: GateReport["verdict"] = "ready") => {
       const next = structuredClone(page);
       change(next);
-      const c = classify(before, await sourceOf(next), [pageFile], verdict);
+      const c = classify(before, await sourceOf(next), [pageFile], { verdict, warnings: [] });
       expect(c.risk).toBe("review");
       return c.reasons.join(" ");
     };
@@ -130,13 +135,88 @@ describe("classify", () => {
     expect(await reason((p) => (p.form.hubspotFormId = "11111111-1111-1111-1111-111111111111"))).toContain("where its leads go");
     expect(await reason((p) => (p.variants[0]!.slug = "revops"))).toContain("new URL");
     expect(await reason((p) => (p.slug = "hubspot"))).toContain("moves from /hubspot-integration to /hubspot");
+    expect(await reason((p) => p.blocks.forEach((b) => b.type === "faq" && b.items.pop()))).toContain("Items were added to or removed from a section.");
     expect(await reason(() => {}, "review")).toContain("warnings");
 
-    expect(classify(null, before, [pageFile], "ready").reasons[0]).toContain("new page");
-    const changedHeaders = classify(before, before, [{ path: "site/_headers", kind: "config", status: "changed" }], "ready");
+    expect(classify(null, before, [pageFile], READY).reasons[0]).toContain("new page");
+    const changedHeaders = classify(before, before, [{ path: "site/_headers", kind: "config", status: "changed" }], READY);
     expect(changedHeaders).toEqual({ risk: "review", reasons: ["Shared site files change: site/_headers."] });
-    const tokens = classify(before, { ...before, build: { ...before.build, tokens: "other" } }, [pageFile], "ready");
+    const tokens = classify(before, { ...before, build: { ...before.build, tokens: "other" } }, [pageFile], READY);
     expect(tokens.reasons[0]).toContain("tokens changed");
+    const handEdited = classify(before, before, [{ ...pageFile, beyondCopy: true }], READY);
+    expect(handEdited).toEqual({ risk: "review", reasons: ["More than the words changed in site/hubspot-integration.html: its tags, links, scripts or styles."] });
+  });
+
+  it("tells a copy edit from any other change to the HTML", async () => {
+    const { page } = await finishedPage();
+    const render = (p: Page) => renderVersions(p, brand, css, { origin: config.origin, formAction: `/api/forms/${p.id}` }).map((v) => v.html);
+    const [general, version] = render(page);
+
+    // Every kind of text: headings, buttons, FAQ answers, the quote, form labels, SEO text, a version's override.
+    const copy = structuredClone(page);
+    for (const b of copy.blocks) {
+      if (b.type === "hero") Object.assign(b, { heading: "Route every lead in seconds", lead: "New words & <symbols>." }), (b.primaryCta.label = "Start now");
+      if (b.type === "faq") b.items[0]!.answer = "A different answer, with \"quotes\".";
+      if (b.type === "testimonial") b.quote = "Another quote.";
+      if (b.type === "form") b.fields[0]!.label = "Your work email";
+    }
+    Object.assign(copy.seo, { title: "Another title for the page", metaDescription: "Another description of the page." });
+    copy.variants[0]!.overrides["hero.heading"] = "A heading for RevOps";
+    const [general2, version2] = render(copy);
+    expect(general2).not.toBe(general);
+    expect(htmlSkeleton(general2!)).toBe(htmlSkeleton(general!));
+    expect(beyondCopy(version!, version2!)).toBe(false);
+
+    // Hand edits that keep the words.
+    const edits = [
+      general!.replace(/href="[^"]*"/, 'href="https://evil.example/login"'),
+      general!.replace("</body>", '<script src="https://evil.example/x.js"></script></body>'),
+      general!.replace(/<h1/, '<h1 onclick="steal()"'),
+      general!.replace(/<style>/, "<style>body{display:none}"),
+      general!.replace(/("url":")[^"]*/, "$1https://evil.example/"),
+      general!.replace(/<meta name="robots"[^>]*>|<\/title>/, '</title><meta http-equiv="refresh" content="0;url=https://evil.example">'),
+      general!.replace('"@type":"FAQPage"', '"@type":"FAQPage"}</script><script>alert(1)</script><script type="application/ld+json">{"x":1'),
+    ];
+    for (const edited of edits) {
+      expect(edited).not.toBe(general);
+      expect(beyondCopy(general!, edited)).toBe(true);
+    }
+  });
+
+  it("doesn't ask again about a warning a reviewer accepted, unless its text changed", async () => {
+    // The testimonial's quote isn't on the site: a warning a person accepts once.
+    const { page, brief } = await finishedPage();
+    const gate = await gateFor(page, brief);
+    const warnings = warningsOf(gate);
+    expect(gate.verdict).toBe("review");
+    expect(warnings.map((w) => w.id)).toContain("testimonial.quote-source");
+    const live = await sourceOf(page, gate);
+    expect(live.gate?.warnings).toEqual(warnings);
+    const pageFile = { path: "site/hubspot-integration.html", kind: "page" as const, status: "changed" as const };
+
+    // A new H1, the quote as it was: copy only.
+    const edited = structuredClone(page);
+    const hero = edited.blocks.find((b) => b.type === "hero")!;
+    if (hero.type === "hero") hero.heading = "Route every HubSpot lead in seconds";
+    const next = await gateFor(edited, brief);
+    const c = classify(live, await sourceOf(edited, next), [pageFile], { verdict: next.verdict, warnings: warningsOf(next) });
+    expect(c.risk).toBe("content");
+    expect(c.reasons.join(" ")).toContain("accepted when the live page was reviewed");
+    // The same warnings found again by the site's CI are counted once.
+    const both = classify(live, await sourceOf(edited, next), [pageFile], { verdict: next.verdict, warnings: [...warningsOf(next), ...warningsOf(next)] });
+    expect(both.reasons).toEqual(c.reasons);
+
+    // A different quote is checked again.
+    const quote = structuredClone(edited);
+    const t = quote.blocks.find((b) => b.type === "testimonial")!;
+    if (t.type === "testimonial") t.quote = "We cut lead routing from a day to a minute.";
+    const again = await gateFor(quote, brief);
+    const q = classify(live, await sourceOf(quote, again), [pageFile], { verdict: again.verdict, warnings: warningsOf(again) });
+    expect(q).toEqual({ risk: "review", reasons: ["The checks found a new warning a person has to accept: testimonial.quote-source."] });
+
+    // A page published without its warnings recorded gets no pass.
+    const unrecorded = { ...live, gate: { ...live.gate!, warnings: [] } };
+    expect(classify(unrecorded, await sourceOf(edited, next), [pageFile], { verdict: next.verdict, warnings: warningsOf(next) }).risk).toBe("review");
   });
 });
 

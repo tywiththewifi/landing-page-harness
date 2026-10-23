@@ -2,7 +2,8 @@ import { gateMarkdown, type GateReport } from "@lph/checks/browser";
 import { applyVariant, versionPath, type Page } from "@lph/page/browser";
 import type { Brand } from "@lph/tokens";
 import { classify, LABELS, type Classification, type FileChange } from "./classify.ts";
-import { htmlFile, parseSource, siteFiles, sourceFile, type PageSource, type SiteConfig, type SiteFile } from "./site.ts";
+import { htmlFile, parseSource, siteFiles, sourceFile, warningsOf, type PageSource, type SiteConfig, type SiteFile } from "./site.ts";
+import { beyondCopy } from "./skeleton.ts";
 
 export interface PublishPlan {
   branch: string;
@@ -37,10 +38,10 @@ export const branchFor = (page: Pick<Page, "slug">) => `lph/${page.slug}`;
 
 /**
  * Cloudflare Pages previews a branch at <branch>.<project>.pages.dev, with the branch
- * name lowercased and anything but letters and digits turned into hyphens.
+ * name lowercased and each character but letters and digits turned into a hyphen.
  */
 export function previewFor(template: string, branch: string, path: string): string {
-  const alias = branch.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const alias = branch.toLowerCase().replace(/[^a-z0-9]/g, "-");
   const base = template.replace("{branch}", alias).replace(/\/+$/, "");
   return `${base}${path}`;
 }
@@ -65,11 +66,12 @@ export async function planPublish(input: PlanInput): Promise<PublishPlan> {
   const changes: FileChange[] = [];
   for (const f of files) {
     const current = await input.read(f.path);
-    changes.push({ path: f.path, kind: f.kind, status: current === null ? "added" : current === f.content ? "unchanged" : "changed" });
+    const status = current === null ? "added" : current === f.content ? "unchanged" : "changed";
+    changes.push({ path: f.path, kind: f.kind, status, ...(f.kind === "page" && status === "changed" && { beyondCopy: beyondCopy(current!, f.content) }) });
   }
   for (const path of removed) changes.push({ path, kind: "page", status: "removed" });
 
-  const classification = classify(before, after, changes, input.gate?.verdict);
+  const classification = classify(before, after, changes, input.gate && { verdict: input.gate.verdict, warnings: warningsOf(input.gate) });
   const branch = branchFor(page);
   const previews = input.previewUrl ? [null, ...page.variants].map((v) => ({ name: v?.name ?? "General", path: versionPath(page, v), url: previewFor(input.previewUrl!, branch, versionPath(page, v)) })) : [];
   const title = `${before ? "Update" : "Publish"} landing page: ${page.title}`;
@@ -96,7 +98,7 @@ function prBody(o: { page: Page; config: SiteConfig; gate: GateReport | null; cl
     `${o.isNew ? "Publishes" : "Updates"} **${cell(page.title)}** at [\`${versionPath(page, null)}\`](${live(versionPath(page, null))})${page.variants.length ? `, with ${page.variants.length === 1 ? "a version" : `${page.variants.length} versions`} for ${page.variants.map((v) => v.name).join(", ")}` : ""}.`,
     "",
     classification.risk === "content" ? "🟢 **Copy only.** This merges itself once the checks pass." : "🟡 **Needs a reviewer.**",
-    ...(classification.risk === "review" ? classification.reasons.map((r) => `- ${r}`) : []),
+    ...classification.reasons.map((r) => `- ${r}`),
     "",
   ];
   if (o.previews.length) lines.push("**Preview:** " + o.previews.map((p) => `[${cell(p.name)}](${p.url})`).join(" · "), "");

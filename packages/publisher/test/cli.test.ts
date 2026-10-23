@@ -79,6 +79,19 @@ describe("lph-site (the site repo's CI)", () => {
     const review = run(repo.dir, "classify");
     expect(review.output).toEqual({ risk: "review" });
     expect(review.stdout).toContain("Sections were added, removed or reordered.");
+
+    // A copy edit from the studio, with a script added to the HTML by hand on the same branch.
+    repo.git("checkout", "-q", "main");
+    repo.git("checkout", "-q", "-b", "lph/script");
+    const words = structuredClone(page);
+    words.seo.title = "A new title for the HubSpot integration page";
+    await repo.write(words);
+    const file = join(repo.dir, "site/hubspot-integration.html");
+    writeFileSync(file, readFileSync(file, "utf8").replace("</body>", '<script src="https://cdn.example/tag.js"></script></body>'));
+    repo.git("commit", "-q", "-am", "Copy and a script");
+    const script = run(repo.dir, "classify");
+    expect(script.output).toEqual({ risk: "review" });
+    expect(script.stdout).toContain("More than the words changed in site/hubspot-integration.html");
   });
 
   it("blocks a page whose HTML fails the checks", async () => {

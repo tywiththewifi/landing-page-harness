@@ -154,7 +154,7 @@ describe("runGate", () => {
     const withQuote = await finishedPage();
     const review = await runGate({ model: { ...withQuote, brand }, versions: await published(withQuote.page) }, htmlOnly);
     expect(review.verdict).toBe("review");
-    expect(gateMarkdown(review)).toContain("Needs a reviewer");
+    expect(gateMarkdown(review)).toContain("Passed with warnings");
   });
 
   it("blocks unfinished copy, and points back at the field and version", async () => {

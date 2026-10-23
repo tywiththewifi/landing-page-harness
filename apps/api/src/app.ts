@@ -514,6 +514,7 @@ export function createApp(opts: AppOptions) {
       target: gh ? { kind: "github", repo: gh.repo, base: gh.base, reviewers: gh.reviewers ?? [] } : null,
       config,
       gate,
+      report: gate ?? (await gates.latest(page.id)),
       plan: summary,
       published: page.published ?? null,
     });

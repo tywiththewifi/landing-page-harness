@@ -11,10 +11,11 @@ import { execFileSync } from "node:child_process";
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { gateMarkdown, runGate, serverRunner, type GateReport } from "@lph/checks";
+import { gateMarkdown, runGate, serverRunner } from "@lph/checks";
 import { versionPath } from "@lph/page";
-import { classify, LABELS, type Classification, type FileChange } from "./classify.ts";
-import { DEFAULT_SITE, htmlFile, parseSource, type PageSource, type SiteConfig } from "./site.ts";
+import { classify, LABELS, type Classification, type FileChange, type GateFindings } from "./classify.ts";
+import { DEFAULT_SITE, htmlFile, parseSource, warningsOf, type PageSource, type SiteConfig } from "./site.ts";
+import { beyondCopy } from "./skeleton.ts";
 
 const { positionals, values } = parseArgs({
   allowPositionals: true,
@@ -65,15 +66,16 @@ function pagesInDiff() {
     html.forEach((p) => claimed.add(p));
     pages.push({ path: f.path, before, after, html: [...new Set(html)] });
   }
-  const changes: FileChange[] = files.map((f) => ({
-    path: f.path,
-    status: f.status,
-    kind: f.path.startsWith(`${config.sourceDir}/`) ? "source" : claimed.has(f.path) ? "page" : f.path.startsWith(config.functionsDir ? `${config.functionsDir}/` : "\u0000") || f.path.endsWith("_headers") ? "config" : "other",
-  }));
+  const changes: FileChange[] = files.map((f) => {
+    const kind = f.path.startsWith(`${config.sourceDir}/`) ? "source" : claimed.has(f.path) ? "page" : f.path.startsWith(config.functionsDir ? `${config.functionsDir}/` : "\u0000") || f.path.endsWith("_headers") ? "config" : "other";
+    // The HTML as committed, not as the source says it should be: a hand edit shows here.
+    const edited = kind === "page" && f.status === "changed" ? beyondCopy(atBase(f.path) ?? "", atHead(f.path) ?? "") : undefined;
+    return { path: f.path, status: f.status, kind, ...(edited !== undefined && { beyondCopy: edited }) };
+  });
   return { pages, changes };
 }
 
-function decide(pages: PageChange[], changes: FileChange[], verdicts: Map<string, GateReport["verdict"]>): Classification {
+function decide(pages: PageChange[], changes: FileChange[], found: Map<string, GateFindings>): Classification {
   if (!pages.length) return { risk: "review", reasons: ["No landing page changed: this isn't a publish from the studio."] };
   const reasons: string[] = [];
   for (const p of pages) {
@@ -84,10 +86,12 @@ function decide(pages: PageChange[], changes: FileChange[], verdicts: Map<string
     // Each page is judged on its own files, plus every file that belongs to no page.
     const own = changes.filter((c) => p.html.includes(c.path) || c.path === p.path || (c.kind !== "page" && c.kind !== "source"));
     const studio = p.after.gate?.verdict ?? null;
-    const ci = verdicts.get(p.path) ?? null;
+    const ci = found.get(p.path) ?? null;
     if (!studio) reasons.push(`${p.path}: published without the studio's checks.`);
-    const worst = [studio, ci].includes("blocked") ? "blocked" : [studio, ci].includes("review") ? "review" : "ready";
-    const c = classify(p.before, p.after, own, worst);
+    // The worse of what the studio found and what CI found here, with every warning from both.
+    const verdicts = [studio, ci?.verdict];
+    const worst = verdicts.includes("blocked") ? "blocked" : verdicts.includes("review") ? "review" : "ready";
+    const c = classify(p.before, p.after, own, { verdict: worst, warnings: [...(p.after.gate?.warnings ?? []), ...(ci?.warnings ?? [])] });
     if (c.risk === "review") reasons.push(...c.reasons.map((r) => (pages.length > 1 ? `/${p.after!.page.slug}: ${r}` : r)));
   }
   const loose = changes.filter((c) => c.kind === "other");
@@ -110,7 +114,7 @@ async function main() {
     process.exit(2);
   }
   const { pages, changes } = pagesInDiff();
-  const verdicts = new Map<string, GateReport["verdict"]>();
+  const found = new Map<string, GateFindings>();
   const sections: string[] = [];
 
   if (command === "check") {
@@ -125,12 +129,12 @@ async function main() {
         });
         const missing = versions.filter((v) => !v.html);
         if (missing.length) {
-          verdicts.set(p.path, "blocked");
+          found.set(p.path, { verdict: "blocked", warnings: [] });
           sections.push(`### /${page.slug}\n\n❌ Missing HTML for ${missing.map((v) => v.path).join(", ")}.`);
           continue;
         }
         const report = await runGate({ versions, targets: p.after.targets }, runner);
-        verdicts.set(p.path, report.verdict);
+        found.set(p.path, { verdict: report.verdict, warnings: warningsOf(report) });
         sections.push(`### /${page.slug}\n\n${gateMarkdown(report)}`);
       }
     } finally {
@@ -138,8 +142,9 @@ async function main() {
     }
   }
 
-  const decision = decide(pages, changes, verdicts);
-  const verdict = [...verdicts.values()].includes("blocked") ? "blocked" : [...verdicts.values()].includes("review") ? "review" : "ready";
+  const decision = decide(pages, changes, found);
+  const verdicts = [...found.values()].map((f) => f.verdict);
+  const verdict = verdicts.includes("blocked") ? "blocked" : verdicts.includes("review") ? "review" : "ready";
   output({ risk: decision.risk, ...(command === "check" && { verdict }) }, ["## Landing pages", "", riskText(decision), "", ...sections].join("\n"));
   if (verdict === "blocked") process.exit(1);
 }
