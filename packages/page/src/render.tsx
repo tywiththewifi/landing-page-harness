@@ -4,7 +4,7 @@ import { FIELDS, HONEYPOT } from "@lph/forms";
 import { toCss, type Brand } from "@lph/tokens";
 import { Button, Card, Comparison, Faq, Footer, Grid, Hero, LeadForm, LogoRow, Logo, Nav, Quote, Section, Split, Stats, Steps } from "@lph/ui";
 import { safeHref, written } from "./blocks.ts";
-import { buttonsFor, navTone } from "./brand.ts";
+import { buttonsFor, heroTone, navTone } from "./brand.ts";
 import { FORM_SCRIPT } from "./form-script.ts";
 import type { Block, Link, Page, Variant } from "./schema.ts";
 import { applyVariant, versionPath } from "./variants.ts";
@@ -57,7 +57,8 @@ function BlockView({ block, brand, formAction }: { block: Block; brand: Brand; f
           eyebrow={opt(block.eyebrow)}
           title={block.heading}
           lead={opt(block.lead)}
-          actions={<Actions links={[block.primaryCta, block.secondaryCta]} brand={brand} tone="hero" />}
+          actions={<Actions links={[block.primaryCta, block.secondaryCta]} brand={brand} tone={heroTone(brand, tone)} />}
+          tone={heroTone(brand, tone)}
         />
       );
     case "logos":
@@ -69,7 +70,7 @@ function BlockView({ block, brand, formAction }: { block: Block; brand: Brand; f
     case "features":
       return (
         <Section id={id} tone={tone} eyebrow={opt(block.eyebrow)} title={opt(block.heading)} intro={opt(block.intro)}>
-          <Grid>
+          <Grid count={block.items.length}>
             {block.items.map((item, i) => (
               <Card key={i} variant={block.cardVariant} title={item.title}>
                 <p className="lph-body lph-muted">{item.body}</p>

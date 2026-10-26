@@ -520,10 +520,14 @@ function analyzeCards(pages: PageCapture[]): CardStyle[] {
     });
 }
 
-function analyzeInput(pages: PageCapture[]): InputStyle | null {
+export function analyzeInput(pages: PageCapture[]): InputStyle | null {
   const tally = new Tally<BoxSample>();
   for (const { desktop: p } of pages) {
     for (const i of p.inputs) {
+      // A field set in display type (Frontify's 96px newsletter signup) is a one-off, not the form style.
+      if (i.fontSize > 24) continue;
+      // Nor is a bare field inside a box something else draws (the header searches on Frontify and Cosuno).
+      if (i.borderWidth < 1 && (!normalizeColor(i.bg) || normalizeColor(i.bg) === normalizeColor(i.contextBg))) continue;
       const key = [normalizeColor(i.bg), normalizeColor(i.borderColor, 0.3), Math.round(i.radius)].join("|");
       tally.add(key, i, 1, p.url, i.selector);
     }

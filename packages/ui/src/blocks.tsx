@@ -82,7 +82,8 @@ export function Quote({ quote, name, role, company }: { quote: ReactNode; name: 
 
 export function Comparison({ caption, columns, rows }: { caption: string; columns: { ours: ReactNode; theirs: ReactNode }; rows: { label: ReactNode; ours: ReactNode; theirs: ReactNode }[] }) {
   return (
-    <div className="lph-table-wrap">
+    // It scrolls sideways on a phone, so keyboard users need to be able to focus it.
+    <div className="lph-table-wrap" tabIndex={0} role="region" aria-label={caption}>
       <table className="lph-table">
         <caption className="lph-visually-hidden">{caption}</caption>
         <thead>

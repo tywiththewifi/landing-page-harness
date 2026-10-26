@@ -48,11 +48,13 @@ export interface HeroProps {
   actions?: ReactNode;
   /** Optional right-hand column, e.g. a lead form. */
   aside?: ReactNode;
+  /** The band behind it: the brand colour by default. */
+  tone?: "brand" | "subtle";
 }
 
-export function Hero({ id, eyebrow, title, lead, actions, aside }: HeroProps) {
+export function Hero({ id, eyebrow, title, lead, actions, aside, tone = "brand" }: HeroProps) {
   return (
-    <section id={id} className={cx("lph-hero", aside && "lph-hero--split")}>
+    <section id={id} className={cx("lph-hero", tone === "subtle" && "lph-hero--subtle", aside && "lph-hero--split")}>
       <div className="lph-container lph-hero__inner">
         <div>
           {eyebrow ? <span className="lph-eyebrow">{eyebrow}</span> : null}
@@ -94,8 +96,9 @@ export function Section({ id, tone = "default", align = "start", eyebrow, title,
   );
 }
 
-export function Grid({ children }: { children: ReactNode }) {
-  return <div className="lph-grid">{children}</div>;
+/** Pass `count` so three or six cards fill even rows of three instead of leaving an orphan row. */
+export function Grid({ children, count }: { children: ReactNode; count?: number }) {
+  return <div className={count && count % 3 === 0 ? "lph-grid lph-grid--thirds" : "lph-grid"}>{children}</div>;
 }
 
 export interface NavProps {

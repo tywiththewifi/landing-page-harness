@@ -51,7 +51,7 @@ describe("replaceColor", async () => {
 });
 
 describe("semanticColors", async () => {
-  const { semanticColors } = await import("../src/output.ts");
+  const { semanticColors, cardText, cardPadding } = await import("../src/output.ts");
   const color = (name: string, value: string, role: string, usage: string[] = []) => ({ name, value, role, usage, sources: [], confidence: 1 });
   const brand = (over: Record<string, unknown> = {}) =>
     ({
@@ -71,6 +71,22 @@ describe("semanticColors", async () => {
     expect(semanticColors(brand()).onBrand).toBe("#000000");
     const readable = brand({ colors: [color("surface", "#ffffff", "surface"), color("ink", "#111111", "ink"), color("navy", "#0d1738", "brand")], buttons: [{ kind: "filled", background: "#0d1738", color: "#e0e7ff" }] });
     expect(semanticColors(readable).onBrand).toBe("#e0e7ff");
+  });
+
+  it("writes white text on a dark card, and ink on a light one", () => {
+    // SCAYLE's feature cards are black: ink text on them was invisible.
+    const sem = { ink: "#0f0f0f", muted: "#6f6f6f" };
+    const card = (background: string) => ({ background }) as Parameters<typeof cardText>[0];
+    expect(cardText(card("#000000"), sem)).toEqual({ fg: "#ffffff", muted: "#ffffff" });
+    expect(cardText(card("#ffffff"), sem)).toEqual({ fg: "#0f0f0f", muted: "#6f6f6f" });
+  });
+
+  it("gives a card measured without padding room for its text", () => {
+    // GoodHabitz pads an inner wrapper under the card's image, so the card measures 0px.
+    const card = (padding: number, radius: number) => ({ padding, radius }) as Parameters<typeof cardPadding>[0];
+    expect(cardPadding(card(0, 16))).toBe(16);
+    expect(cardPadding(card(0, 9999))).toBe(32);
+    expect(cardPadding(card(30, 20))).toBe(30);
   });
 
   it("puts the surface on the brand band of a monochrome dark site", () => {

@@ -1,6 +1,6 @@
 import { PLACEHOLDER, casingOf, dataText, numberIsSourced, numbersIn, siteCasing, siteText, textIsSourced, type Brief } from "@lph/brief/browser";
 import type { Brand } from "@lph/tokens";
-import { buttonsFor } from "./brand.ts";
+import { buttonsFor, heroTone } from "./brand.ts";
 import { SAFE_HREF } from "./blocks.ts";
 import { BLOCK_NAMES, type Block, type Page, type Variant } from "./schema.ts";
 import { applyVariant, baseValue, keyLabel, textPaths, versionPath } from "./variants.ts";
@@ -145,7 +145,7 @@ export function checkPage(page: Page, brief: Brief, brand: Brand): PageIssue[] {
   }
   // Buttons are picked per band; say so when none of the brand's would stand out on one.
   for (const b of blocks) {
-    if ((b.type === "hero" || b.type === "cta") && !buttonsFor(brand, b.type === "hero" ? "hero" : b.tone).visible) {
+    if ((b.type === "hero" || b.type === "cta") && !buttonsFor(brand, b.type === "hero" ? heroTone(brand, b.tone) : b.tone).visible) {
       add("warning", b.id, "buttons", `None of ${brand.name}'s button styles stands out on this ${b.type === "hero" ? "hero" : `${b.tone} band`}. Change the band's tone, or add a button style to the brand.`);
     }
   }

@@ -365,6 +365,7 @@ function BlockFields({ block }: { block: Block }) {
   }
 }
 
+const HERO_TONES = ["brand", "subtle"] as const;
 const TONE_NAMES: Record<(typeof TONES)[number], string> = { default: "Plain", subtle: "Subtle band", brand: "Brand colour" };
 
 /** A customer's logo as imported. The SVG was sanitised then (no scripts, handlers or outside links). */
@@ -409,20 +410,19 @@ function BlockCard({ block, index, count, open, onToggle, onRemove, issues }: { 
         </button>
         {api.variant ? null : (
           <div className={styles.blockControls}>
-            {block.type === "hero" ? null : (
-              <select
-                className={styles.tone}
-                aria-label={`${BLOCK_NAMES[block.type]} background`}
-                value={block.tone}
-                onChange={(e) => api.update((d) => void (d.blocks[index]!.tone = e.target.value as Block["tone"]))}
-              >
-                {TONES.map((t) => (
-                  <option key={t} value={t}>
-                    {TONE_NAMES[t]}
-                  </option>
-                ))}
-              </select>
-            )}
+            <select
+              className={styles.tone}
+              aria-label={`${BLOCK_NAMES[block.type]} background`}
+              value={block.type === "hero" && block.tone !== "subtle" ? "brand" : block.tone}
+              onChange={(e) => api.update((d) => void (d.blocks[index]!.tone = e.target.value as Block["tone"]))}
+            >
+              {/* A hero is on the brand colour or the subtle band. */}
+              {(block.type === "hero" ? HERO_TONES : TONES).map((t) => (
+                <option key={t} value={t}>
+                  {TONE_NAMES[t]}
+                </option>
+              ))}
+            </select>
             <button type="button" onClick={() => move(index - 1)} disabled={index === 0} aria-label={`Move ${BLOCK_NAMES[block.type]} up`} title="Move up">
               ↑
             </button>

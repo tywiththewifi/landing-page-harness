@@ -32,11 +32,15 @@
 .lph-section--brand { background: var(--color-brand); color: var(--color-on-brand, #fff); }
 .lph-section__intro { max-width: 40em; margin-bottom: clamp(24px, 4vw, 48px); }
 .lph-grid { display: grid; gap: var(--space-md, 24px); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+/* At most three columns, so six cards make two full rows rather than four and two. */
+.lph-grid--thirds { grid-template-columns: repeat(auto-fit, minmax(max(240px, calc((100% - 2 * var(--space-md, 24px)) / 3)), 1fr)); }
 .lph-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 
 /* Button: brand variants set the --_* variables via .lph-button--<name> in tokens.css */
 .lph-button {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  /* Sites that size buttons by height measure 0px of padding (Cosuno); 44px is also a comfortable target. */
+  min-height: 44px;
   padding: var(--_py, 12px) var(--_px, 20px);
   border: var(--_border-width, 0) solid var(--_border, transparent);
   border-radius: var(--_radius, var(--radius-button, 8px));
@@ -49,7 +53,7 @@
 .lph-button:hover { filter: brightness(1.08); }
 .lph-button:active { transform: translateY(1px); }
 .lph-button:focus-visible { outline: 2px solid var(--color-accent, currentColor); outline-offset: 3px; }
-.lph-button--link { padding: 0; border: 0; background: none; text-decoration: underline; text-underline-offset: 3px; }
+.lph-button--link { min-height: 0; padding: 0; border: 0; background: none; text-decoration: underline; text-underline-offset: 3px; }
 
 /* Card */
 .lph-card {
@@ -58,12 +62,13 @@
   border-radius: var(--_radius, var(--radius-card, 12px));
   box-shadow: var(--_shadow, none);
   padding: var(--_padding, 24px);
-  color: var(--color-ink, #111);
+  color: var(--_fg, var(--color-ink, #111));
 }
 .lph-card > :last-child { margin-bottom: 0; }
 
 /* Hero band */
 .lph-hero { background: var(--color-brand); color: var(--color-on-brand, #fff); padding: clamp(64px, 10vw, 120px) 0; }
+.lph-hero--subtle { background: var(--color-subtle, #f5f5f5); color: var(--color-ink, #111); }
 .lph-hero__inner { display: grid; gap: clamp(32px, 5vw, 64px); align-items: center; }
 .lph-hero--split .lph-hero__inner { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); }
 @media (max-width: 860px) { .lph-hero--split .lph-hero__inner { grid-template-columns: 1fr; } }
@@ -105,7 +110,7 @@ textarea.lph-input { min-height: 112px; resize: vertical; }
 /* Text on a band takes the band's text colour at full strength: faded text fails contrast on many brand colours. */
 .lph-section--brand .lph-muted, .lph-hero .lph-muted { color: inherit; }
 .lph-section--brand .lph-button--link, .lph-hero .lph-button--link, .lph-nav .lph-button--link { color: inherit; }
-.lph-card .lph-muted { color: var(--color-muted, #555); opacity: 1; }
+.lph-card .lph-muted { color: var(--_muted, var(--color-muted, #555)); opacity: 1; }
 
 .lph-logos { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 16px 48px; margin: 0; padding: 0; list-style: none; font-family: var(--font-heading, inherit); font-size: calc(var(--text-body-size, 16px) * 1.25); font-weight: 700; }
 .lph-logos__mark { display: inline-flex; height: 28px; max-width: 160px; }
@@ -148,12 +153,12 @@ img.lph-logos__mark { width: auto; object-fit: contain; }
 .lph-split { display: grid; gap: clamp(32px, 5vw, 64px); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 @media (max-width: 860px) { .lph-split { grid-template-columns: 1fr; } }
 
-.lph-field__optional { font-weight: 400; color: var(--color-muted, #555); }
+.lph-field__optional { font-weight: 400; color: var(--_muted, var(--color-muted, #555)); }
 .lph-field__error { color: #b91c1c; font-size: 13px; }
 .lph-field__error:empty { display: none; }
 .lph-input[aria-invalid="true"] { border-color: #b91c1c; }
 .lph-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
-.lph-form__note { margin: 0; font-size: var(--text-small-size, 14px); color: var(--color-muted, #555); }
+.lph-form__note { margin: 0; font-size: var(--text-small-size, 14px); color: var(--_muted, var(--color-muted, #555)); }
 .lph-form__status { margin: 0; font-size: var(--text-small-size, 14px); }
 .lph-form__status:empty { display: none; }
 .lph-form__status[data-state="error"] { color: #b91c1c; }

@@ -6,7 +6,7 @@ import { generateDesignMd } from "@lph/design-md";
 import { brandKitFiles } from "@lph/kit";
 import { checkContrast, resolveConflict, toCss, toDtcg, type Brand } from "@lph/tokens";
 import { serveFixture } from "../../../scripts/serve-fixture.mjs";
-import { brandName } from "../src/analyze.ts";
+import { analyzeInput, brandName, type PageCapture } from "../src/analyze.ts";
 import { extractBrand, pickProductPage } from "../src/extract.ts";
 import type { PageSample } from "../src/collect.ts";
 
@@ -25,6 +25,20 @@ describe("pickProductPage", () => {
 
   it("returns null when nothing qualifies", () => {
     expect(pickProductPage([{ href: "https://x.com/pricing", text: "Pricing" }], "https://x.com/")).toBeNull();
+  });
+});
+
+describe("analyzeInput", () => {
+  const field = (bg: string, fontSize: number) => ({ bg, color: "#111111", borderColor: "#cccccc", borderWidth: 1, radius: 8, paddingX: 12, paddingY: 10, fontSize, selector: "input", contextBg: "#ffffff" });
+  const pages = (inputs: unknown[]) => [{ desktop: { url: "https://x.com/", inputs } }] as unknown as PageCapture[];
+
+  it("skips fields that aren't the form style", () => {
+    // Frontify's newsletter signup: a 96px field on black, twice, against one ordinary field.
+    expect(analyzeInput(pages([field("#111110", 96), field("#111110", 96), field("#ffffff", 16)]))?.background).toBe("#ffffff");
+    expect(analyzeInput(pages([field("#111110", 96)]))).toBeNull();
+    // A bare search field: no border, and the same colour as the box around it.
+    expect(analyzeInput(pages([{ ...field("#ffffff", 14), borderWidth: 0, paddingX: 30 }]))).toBeNull();
+    expect(analyzeInput(pages([{ ...field("#f4f6fb", 16), borderWidth: 0 }]))?.background).toBe("#f4f6fb");
   });
 });
 
