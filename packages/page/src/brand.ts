@@ -22,7 +22,10 @@ export function buttonsFor(brand: Brand, tone: Tone | "hero"): { primary: string
   const ranked = [...boxed.filter(here), ...boxed.filter((b) => !here(b))];
   const link = brand.buttons.find((b) => b.kind === "text" && visible(b));
   const primary = ranked.find((b) => b.kind === "filled") ?? ranked[0];
-  const secondary = ranked.find((b) => b !== primary) ?? link;
+  // Two buttons that look the same read as one choice (Bolt Pharmacy styles two identical blues),
+  // so the second one has to look different, or fall back to the text link.
+  const look = (b: ButtonStyle) => [b.kind, b.background, b.borderColor, b.color].join("|");
+  const secondary = ranked.find((b) => b !== primary && (!primary || look(b) !== look(primary))) ?? link ?? ranked.find((b) => b !== primary);
   return {
     primary: primary?.name ?? brand.buttons[0]?.name ?? "primary",
     secondary: secondary?.name ?? "link",

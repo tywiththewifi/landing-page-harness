@@ -96,8 +96,9 @@ export function Section({ id, tone = "default", align = "start", eyebrow, title,
   );
 }
 
-export function Grid({ children }: { children: ReactNode }) {
-  return <div className="lph-grid">{children}</div>;
+/** Pass `count` so three or six cards fill even rows of three instead of leaving an orphan row. */
+export function Grid({ children, count }: { children: ReactNode; count?: number }) {
+  return <div className={count && count % 3 === 0 ? "lph-grid lph-grid--thirds" : "lph-grid"}>{children}</div>;
 }
 
 export interface NavProps {

@@ -32,6 +32,8 @@
 .lph-section--brand { background: var(--color-brand); color: var(--color-on-brand, #fff); }
 .lph-section__intro { max-width: 40em; margin-bottom: clamp(24px, 4vw, 48px); }
 .lph-grid { display: grid; gap: var(--space-md, 24px); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+/* At most three columns, so six cards make two full rows rather than four and two. */
+.lph-grid--thirds { grid-template-columns: repeat(auto-fit, minmax(max(240px, calc((100% - 2 * var(--space-md, 24px)) / 3)), 1fr)); }
 .lph-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 
 /* Button: brand variants set the --_* variables via .lph-button--<name> in tokens.css */

@@ -70,7 +70,7 @@ function BlockView({ block, brand, formAction }: { block: Block; brand: Brand; f
     case "features":
       return (
         <Section id={id} tone={tone} eyebrow={opt(block.eyebrow)} title={opt(block.heading)} intro={opt(block.intro)}>
-          <Grid>
+          <Grid count={block.items.length}>
             {block.items.map((item, i) => (
               <Card key={i} variant={block.cardVariant} title={item.title}>
                 <p className="lph-body lph-muted">{item.body}</p>

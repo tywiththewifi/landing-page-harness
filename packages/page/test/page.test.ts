@@ -274,6 +274,23 @@ describe("renderPage", () => {
     expect(buttonsFor(brand, "hero").visible).toBe(true);
   });
 
+  it("never pairs two buttons that look the same", () => {
+    // Bolt Pharmacy: "primary" and "secondary" are the same blue; "tertiary" is a different colour.
+    const blue = { ...brand.buttons.find((b) => b.kind === "filled")!, background: "#005ee3", color: "#fafffe", context: "#ffffff" };
+    const bolt = { ...brand, buttons: [{ ...blue, name: "primary" }, { ...blue, name: "secondary" }, { ...blue, name: "tertiary", background: "#172233", color: "#ffffff" }] } as Brand;
+    expect(buttonsFor(bolt, "default")).toMatchObject({ primary: "primary", secondary: "tertiary" });
+    // With only look-alikes and no text link, the second one is still used rather than none.
+    const twins = { ...bolt, buttons: bolt.buttons.slice(0, 2) } as Brand;
+    expect(buttonsFor(twins, "default").secondary).toBe("secondary");
+  });
+
+  it("lays six feature cards out in two rows of three", async () => {
+    const { page } = await finishedPage();
+    const features = { ...emptyBlock("features", "features", {}), items: Array.from({ length: 6 }, (_, i) => ({ title: `Feature ${i}`, body: "Body" })) };
+    expect(renderPage({ ...page, blocks: [features] }, brand, css)).toContain('class="lph-grid lph-grid--thirds"');
+    expect(renderPage({ ...page, blocks: [{ ...features, items: features.items.slice(0, 4) }] }, brand, css)).toContain('class="lph-grid"');
+  });
+
   it("moves the hero off the brand colour when no button would stand out on it", async () => {
     // Genki: a red button with a large bold white label (3.4:1, enough for large text), and a red brand.
     const red = { ...brand.buttons.find((b) => b.kind === "filled")!, name: "primary", background: "#ff3e3e", color: "#ffffff", context: "#ffffff", fontSize: 20, fontWeight: 800 };
