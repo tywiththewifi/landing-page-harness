@@ -9,7 +9,7 @@ const projectName = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").r
 function readme(project: string, paths: string[]): string {
   return `# ${project}
 
-Landing pages published by landing-page-harness, ready for Cloudflare Pages: static HTML in \`site/\`, and the form endpoint as a Pages Function in \`functions/\`.
+Landing pages published by Softlander, ready for Cloudflare Pages: static HTML in \`site/\`, and the form endpoint as a Pages Function in \`functions/\`.
 
 ## Deploy
 

@@ -14,7 +14,7 @@ export function Shell() {
             <rect x="1" y="1" width="16" height="16" rx="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
             <path d="M5 9h8M9 5v8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          landing-page-harness
+          Softlander
         </Link>
         <nav className={styles.steps} aria-label="Steps">
           {STEPS.map((s, i) => (

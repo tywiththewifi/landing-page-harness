@@ -1,6 +1,6 @@
 import type { SiteMcpTool } from "@lph/tokens";
 
-/** The parts of an MCP tool definition the harness looks at. */
+/** The parts of an MCP tool definition Softlander looks at. */
 export interface ToolInfo {
   name: string;
   title?: string;
@@ -12,7 +12,7 @@ export interface ToolInfo {
 const QUERY_NAMES = /^(query|q|search|topic|term|keywords?|question|text)$/i;
 
 /**
- * Decides whether and how the harness may call a tool on a site's MCP server. Only tools
+ * Decides whether and how Softlander may call a tool on a site's MCP server. Only tools
  * the server marks read-only are called, unless a person allows one, and only when their
  * inputs can be filled: none required, or one search input (query, q, topic…) that gets the page's topic.
  * A missing annotation counts as not read-only, as in the MCP spec.
@@ -34,7 +34,7 @@ export function toolUse(tool: ToolInfo, allowed = false): Pick<SiteMcpTool, "use
   if (required.length === 1 && QUERY_NAMES.test(required[0]!) && isText(required[0]!)) {
     return { use: "query", arg: required[0], reason: `${who}. Called with the page's topic as "${required[0]}".` };
   }
-  return { use: null, reason: `Needs inputs the harness can't fill (${required.join(", ")}).` };
+  return { use: null, reason: `Needs inputs Softlander can't fill (${required.join(", ")}).` };
 }
 
 /** A tool definition as the studio shows it. */

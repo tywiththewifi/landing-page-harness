@@ -134,6 +134,6 @@ function prBody(o: { page: Page; config: SiteConfig; gate: GateReport | null; ov
 
   const changed = o.changes.filter((c) => c.status !== "unchanged");
   lines.push("", "### Files", "", "| File | Change |", "|---|---|", ...changed.map((c) => `| \`${c.path}\` | ${c.status} |`));
-  lines.push("", "<sub>Published from landing-page-harness. To change the page, edit it in the studio and publish again: that updates this pull request, and edits made to these files here are overwritten.</sub>");
+  lines.push("", "<sub>Published from Softlander. To change the page, edit it in the studio and publish again: that updates this pull request, and edits made to these files here are overwritten.</sub>");
   return lines.join("\n");
 }

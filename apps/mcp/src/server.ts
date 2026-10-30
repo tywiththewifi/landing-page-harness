@@ -8,13 +8,13 @@ import { ApiError, type ApiClient } from "./client.ts";
 import { reportMarkdown, runFromUrl } from "./pipeline.ts";
 import { brandSummary, briefSummary, gateSummary, pageSummary } from "./summary.ts";
 
-const INSTRUCTIONS = `landing-page-harness turns any website into on-brand landing pages with guardrails.
+const INSTRUCTIONS = `Softlander turns any website into on-brand landing pages with guardrails.
 
 The fastest way to try it on a site is launch_from_url: it imports the brand from the site's rendered CSS, writes a brief, builds the page and runs the publish checks, and reports what each step found, with links to open.
 
 Step by step: import_brand → (resolve_conflict) → write_brief → (update_brief until check has no errors) → build_page → (update_page) → run_checks → publish_plan → publish_page.
 
-Rules the harness keeps: brand values are always measured from the site, never invented. Numbers and quotes on a page must come from the site, its MCP data or the prompt. Text marked [To write] needs a person (or you) to write it before the page can publish. Errors block, unless the person chooses to publish anyway and gives a reason; warnings need a reviewer.`;
+Rules Softlander keeps: brand values are always measured from the site, never invented. Numbers and quotes on a page must come from the site, its MCP data or the prompt. Text marked [To write] needs a person (or you) to write it before the page can publish. Errors block, unless the person chooses to publish anyway and gives a reason; warnings need a reviewer.`;
 
 type Content = { content: { type: "text"; text: string }[]; isError?: boolean };
 const text = (t: string): Content => ({ content: [{ type: "text", text: t }] });
@@ -37,7 +37,7 @@ const changes = (what: string) =>
   z.record(z.string(), z.unknown()).describe(`Top-level fields of the ${what} to replace, as returned with format "json". Fields you leave out stay as they are.`);
 
 export function createServer(api: ApiClient, info: { version?: string } = {}) {
-  const server = new McpServer({ name: "landing-page-harness", version: info.version ?? "0.1.0" }, { instructions: INSTRUCTIONS });
+  const server = new McpServer({ name: "softlander", version: info.version ?? "0.1.0" }, { instructions: INSTRUCTIONS });
 
   const brandOut = (brand: Brand) => ({
     ...brandSummary(brand),
@@ -58,7 +58,7 @@ export function createServer(api: ApiClient, info: { version?: string } = {}) {
   server.registerTool(
     "launch_from_url",
     {
-      title: "Try the harness on a website",
+      title: "Try Softlander on a website",
       description:
         "Runs a website through every step: imports its brand (about 15 to 30 seconds in a real browser), writes a brief, builds a landing page with a version per persona, and runs the publish checks (brand, SEO, accessibility, performance). Stops at the first step that fails and says why. Returns a Markdown report and the ids to keep working with the other tools.",
       inputSchema: {

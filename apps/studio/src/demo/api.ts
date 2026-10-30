@@ -195,7 +195,7 @@ function collectSample(topic: string, allowed: string[]): SiteData {
   return {
     server: { name: sampleMcp.server.title, url: MCP_URL },
     facts,
-    notes: skipped ? [`${skipped} tool${skipped === 1 ? " was" : "s were"} skipped: not read-only, or ${skipped === 1 ? "it needs" : "they need"} inputs the harness can't fill.`] : [],
+    notes: skipped ? [`${skipped} tool${skipped === 1 ? " was" : "s were"} skipped: not read-only, or ${skipped === 1 ? "it needs" : "they need"} inputs Softlander can't fill.`] : [],
   };
 }
 const generator = templateGenerator();

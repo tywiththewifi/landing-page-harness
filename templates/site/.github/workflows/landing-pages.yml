@@ -1,4 +1,4 @@
-# Checks every pull request the landing-page-harness publisher opens, and merges the
+# Checks every pull request the Softlander publisher opens, and merges the
 # low-risk ones itself.
 #
 # - check: re-runs the publish gate on the changed pages (SEO and answer engines, brand,
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      # The harness that runs the checks. Pin ref to a commit SHA you've reviewed.
+      # Softlander, which runs the checks. Pin ref to a commit SHA you've reviewed.
       - uses: actions/checkout@v4
         with:
           repository: tywiththewifi/landing-page-harness

@@ -160,7 +160,7 @@ export function mergeForms(existing: string | null, page: Page): string {
   return `${JSON.stringify(all, null, 2)}\n`;
 }
 
-const FUNCTION_ENTRY = `// The form endpoint for pages published by landing-page-harness. Written by the publisher.
+const FUNCTION_ENTRY = `// The form endpoint for pages published by Softlander. Written by the publisher.
 import { handleForm, type FormConfig, type FormEnv } from "../../_lph/handler.ts";
 import forms from "../../_lph/forms.json";
 

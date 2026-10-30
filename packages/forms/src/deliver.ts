@@ -107,7 +107,7 @@ export async function deliver(submission: Submission, connector: Connector, meta
 
     if (connector.kind === "webhook") {
       const body = JSON.stringify(webhookBody(submission, { pageId: meta.pageId, id: crypto.randomUUID(), now }));
-      const headers: Record<string, string> = { "content-type": "application/json", "user-agent": "landing-page-harness", "x-lph-event": "lead" };
+      const headers: Record<string, string> = { "content-type": "application/json", "user-agent": "softlander", "x-lph-event": "lead" };
       if (connector.secret) headers["x-lph-signature"] = await signWebhook(body, connector.secret, now);
       // Redirects aren't followed: the URL was checked, wherever it redirects to wasn't.
       const res = await post(connector.url, { headers, body, redirect: "manual" }, meta);

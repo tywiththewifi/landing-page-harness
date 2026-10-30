@@ -1,6 +1,6 @@
 #!/usr/bin/env -S npx tsx
 /**
- * The harness as an MCP server over stdio, for Claude Desktop, Claude Code, Cursor or any MCP client.
+ * Softlander as an MCP server over stdio, for Claude Desktop, Claude Code, Cursor or any MCP client.
  * With LPH_API_URL set it talks to that API; otherwise it runs the API itself (see .env.example).
  */
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";

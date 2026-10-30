@@ -1,5 +1,5 @@
 /**
- * A small client for the harness API. It talks to a running API over HTTP, or to the
+ * A small client for the Softlander API. It talks to a running API over HTTP, or to the
  * app in this process (`app.fetch`), with the same calls either way.
  */
 export class ApiError extends Error {

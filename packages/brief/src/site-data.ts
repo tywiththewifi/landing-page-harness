@@ -27,10 +27,10 @@ const MAX_TOOLS = 6;
 const MAX_RESOURCES = 5;
 
 async function connect(url: string, opts: McpOptions) {
-  const client = new Client({ name: "landing-page-harness", version: "0.1.0" });
+  const client = new Client({ name: "softlander", version: "0.1.0" });
   const transport = new StreamableHTTPClientTransport(new URL(url), {
     requestInit: opts.token ? { headers: { authorization: `Bearer ${opts.token}` } } : undefined,
-    // A server that redirects could point the harness at an internal address, so redirects fail.
+    // A server that redirects could point Softlander at an internal address, so redirects fail.
     fetch: (input, init) => (opts.fetch ?? fetch)(input, { ...init, redirect: "error" }),
   });
   await client.connect(transport, { timeout: opts.timeoutMs ?? 15_000 });
@@ -45,7 +45,7 @@ async function listAll(client: Client, opts: McpOptions) {
   return { tools, resources };
 }
 
-/** Connects, and lists what the server offers and what the harness would do with each tool. */
+/** Connects, and lists what the server offers and what Softlander would do with each tool. */
 export async function inspectMcp(url: string, opts: McpOptions = {}): Promise<SiteMcp> {
   const client = await connect(url, opts);
   try {
@@ -114,7 +114,7 @@ export async function collectSiteData(url: string, topic: string, opts: McpOptio
       }
     }
     const skipped = tools.length - usable.length;
-    if (skipped) notes.push(`${skipped} tool${skipped === 1 ? " was" : "s were"} skipped: not read-only, or ${skipped === 1 ? "it needs" : "they need"} inputs the harness can't fill.`);
+    if (skipped) notes.push(`${skipped} tool${skipped === 1 ? " was" : "s were"} skipped: not read-only, or ${skipped === 1 ? "it needs" : "they need"} inputs Softlander can't fill.`);
     return { server: { name, url }, facts, notes };
   } finally {
     await client.close().catch(() => {});

@@ -75,7 +75,7 @@ export function createPublicApp(opts: PublicOptions) {
   const perVisitor = (key: string, max: number, what: string) => ({
     key,
     max,
-    message: `The demo allows ${max} ${what} an hour per visitor. Try again later, or run the harness locally.`,
+    message: `The demo allows ${max} ${what} an hour per visitor. Try again later, or run Softlander locally.`,
   });
   const visitor = (header: string | undefined) => header?.split(",")[0]?.trim() || "unknown";
 
@@ -126,7 +126,7 @@ export function createPublicApp(opts: PublicOptions) {
     limit(perVisitor(`import:${visitor(c.req.header("x-forwarded-for"))}`, importsPerHour, "imports"), {
       key: "import:all",
       max: importsPerHourTotal,
-      message: "The demo has run all the imports it can this hour. Try again later, or run the harness locally.",
+      message: "The demo has run all the imports it can this hour. Try again later, or run Softlander locally.",
     });
     const { brand: _, ...job } = start({ url: url.href, productUrl: productUrl?.href }, body.id);
     return c.json(job, 202);
