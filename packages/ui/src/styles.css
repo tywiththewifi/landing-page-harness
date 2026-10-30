@@ -134,6 +134,7 @@ img.lph-logos__mark { width: auto; object-fit: contain; }
 .lph-quote cite { font-style: normal; font-weight: 600; }
 
 .lph-table-wrap { overflow-x: auto; }
+.lph-table-wrap:focus-visible { outline: 2px solid var(--color-accent, currentColor); outline-offset: 3px; }
 .lph-table { width: 100%; border-collapse: collapse; }
 .lph-table th, .lph-table td { padding: 14px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--color-border, #e5e5e5); }
 .lph-table thead th { font-family: var(--font-heading, inherit); font-size: var(--text-h4-size, 18px); }
