@@ -134,7 +134,7 @@ Anything else needs a reviewer, and the pull request says why: a new page, a sec
 5. **Repo settings.** Create the labels `lph:content` and `lph:needs-review`. Turn on **Allow auto-merge**. Add a branch rule for the default branch that requires the **check** status. If the rule also requires an approval, copy-only pull requests wait for one click from a reviewer instead of merging themselves: the workflow merges, but never approves.
 6. **Previews.** Connect the repo to Cloudflare Pages (or Netlify, or Vercel) so every branch gets a preview deployment, and set `LPH_PREVIEW_URL` to match. Merges by the workflow use the repo's `GITHUB_TOKEN`, which doesn't start other workflows; a host's Git integration deploys them as usual.
 
-The workflow checks out the harness to run the checks. Pin its `ref` to a commit you've reviewed.
+The workflow checks out Softlander to run the checks. Pin its `ref` to a commit you've reviewed.
 
 ### The CLI
 

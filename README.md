@@ -1,4 +1,4 @@
-# landing-page-harness
+# Softlander
 
 Let non-technical teams launch on-brand, SEO-ready landing pages, with guardrails so nothing ships without passing brand, accessibility, performance and SEO checks.
 
@@ -158,7 +158,7 @@ curl -o site.zip localhost:8787/api/pages/<pageId>/site.zip   # or as a Cloudfla
 The same calls as MCP tools, for Claude Desktop, Claude Code, Cursor or any MCP client. `launch_from_url` runs a site through every phase in one call; the other tools go step by step (`import_brand`, `write_brief`, `update_brief`, `build_page`, `update_page`, `run_checks`, `publish_plan`, `publish_page`), and each brand's DESIGN.md is a resource. Without `LPH_API_URL` it runs the API in its own process.
 
 ```bash
-claude mcp add landing-page-harness -- pnpm --silent --dir /path/to/landing-page-harness mcp
+claude mcp add softlander -- pnpm --silent --dir /path/to/landing-page-harness mcp
 ```
 
 See [docs/mcp.md](docs/mcp.md) for Claude Desktop and the tool list.

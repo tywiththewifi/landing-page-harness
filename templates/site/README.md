@@ -1,6 +1,6 @@
 # Site repo template
 
-The company's site repo, ready for landing-page-harness to publish into. Copy these files into the repo that holds the site (or start a new one from them):
+The company's site repo, ready for Softlander to publish into. Copy these files into the repo that holds the site (or start a new one from them):
 
 | File | What it does |
 |---|---|
@@ -14,7 +14,7 @@ The studio writes `site/<slug>.html` (and one file per persona version), `.lph/p
 ## Setup
 
 1. In `lph.json`, set `origin` to the live site, e.g. `https://www.example.com`.
-2. In the workflow, pin the harness checkout's `ref` to a commit you've reviewed.
+2. In the workflow, pin the Softlander checkout's `ref` to a commit you've reviewed.
 3. Create the labels `lph:content` and `lph:needs-review`.
 4. Settings → General: turn on **Allow auto-merge**.
 5. Add a branch rule for `main` that requires the **check** status. If it also requires an approval, copy-only pull requests wait for a reviewer's click: the workflow never approves.
@@ -28,4 +28,4 @@ npx wrangler pages secret put HUBSPOT_ACCESS_TOKEN   # HubSpot private app token
 npx wrangler pages secret put LPH_WEBHOOK_SECRET     # signs webhook posts (optional)
 ```
 
-Everything else is in the harness's [publishing guide](https://github.com/tywiththewifi/landing-page-harness/blob/main/docs/publish.md).
+Everything else is in Softlander's [publishing guide](https://github.com/tywiththewifi/landing-page-harness/blob/main/docs/publish.md).

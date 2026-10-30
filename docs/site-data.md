@@ -2,7 +2,7 @@
 
 Many companies now run an MCP server so AI agents can look up their plans, prices, help articles or product facts. If yours does, connect it on the **Plan a page** screen (or `POST /api/brands/:id/site-mcp`). Every brief can then use what it says, alongside the copy from the site's pages.
 
-## What the harness calls
+## What Softlander calls
 
 Connecting lists the server's tools and resources and shows what will happen to each one:
 

@@ -5,7 +5,7 @@ const ok = (description: string, type = "application/json") => ({ 200: { descrip
 export const openApi = {
   openapi: "3.1.0",
   info: {
-    title: "landing-page-harness API",
+    title: "Softlander API",
     version: "0.1.0",
     description:
       "Import a website's design system from its rendered CSS, review it, and export tokens, Design.md and starter components. Turn a prompt into a marketing brief grounded in the site's own copy, then the brief into a page built from the component library, with a version per persona and a lead form that posts to HubSpot or a webhook. Before publishing, a gate checks content, brand, SEO and answer engines, accessibility (axe) and a performance budget; publishing opens a pull request into the company's site repo, which merges itself when it only changes copy. Values are always measured and claims always sourced, never invented.",

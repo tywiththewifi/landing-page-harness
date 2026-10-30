@@ -53,7 +53,7 @@ describe("site MCP", () => {
     const server = await inspectMcp(`${site.url}mcp`, { allowed: ["latest_releases", "book_demo", "nope"] });
     expect(server.allowed).toEqual(["latest_releases", "book_demo"]);
     expect(server.tools.find((t) => t.name === "latest_releases")).toMatchObject({ readOnly: false, use: "auto" });
-    // Allowing doesn't help a tool whose inputs the harness can't fill.
+    // Allowing doesn't help a tool whose inputs Softlander can't fill.
     expect(server.tools.find((t) => t.name === "book_demo")?.use).toBeNull();
 
     site.mcpCalls.length = 0;

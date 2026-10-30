@@ -43,7 +43,7 @@ It speaks MCP over stdio. With `LPH_API_URL` set it uses that API; otherwise it 
 ### Claude Code
 
 ```bash
-claude mcp add landing-page-harness -e ANTHROPIC_API_KEY=sk-... -- pnpm --silent --dir /path/to/landing-page-harness mcp
+claude mcp add softlander -e ANTHROPIC_API_KEY=sk-... -- pnpm --silent --dir /path/to/landing-page-harness mcp
 ```
 
 ### Claude Desktop, Cursor and others
@@ -51,7 +51,7 @@ claude mcp add landing-page-harness -e ANTHROPIC_API_KEY=sk-... -- pnpm --silent
 ```json
 {
   "mcpServers": {
-    "landing-page-harness": {
+    "softlander": {
       "command": "pnpm",
       "args": ["--silent", "--dir", "/path/to/landing-page-harness", "mcp"],
       "env": { "ANTHROPIC_API_KEY": "sk-..." }
@@ -60,7 +60,7 @@ claude mcp add landing-page-harness -e ANTHROPIC_API_KEY=sk-... -- pnpm --silent
 }
 ```
 
-Then ask: *"Try the landing page harness on qonto.com and tell me what it found."*
+Then ask: *"Try Softlander on qonto.com and tell me what it found."*
 
 ### Tools
 
@@ -77,11 +77,11 @@ Then ask: *"Try the landing page harness on qonto.com and tell me what it found.
 
 Each brand's `DESIGN.md` and `tokens.css` are also resources (`lph://brands/{id}/design.md`), so a client can attach them to a conversation.
 
-An agent can close the loop: read a check's errors, fix the copy with `update_page`, run the checks again. The tools keep the harness's rules: values come from the site, numbers and quotes need a source, and publishing needs a gate with no errors, unless the person chooses to publish anyway and says why.
+An agent can close the loop: read a check's errors, fix the copy with `update_page`, run the checks again. The tools keep Softlander's rules: values come from the site, numbers and quotes need a source, and publishing needs a gate with no errors, unless the person chooses to publish anyway and says why.
 
 ## Results from random sites
 
-Thirteen sites run while building this (October 2026), with the offline writer. "Content" always blocks because the offline writer leaves `[To write]` copy for a person; the other checks are about what the harness built from the brand, and none of them has an error.
+Thirteen sites run while building this (October 2026), with the offline writer. "Content" always blocks because the offline writer leaves `[To write]` copy for a person; the other checks are about what Softlander built from the brand, and none of them has an error.
 
 | Site | Import | Brand, SEO, accessibility, performance on the generated page |
 |---|---|---|

@@ -144,7 +144,7 @@ export interface PageContent {
   ctas: string[];
 }
 
-/** A tool on the site's MCP server, and whether the harness will call it. */
+/** A tool on the site's MCP server, and whether Softlander will call it. */
 export interface SiteMcpTool {
   name: string;
   title: string;
@@ -155,7 +155,7 @@ export interface SiteMcpTool {
   reason: string;
   /** False when the server doesn't mark it read-only. Such a tool is only called if a person allows it. */
   readOnly: boolean;
-  /** Whether the harness can fill its inputs, so allowing it would make a difference. */
+  /** Whether Softlander can fill its inputs, so allowing it would make a difference. */
   fillable: boolean;
 }
 

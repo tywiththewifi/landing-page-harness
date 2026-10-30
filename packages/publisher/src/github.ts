@@ -55,7 +55,7 @@ export function github(target: GitHubTarget) {
         accept: "application/vnd.github+json",
         authorization: `Bearer ${target.token}`,
         "x-github-api-version": "2022-11-28",
-        "user-agent": "landing-page-harness",
+        "user-agent": "softlander",
         ...(body !== undefined && { "content-type": "application/json" }),
       },
       ...(body !== undefined && { body: JSON.stringify(body) }),
