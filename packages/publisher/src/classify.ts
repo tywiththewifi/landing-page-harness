@@ -89,13 +89,13 @@ export function classify(before: PageSource | null, after: PageSource, changes: 
     if (!same(links(a), links(b)) && same(shape(a), shape(b))) reasons.push("Where a button links changed.");
     const form = (s: typeof a) => [s.form, s.blocks.map((x) => ("fields" in x ? x.fields : null))];
     if (!same(form(a), form(b))) reasons.push("The form, or where its leads go, changed.");
-    if (!same(a.versions, b.versions)) reasons.push("A version was added, removed or moved to a new URL.");
-    if (before.build.tokens !== after.build.tokens) reasons.push("The brand's tokens changed since the page was last published.");
-    if (before.build.components !== after.build.components) reasons.push("The component library changed since the page was last published.");
+    if (!same(a.versions, b.versions)) reasons.push("A version was added, removed or moved to a new address.");
+    if (before.build.tokens !== after.build.tokens) reasons.push("The brand's styles changed since the page was last published.");
+    if (before.build.components !== after.build.components) reasons.push("The page's building blocks changed since the page was last published.");
   }
   // A safety net under the rules above: whatever the source says, the HTML itself changed in more than words.
   const rebuilt = changes.filter((c) => c.kind === "page" && c.status === "changed" && c.beyondCopy);
-  if (before && rebuilt.length && !reasons.length) reasons.push(`More than the words changed in ${rebuilt.map((c) => c.path).join(", ")}: its tags, links, scripts or styles.`);
+  if (before && rebuilt.length && !reasons.length) reasons.push(`More than the words changed in ${rebuilt.map((c) => c.path).join(", ")}, like its links, code or styles.`);
   const shared = changes.filter((c) => (c.kind === "config" || c.kind === "other") && c.status !== "unchanged");
   if (shared.length && before) reasons.push(`Shared site files change: ${shared.map((c) => c.path).join(", ")}.`);
   // The studio and CI often find the same warning: count it once.
@@ -104,21 +104,21 @@ export function classify(before: PageSource | null, after: PageSource, changes: 
   if (gate?.verdict === "review" && (fresh.length || !warnings.length)) {
     reasons.push(
       fresh.length && before
-        ? `The checks found ${fresh.length === 1 ? "a new warning" : `${fresh.length} new warnings`} a person has to accept: ${[...new Set(fresh.map((w) => w.id))].join(", ")}.`
-        : "The checks found warnings a person has to accept.",
+        ? `The checks found ${fresh.length === 1 ? "something new" : `${fresh.length} new things`} a person needs to look at: ${[...new Set(fresh.map((w) => w.id))].join(", ")}.`
+        : "The checks found things a person needs to look at.",
     );
   }
   if (gate?.verdict === "blocked") {
     const o = after.override;
-    reasons.push(o ? `Published over ${o.errors === 1 ? "an error" : `${o.errors} errors`} the checks found. The reason given: “${o.reason}”` : "The checks found errors.");
+    reasons.push(o ? `Published even though the checks found ${o.errors === 1 ? "a problem" : `${o.errors} problems`}. The reason given: “${o.reason}”` : "The checks found problems that must be fixed.");
   }
   if (reasons.length) return { risk: "review", reasons };
   const kept = warnings.length - fresh.length;
   return {
     risk: "content",
     reasons: [
-      "Only copy changed, on a page that's already live.",
-      ...(kept ? [`${kept === 1 ? "One warning was" : `${kept} warnings were`} accepted when the live page was reviewed, and ${kept === 1 ? "its" : "their"} text hasn't changed.`] : []),
+      "Only the words changed, on a page that's already live.",
+      ...(kept ? [`${kept === 1 ? "One thing to check was" : `${kept} things to check were`} accepted when the live page was reviewed, and ${kept === 1 ? "its" : "their"} text hasn't changed.`] : []),
     ],
   };
 }

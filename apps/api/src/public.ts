@@ -75,7 +75,7 @@ export function createPublicApp(opts: PublicOptions) {
   const perVisitor = (key: string, max: number, what: string) => ({
     key,
     max,
-    message: `The demo allows ${max} ${what} an hour per visitor. Try again later, or run Softlander locally.`,
+    message: `The demo allows ${max} ${what} an hour. Please try again later.`,
   });
   const visitor = (header: string | undefined) => header?.split(",")[0]?.trim() || "unknown";
 
@@ -86,7 +86,7 @@ export function createPublicApp(opts: PublicOptions) {
   };
 
   const withTimeout = <T,>(work: Promise<T>, ms: number) =>
-    Promise.race([work, new Promise<never>((_, fail) => setTimeout(() => fail(new Error("The site took too long to load.")), ms))]);
+    Promise.race([work, new Promise<never>((_, fail) => setTimeout(() => fail(new Error("The site took too long to load. Try again in a minute.")), ms))]);
 
   const start = (input: ExtractOptions, keepId?: string): PublicJob => {
     sweep();
@@ -111,7 +111,7 @@ export function createPublicApp(opts: PublicOptions) {
     };
     if (running < maxConcurrent) void run();
     else {
-      job.step = `Waiting for a free browser (${queue.length + 1} ahead)`;
+      job.step = `Waiting in line (${queue.length + 1} ahead of you)`;
       queue.push(() => void run());
     }
     return job;
@@ -123,10 +123,10 @@ export function createPublicApp(opts: PublicOptions) {
     const body = importBody.parse(await c.req.json());
     const url = await assertPublicUrl(body.url, opts.allowPrivateUrls);
     const productUrl = body.productUrl ? await assertPublicUrl(body.productUrl, opts.allowPrivateUrls) : undefined;
-    limit(perVisitor(`import:${visitor(c.req.header("x-forwarded-for"))}`, importsPerHour, "imports"), {
+    limit(perVisitor(`import:${visitor(c.req.header("x-forwarded-for"))}`, importsPerHour, "scans"), {
       key: "import:all",
       max: importsPerHourTotal,
-      message: "The demo has run all the imports it can this hour. Try again later, or run Softlander locally.",
+      message: "The demo has done all the scans it can this hour. Please try again later.",
     });
     const { brand: _, ...job } = start({ url: url.href, productUrl: productUrl?.href }, body.id);
     return c.json(job, 202);
@@ -145,21 +145,21 @@ export function createPublicApp(opts: PublicOptions) {
   app.post("/api/site-mcp/inspect", async (c) => {
     const body = mcpBody.parse(await c.req.json());
     const url = await assertPublicUrl(body.url, opts.allowPrivateUrls);
-    limit(perVisitor(`mcp:${visitor(c.req.header("x-forwarded-for"))}`, mcpCallsPerHour, "MCP calls"));
+    limit(perVisitor(`mcp:${visitor(c.req.header("x-forwarded-for"))}`, mcpCallsPerHour, "data source lookups"));
     try {
       return c.json(await inspectMcp(url.href, { allowed: body.allowed, timeoutMs: 15_000 }));
     } catch (err) {
-      throw new HTTPException(502, { message: `Couldn't connect to an MCP server at ${url.href} (${(err as Error).message}).` });
+      throw new HTTPException(502, { message: `We couldn't connect to ${url.href}. Check the address and try again. (${(err as Error).message})` });
     }
   });
   app.post("/api/site-mcp/collect", async (c) => {
     const body = collectBody.parse(await c.req.json());
     const url = await assertPublicUrl(body.url, opts.allowPrivateUrls);
-    limit(perVisitor(`mcp:${visitor(c.req.header("x-forwarded-for"))}`, mcpCallsPerHour, "MCP calls"));
+    limit(perVisitor(`mcp:${visitor(c.req.header("x-forwarded-for"))}`, mcpCallsPerHour, "data source lookups"));
     try {
       return c.json(await collectSiteData(url.href, body.topic, { allowed: body.allowed, timeoutMs: 15_000 }));
     } catch (err) {
-      throw new HTTPException(502, { message: `Couldn't read the MCP server at ${url.href} (${(err as Error).message}).` });
+      throw new HTTPException(502, { message: `We connected to ${url.href} but couldn't read from it. (${(err as Error).message})` });
     }
   });
 

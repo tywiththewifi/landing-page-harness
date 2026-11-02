@@ -44,10 +44,10 @@ describe("public import service", () => {
     const app = createPublicApp({ extract: async ({ url }) => (await gate, fakeBrand(url)), allowPrivateUrls: true, importsPerHour: 2, maxConcurrent: 1 });
     const first = await (await app.request("/api/brands", json({ url: site.url }))).json();
     const second = await (await app.request("/api/brands", json({ url: site.url }))).json();
-    expect(second.step).toMatch(/Waiting for a free browser/);
+    expect(second.step).toMatch(/Waiting in line/);
     const third = await app.request("/api/brands", json({ url: site.url }));
     expect(third.status).toBe(429);
-    expect((await third.json()).error).toMatch(/2 imports an hour/);
+    expect((await third.json()).error).toMatch(/2 scans an hour/);
     // Another visitor isn't affected.
     expect((await app.request("/api/brands", json({ url: site.url }, "2.2.2.2"))).status).toBe(202);
     release();
@@ -61,7 +61,7 @@ describe("public import service", () => {
     expect((await app.request("/api/brands", json({ url: site.url }, "2.2.2.2"))).status).toBe(202);
     const third = await app.request("/api/brands", json({ url: site.url }, "3.3.3.3"));
     expect(third.status).toBe(429);
-    expect((await third.json()).error).toMatch(/all the imports it can this hour/);
+    expect((await third.json()).error).toMatch(/all the scans it can this hour/);
   });
 
   it("holds the page's own requests to the same rule", async () => {

@@ -154,9 +154,9 @@ export function claudePageGenerator(opts: { client?: Anthropic; model?: string }
           },
         ],
       });
-      if (res.stop_reason === "refusal") throw new GenerationError("The model declined to write this page. Try editing the brief.");
-      if (res.stop_reason === "max_tokens") throw new GenerationError("The page copy was cut off before it was finished. Try a shorter outline.");
-      if (!res.parsed_output) throw new GenerationError("The model's answer didn't match the page format.");
+      if (res.stop_reason === "refusal") throw new GenerationError("Claude declined to write this page. Try changing the brief.");
+      if (res.stop_reason === "max_tokens") throw new GenerationError("The page was cut off before it was finished. Try a shorter outline.");
+      if (!res.parsed_output) throw new GenerationError("Something went wrong while writing the page. Please try again.");
       return applyCopy(draft, res.parsed_output, brand.name);
     },
   };

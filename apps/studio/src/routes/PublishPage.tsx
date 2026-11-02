@@ -66,11 +66,11 @@ export function PublishPage() {
     : !info.gate
       ? "Run the checks on this version of the page first."
       : info.target && info.gate.environment !== "server"
-        ? "The checks have to run on the server first."
+        ? "Run the checks again before publishing."
         : null;
   // Errors block publishing, unless a person publishes anyway and says why.
   const errors = !notYet && info.gate?.verdict === "blocked";
-  const blocked = notYet ?? (errors ? "Fix the errors the checks found, then run them again." : null);
+  const blocked = notYet ?? (errors ? "Fix the problems the checks found, then run them again." : null);
 
   const publish = async (override?: string) => {
     setBusy(true);
@@ -104,7 +104,7 @@ export function PublishPage() {
       <div className={review.head}>
         <div>
           <h1>Publish</h1>
-          <p>Every version is checked as the HTML that will go live. Errors block publishing unless you publish anyway and say why; new warnings go to a reviewer.</p>
+          <p>We check every version of the page exactly as visitors will see it. Anything marked “Must fix” stops it going live, unless you choose to publish anyway and say why.</p>
         </div>
         <div className={review.actions}>
           <Link className="ui-button" to={`/pages/${page.id}`}>
@@ -139,7 +139,7 @@ export function PublishPage() {
         <section className={review.card} aria-labelledby="publish-title">
           <div className={review.cardHead}>
             <div className={review.identity}>
-              <strong id="publish-title">{info.target ? "Pull request" : "Publish"}</strong>
+              <strong id="publish-title">Publish</strong>
             </div>
           </div>
           <div className={styles.body}>

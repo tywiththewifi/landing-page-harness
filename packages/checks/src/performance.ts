@@ -43,20 +43,20 @@ export function perfIssues(samples: PerfSample[], budget: Budget, doc?: (path: s
       if (value === null) return;
       const limit = budget[id];
       const severity: Severity | null = value > limit.fail ? "error" : value > limit.warn ? "warning" : null;
-      if (severity) issues.push({ id: `performance.${id}`, check: "performance", severity, path: s.path, message: `${what} ${shown(value)}, over the budget of ${shown(severity === "error" ? limit.fail : limit.warn)}.` });
+      if (severity) issues.push({ id: `performance.${id}`, check: "performance", severity, path: s.path, message: `${what} ${shown(value)}, over the limit of ${shown(severity === "error" ? limit.fail : limit.warn)}.` });
     };
-    over("htmlGzipKb", s.htmlGzipBytes / 1024, (v) => kb(v * 1024), "The HTML is");
-    over("transferKb", s.transferBytes === null ? null : s.transferBytes / 1024, (v) => kb(v * 1024), "The page transfers");
-    over("requests", s.requests, (v) => `${v} requests`, "The page makes");
-    over("renderBlocking", s.renderBlocking, (v) => `${v}`, "Requests that block the first paint:");
+    over("htmlGzipKb", s.htmlGzipBytes / 1024, (v) => kb(v * 1024), "The page itself is");
+    over("transferKb", s.transferBytes === null ? null : s.transferBytes / 1024, (v) => kb(v * 1024), "Visitors download");
+    over("requests", s.requests, (v) => `${v} files`, "The page loads");
+    over("renderBlocking", s.renderBlocking, (v) => `${v}`, "Files that delay showing the page:");
     over("domNodes", s.domNodes, (v) => `${v} elements`, "The page has");
-    over("lcpMs", s.lcpMs, (v) => `${(v / 1000).toFixed(1)} s`, "The largest content paints at");
-    over("cls", s.cls, (v) => v.toFixed(2), "Layout shift is");
-    over("tbtMs", s.tbtMs, (v) => `${Math.round(v)} ms`, "Scripts block the main thread for");
+    over("lcpMs", s.lcpMs, (v) => `${(v / 1000).toFixed(1)} s`, "The main content shows after");
+    over("cls", s.cls, (v) => v.toFixed(2), "The layout jumps around by");
+    over("tbtMs", s.tbtMs, (v) => `${Math.round(v)} ms`, "The page is too busy to respond for");
 
     // Images without dimensions shift the layout when they load.
     const unsized = doc?.(s.path)?.querySelectorAll("img:not([width]), img:not([height])").length ?? 0;
-    if (unsized) issues.push({ id: "performance.image-size", check: "performance", severity: "info", path: s.path, message: `${unsized === 1 ? "An image has" : `${unsized} images have`} no width and height, so the layout shifts as ${unsized === 1 ? "it loads" : "they load"}.` });
+    if (unsized) issues.push({ id: "performance.image-size", check: "performance", severity: "info", path: s.path, message: `${unsized === 1 ? "An image has" : `${unsized} images have`} no set size, so the page jumps around as ${unsized === 1 ? "it loads" : "they load"}.` });
   }
   return issues;
 }

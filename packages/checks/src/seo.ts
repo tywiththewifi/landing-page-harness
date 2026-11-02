@@ -59,47 +59,47 @@ export function seoLint(doc: Document, ctx: SeoContext): GateIssue[] {
 
   const title = doc.querySelector("title")?.textContent?.trim() ?? "";
   const description = attr(doc, 'meta[name="description"]', "content");
-  if (!title) add("error", "title", "The page has no <title>.");
-  else if (!ctx.modelChecked && (title.length < 30 || title.length > 60)) add("warning", "title-length", `The title is ${title.length} characters. Search results show about 30 to 60.`);
-  if (!description) add("error", "description", "The page has no meta description, so search engines pick a snippet themselves.");
-  else if (!ctx.modelChecked && (description.length < 120 || description.length > 160)) add("warning", "description-length", `The meta description is ${description.length} characters. Aim for 120 to 160.`);
+  if (!title) add("error", "title", "The page has no title for search results.");
+  else if (!ctx.modelChecked && (title.length < 30 || title.length > 60)) add("warning", "title-length", `The title in search results is ${title.length} characters long. Aim for 30 to 60 so it isn't cut off.`);
+  if (!description) add("error", "description", "The page has no description for search results, so search engines will pick some text themselves.");
+  else if (!ctx.modelChecked && (description.length < 120 || description.length > 160)) add("warning", "description-length", `The description in search results is ${description.length} characters long. Aim for 120 to 160.`);
 
   const h1s = Array.from(doc.querySelectorAll("h1"));
-  if (h1s.length !== 1) add("error", "h1", h1s.length ? `The page has ${h1s.length} H1s. Use one, for the page's main heading.` : "The page has no H1.");
-  else if (!h1s[0]!.textContent?.trim()) add("error", "h1", "The H1 is empty.");
+  if (h1s.length !== 1) add("error", "h1", h1s.length ? `The page has ${h1s.length} main headings. Use just one.` : "The page has no main heading.");
+  else if (!h1s[0]!.textContent?.trim()) add("error", "h1", "The main heading is empty.");
 
   // What search engines are told about the URL.
   const robots = attr(doc, 'meta[name="robots"]', "content").toLowerCase();
   const canonical = attr(doc, 'link[rel="canonical"]', "href");
   if (publish) {
-    if (robots.includes("noindex")) add("error", "noindex", "The page asks search engines not to index it (robots noindex). Previews do that; a published page shouldn't.");
-    if (!canonical) add("error", "canonical", "There's no canonical URL, so copies of the page (with UTMs, say) compete with it in search.");
-    else if (!/^https:\/\//.test(canonical)) add("error", "canonical", `The canonical URL "${canonical}" has to be an absolute https address.`);
+    if (robots.includes("noindex")) add("error", "noindex", "The page tells search engines to hide it. That's right for previews, but not for a published page.");
+    if (!canonical) add("error", "canonical", "The page doesn't tell search engines its main address, so copies of it (like links with tracking codes) can compete with it in search.");
+    else if (!/^https:\/\//.test(canonical)) add("error", "canonical", `The page's main address for search engines, "${canonical}", has to be a full address starting with https://.`);
     else if (ctx.general && new URL(canonical).pathname.replace(/\/$/, "") !== ctx.path.replace(/\/$/, "")) {
-      add("warning", "canonical", `The general page's canonical points at ${new URL(canonical).pathname}, not itself, so it won't rank.`);
+      add("warning", "canonical", `The general page tells search engines its main address is ${new URL(canonical).pathname}, not itself, so it won't show up in search.`);
     }
-    if (!SLUG_PATH.test(ctx.path)) add("warning", "url", `${ctx.path} isn't a clean URL. Use lowercase words separated by hyphens.`);
-    else if (ctx.path.length > 75) add("info", "url", `The URL is ${ctx.path.length} characters. Shorter URLs are easier to share and read in results.`);
+    if (!SLUG_PATH.test(ctx.path)) add("warning", "url", `${ctx.path} can't be used as a page address. Use lowercase words joined by hyphens.`);
+    else if (ctx.path.length > 75) add("info", "url", `The page address is ${ctx.path.length} characters long. Shorter addresses are easier to share and read.`);
   }
 
   // How the link looks when shared.
-  if (!attr(doc, 'meta[property="og:title"]', "content")) add("warning", "og-title", "There's no og:title, so shared links fall back to whatever the platform finds.");
-  if (!attr(doc, 'meta[property="og:description"]', "content")) add("warning", "og-description", "There's no og:description for shared links.");
-  if (publish && !attr(doc, 'meta[property="og:url"]', "content")) add("warning", "og-url", "There's no og:url, so shares of URLs with UTMs are counted separately.");
-  if (!attr(doc, 'meta[property="og:image"]', "content")) add("info", "og-image", "There's no og:image, so shared links show no picture. Add a share image to the brand when you have one.");
+  if (!attr(doc, 'meta[property="og:title"]', "content")) add("warning", "og-title", "There's no title for when the page is shared, so social sites will pick one themselves.");
+  if (!attr(doc, 'meta[property="og:description"]', "content")) add("warning", "og-description", "There's no description for when the page is shared.");
+  if (publish && !attr(doc, 'meta[property="og:url"]', "content")) add("warning", "og-url", "Shared links don't point to one main address, so shares of links with tracking codes are counted separately.");
+  if (!attr(doc, 'meta[property="og:image"]', "content")) add("info", "og-image", "There's no picture for when the page is shared, so shared links show without one.");
 
   // Structured data has to parse, and has to describe what's on the page.
   const text = visibleText(doc.body);
   const pageText = normalise(text);
   const { nodes, broken } = jsonLdNodes(doc);
-  if (broken) add("error", "json-ld", `${broken === 1 ? "A JSON-LD block doesn't" : `${broken} JSON-LD blocks don't`} parse, so search engines ignore ${broken === 1 ? "it" : "them"}.`);
+  if (broken) add("error", "json-ld", `${broken === 1 ? "Some information for search engines is" : `${broken} pieces of information for search engines are`} broken, so search engines ignore ${broken === 1 ? "it" : "them"}.`);
   const types = nodes.flatMap(typesOf);
-  if (!types.includes("WebPage")) add("warning", "json-ld-webpage", "There's no WebPage structured data.");
-  if (!types.includes("Organization")) add("info", "json-ld-organization", "There's no Organization structured data linking the page to the company.");
+  if (!types.includes("WebPage")) add("warning", "json-ld-webpage", "The page doesn't describe itself to search engines.");
+  if (!types.includes("Organization")) add("info", "json-ld-organization", "The page doesn't tell search engines which company it belongs to.");
   for (const faq of nodes.filter((n) => typesOf(n).includes("FAQPage"))) {
     const entities = Array.isArray(faq.mainEntity) ? (faq.mainEntity as JsonLdNode[]) : [];
     const hidden = entities.map((q) => String(q.name ?? "")).filter((q) => q && !pageText.includes(normalise(q)));
-    if (hidden.length) add("error", "faq-visible", `FAQ markup has to match questions on the page. Not on the page: ${hidden.map((q) => `"${q}"`).join(", ")}.`);
+    if (hidden.length) add("error", "faq-visible", `Search engines are told about questions that aren't on the page: ${hidden.map((q) => `"${q}"`).join(", ")}.`);
   }
 
   // Answer engines: the questions the brief planned to answer, answered where they can be quoted.
@@ -107,7 +107,7 @@ export function seoLint(doc: Document, ctx: SeoContext): GateIssue[] {
   for (const q of ctx.questions ?? []) {
     if (!q.trim()) continue;
     const found = pageText.includes(normalise(q)) || asked.some((a) => overlap(q, a) >= 0.75);
-    if (!found) add("warning", "aeo-question", `The brief plans to answer "${q}", but the page doesn't ask it. Answer engines quote pages that ask the question and answer it directly.`);
+    if (!found) add("warning", "aeo-question", `The brief plans to answer "${q}", but the page doesn't ask it. AI search tools quote pages that ask a question and answer it directly.`);
   }
 
   // The keyword early on, where search engines and readers look first.
@@ -118,7 +118,7 @@ export function seoLint(doc: Document, ctx: SeoContext): GateIssue[] {
     if (!opening.includes(normalise(kw))) add("info", "keyword-opening", `"${kw}" isn't in the page's first 100 words.`);
   }
   const words = wordsIn(visibleText(doc.querySelector("main") ?? doc.body)).length;
-  if (ctx.general && words < 250) add("info", "thin", `The page has ${words} words. Under about 250 rarely ranks for competitive searches, which is fine for a campaign page.`);
+  if (ctx.general && words < 250) add("info", "thin", `The page has ${words} words. Pages under about 250 words rarely rank well in search, which is fine for a campaign page.`);
 
   // Links a crawler follows. The page model checks the buttons it makes; this catches the rest.
   if (!ctx.modelChecked) {
@@ -126,9 +126,9 @@ export function seoLint(doc: Document, ctx: SeoContext): GateIssue[] {
       const href = a.getAttribute("href")?.trim() ?? "";
       const label = a.textContent?.trim() || a.getAttribute("aria-label") || href;
       if (!href || href === "#") add("error", "link", `"${label}" doesn't link anywhere.`);
-      else if (/^javascript:/i.test(href)) add("error", "link", `"${label}" runs script instead of linking.`);
-      else if (href.startsWith("#") && !doc.getElementById(href.slice(1))) add("error", "link", `"${label}" points at ${href}, but nothing on the page has that id.`);
-      else if (href.startsWith("http://")) add("warning", "link", `"${label}" links over http. Use https.`);
+      else if (/^javascript:/i.test(href)) add("error", "link", `"${label}" runs code instead of linking to a page.`);
+      else if (href.startsWith("#") && !doc.getElementById(href.slice(1))) add("error", "link", `"${label}" links to ${href}, but there's no section with that name on the page.`);
+      else if (href.startsWith("http://")) add("warning", "link", `"${label}" links to an address starting with http://. Use https:// so visitors don't see a security warning.`);
     }
   }
   return issues;

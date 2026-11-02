@@ -30,14 +30,14 @@ export async function assertPublicUrl(raw: string, allowPrivate = process.env.LP
   try {
     url = new URL(raw);
   } catch {
-    throw new UrlRejected("That doesn't look like a URL. Include https://");
+    throw new UrlRejected("That doesn't look like a web address. Try something like https://example.com");
   }
-  if (url.protocol !== "https:" && url.protocol !== "http:") throw new UrlRejected("Only http and https URLs are supported.");
+  if (url.protocol !== "https:" && url.protocol !== "http:") throw new UrlRejected("Only web addresses starting with http:// or https:// work here.");
   if (allowPrivate) return url;
   const host = url.hostname.replace(/^\[|\]$/g, "");
   const addresses = isIP(host) ? [host] : (await lookup(host, { all: true }).catch(() => [])).map((a) => a.address);
-  if (!addresses.length) throw new UrlRejected(`Couldn't resolve ${url.hostname}.`);
-  if (addresses.some(isPrivateAddress)) throw new UrlRejected("Internal and private network addresses can't be imported.");
+  if (!addresses.length) throw new UrlRejected(`We couldn't find a website at ${url.hostname}. Check the address and try again.`);
+  if (addresses.some(isPrivateAddress)) throw new UrlRejected("Addresses on a private network can't be scanned.");
   return url;
 }
 

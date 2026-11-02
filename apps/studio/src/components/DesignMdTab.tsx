@@ -8,7 +8,7 @@ export function DesignMdTab({ brand }: { brand: Brand }) {
       load={() => api.designMd(brand.id)}
       version={brand.updatedAt}
       rawHref={`/api/brands/${brand.id}/design.md`}
-      notice="Changes to your brand must be made in the Theme tab. This file is what agents read."
+      notice="Your brand written up as one file (Design.md) that AI tools can read. To change it, edit the Theme tab."
     />
   );
 }

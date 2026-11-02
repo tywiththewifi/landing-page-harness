@@ -50,7 +50,7 @@ export function SiteDataPanel({
     return (
       <div className={styles.panel}>
         <label className="ui-label" htmlFor="mcp-url">
-          Site data (optional)
+          Connect your data (optional)
         </label>
         <div className={styles.connect}>
           <input
@@ -72,11 +72,12 @@ export function SiteDataPanel({
           </button>
         </div>
         <span className={styles.hint}>
-          If your site has an MCP server, the brief can use what it knows: plans, prices, help articles. Only tools it marks read-only are called.
+          If your site has an MCP server (a way for AI tools to look up your content), the brief can use what it knows, like plans, prices and
+          help articles. We only use the parts that look things up, unless you allow more.
           {IMPORT_SERVICE
-            ? " In the demo, northloop.example/mcp is a sample server; other URLs are read through the import service."
+            ? " In the demo, try northloop.example/mcp, a sample server. Other addresses work too."
             : DEMO
-              ? " In the demo, any URL connects Northloop's sample server."
+              ? " In the demo, any address connects to Northloop's sample server."
               : ""}
         </span>
         {error ? <span className={styles.error}>{error}</span> : null}
@@ -94,7 +95,7 @@ export function SiteDataPanel({
 
   return (
     <div className={styles.panel}>
-      <span className="ui-label">Site data</span>
+      <span className="ui-label">Connected data</span>
       <div className={styles.card}>
         <div className={styles.head}>
           <span className={styles.dot} aria-hidden="true" />
@@ -109,8 +110,8 @@ export function SiteDataPanel({
           Use it for this brief
         </label>
         <button type="button" className={styles.summary} onClick={() => setOpen(!open)} aria-expanded={open}>
-          {used.length} of {mcp.tools.length} tools will be called
-          {mcp.resources.length ? `, and ${mcp.resources.length} resource${mcp.resources.length === 1 ? "" : "s"} read` : ""} {open ? "▴" : "▾"}
+          We'll use {used.length} of its {mcp.tools.length} tools
+          {mcp.resources.length ? ` and read ${mcp.resources.length} document${mcp.resources.length === 1 ? "" : "s"}` : ""} {open ? "▴" : "▾"}
         </button>
         {open ? (
           <ul className={styles.tools}>
@@ -120,11 +121,11 @@ export function SiteDataPanel({
                   {t.use ? "✓" : "–"}
                 </span>
                 <div>
-                  <strong>{t.title}</strong> <code>{t.name}</code>
+                  <strong title={t.name}>{t.title}</strong>
                   <span>{t.reason}</span>
                 </div>
                 {!t.readOnly && t.fillable ? (
-                  <label className={styles.allow} title="Only allow tools you know just read data. Allowed tools are called every time a brief is written.">
+                  <label className={styles.allow} title="Only allow this if you're sure it just looks things up and doesn't change anything. It runs every time a brief is written.">
                     <input type="checkbox" checked={mcp.allowed.includes(t.name)} onChange={(e) => toggle(t.name, e.target.checked)} disabled={busy || disabled} />
                     Allow
                   </label>
@@ -137,8 +138,8 @@ export function SiteDataPanel({
                   ✓
                 </span>
                 <div>
-                  <strong>{r.name}</strong> <code>{r.uri}</code>
-                  <span>Resource, read as text.</span>
+                  <strong title={r.uri}>{r.name}</strong>
+                  <span>A document we'll read.</span>
                 </div>
               </li>
             ))}

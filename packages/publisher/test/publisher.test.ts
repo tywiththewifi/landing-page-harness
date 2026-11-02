@@ -134,18 +134,18 @@ describe("classify", () => {
     expect(await reason((p) => (p.blocks[1]!.tone = "brand"))).toContain("background or card style");
     expect(await reason((p) => p.blocks[0]!.type === "hero" && (p.blocks[0]!.primaryCta.href = "/pricing"))).toContain("Where a button links");
     expect(await reason((p) => (p.form.hubspotFormId = "11111111-1111-1111-1111-111111111111"))).toContain("where its leads go");
-    expect(await reason((p) => (p.variants[0]!.slug = "revops"))).toContain("new URL");
+    expect(await reason((p) => (p.variants[0]!.slug = "revops"))).toContain("new address");
     expect(await reason((p) => (p.slug = "hubspot"))).toContain("moves from /hubspot-integration to /hubspot");
     expect(await reason((p) => p.blocks.forEach((b) => b.type === "faq" && b.items.pop()))).toContain("Items were added to or removed from a section.");
-    expect(await reason(() => {}, "review")).toContain("warnings");
+    expect(await reason(() => {}, "review")).toContain("needs to look at");
 
     expect(classify(null, before, [pageFile], READY).reasons[0]).toContain("new page");
     const changedHeaders = classify(before, before, [{ path: "site/_headers", kind: "config", status: "changed" }], READY);
     expect(changedHeaders).toEqual({ risk: "review", reasons: ["Shared site files change: site/_headers."] });
     const tokens = classify(before, { ...before, build: { ...before.build, tokens: "other" } }, [pageFile], READY);
-    expect(tokens.reasons[0]).toContain("tokens changed");
+    expect(tokens.reasons[0]).toContain("styles changed");
     const handEdited = classify(before, before, [{ ...pageFile, beyondCopy: true }], READY);
-    expect(handEdited).toEqual({ risk: "review", reasons: ["More than the words changed in site/hubspot-integration.html: its tags, links, scripts or styles."] });
+    expect(handEdited).toEqual({ risk: "review", reasons: ["More than the words changed in site/hubspot-integration.html, like its links, code or styles."] });
   });
 
   it("tells a copy edit from any other change to the HTML", async () => {
@@ -213,7 +213,7 @@ describe("classify", () => {
     if (t.type === "testimonial") t.quote = "We cut lead routing from a day to a minute.";
     const again = await gateFor(quote, brief);
     const q = classify(live, await sourceOf(quote, again), [pageFile], { verdict: again.verdict, warnings: warningsOf(again) });
-    expect(q).toEqual({ risk: "review", reasons: ["The checks found a new warning a person has to accept: testimonial.quote-source."] });
+    expect(q).toEqual({ risk: "review", reasons: ["The checks found something new a person needs to look at: testimonial.quote-source."] });
 
     // A page published without its warnings recorded gets no pass.
     const unrecorded = { ...live, gate: { ...live.gate!, warnings: [] } };
@@ -239,9 +239,9 @@ describe("planPublish", () => {
     expect(plan.previews).toEqual([{ name: "General", path: "/hubspot-integration", url: "https://lph-hubspot-integration.northloop-site.pages.dev/hubspot-integration" }]);
     expect(plan.title).toBe(`Update landing page: ${page.title}`);
     expect(plan.body).toContain("🟡 **Needs a reviewer.**");
-    expect(plan.body).toContain("A version was added, removed or moved to a new URL.");
+    expect(plan.body).toContain("A version was added, removed or moved to a new address.");
     expect(plan.body).toContain("| General | `/hubspot-integration` |");
-    expect(plan.body).toContain("Ready: every check passed.");
+    expect(plan.body).toContain("Ready to publish: everything passed.");
     expect(plan.body).toContain(`| \`${removedPath}\` | removed |`);
 
     // Publishing the same thing again changes nothing.
@@ -261,14 +261,14 @@ describe("planPublish", () => {
     const plan = await planPublish({ page, brand, uiCss: css, config, gate: blocked, override: { reason: "Testing" }, read: async () => null });
     expect(plan.override).toEqual({ reason: "Testing", errors: 1 });
     expect(plan.labels).toEqual([LABELS.review, LABELS.override]);
-    expect(plan.classification.reasons).toContain("Published over an error the checks found. The reason given: “Testing”");
+    expect(plan.classification.reasons).toContain("Published even though the checks found a problem. The reason given: “Testing”");
     expect(plan.body).toContain("⛔ **Published over blocking checks.**");
     expect(parseSource(plan.files.find((f) => f.kind === "source")!.content)!.override).toEqual({ reason: "Testing", errors: 1 });
     // Without a reason it's the usual blocked plan, which the API refuses to publish.
     const plain = await planPublish({ page, brand, uiCss: css, config, gate: blocked, read: async () => null });
     expect(plain.override).toBeNull();
     expect(plain.labels).toEqual([LABELS.review]);
-    expect(plain.classification.reasons).toContain("The checks found errors.");
+    expect(plain.classification.reasons).toContain("The checks found problems that must be fixed.");
   });
 
   it("names branch previews the way Cloudflare Pages does", () => {
@@ -325,7 +325,7 @@ describe("github", () => {
     const edited = structuredClone(page);
     edited.seo.title = "Another title for the HubSpot integration";
     const plan = await planPublish({ page: edited, brand, uiCss: css, config, gate, read: repo.read });
-    await expect(repo.publish(plan, { expectedHead: first.commit })).rejects.toThrow(/Someone pushed/);
+    await expect(repo.publish(plan, { expectedHead: first.commit })).rejects.toThrow(/Someone changed this page/);
     expect(gh.pulls).toHaveLength(1);
   });
 

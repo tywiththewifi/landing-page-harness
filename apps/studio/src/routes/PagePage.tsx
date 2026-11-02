@@ -152,11 +152,11 @@ export function PagePage() {
       <div className={review.head}>
         <div>
           <h1>Build the page</h1>
-          <p>Write the copy inside {brand.name}'s components. Layout, colour and type come from the brand, so the page can't drift off it.</p>
+          <p>Write the words for each section. The layout, colours and fonts come from {brand.name}'s brand, so the page always looks on-brand.</p>
         </div>
         <div className={review.actions}>
           <span className={review.save} aria-live="polite">
-            {{ idle: "", saving: "Saving…", saved: "All changes saved", error: "Couldn't save. Retrying on next edit." }[save]}
+            {{ idle: "", saving: "Saving…", saved: "All changes saved", error: "Couldn't save. We'll try again when you make your next change." }[save]}
           </span>
           <Link className="ui-button" to={`/briefs/${brief.id}`}>
             Brief
@@ -166,7 +166,7 @@ export function PagePage() {
               Open preview
             </a>
           )}
-          <Link className="ui-button ui-button--primary" to={`/pages/${page.id}/publish`} title={errors ? "The checks will block publishing until the issues marked Must fix are fixed" : undefined}>
+          <Link className="ui-button ui-button--primary" to={`/pages/${page.id}/publish`} title={errors ? "You can publish once everything marked “Must fix” is fixed" : undefined}>
             Publish
           </Link>
         </div>

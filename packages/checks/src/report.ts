@@ -4,9 +4,9 @@ const ICON = { pass: "✅", warn: "⚠️", fail: "❌", skipped: "➖" } as con
 const SEVERITY = { error: "❌", warning: "⚠️", info: "ℹ️" } as const;
 
 export const VERDICT_TEXT: Record<GateReport["verdict"], string> = {
-  blocked: "Blocked: fix the errors before publishing.",
-  review: "Passed with warnings: nothing blocks publishing.",
-  ready: "Ready: every check passed.",
+  blocked: "Not ready: fix the problems marked “Must fix” before publishing.",
+  review: "Ready to publish, with a few things worth checking.",
+  ready: "Ready to publish: everything passed.",
 };
 
 /** Markdown can't break out of a table cell or a list item. */

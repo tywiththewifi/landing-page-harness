@@ -138,7 +138,7 @@ describe("webhook", () => {
 
   it("reports a failing or unreachable webhook without throwing", async () => {
     const down = recorder(() => new Response("nope", { status: 500 }));
-    expect(await deliver(submission, { kind: "webhook", url: "https://hooks.example/lead" }, { pageId: "p1", fetch: down.fetch })).toMatchObject({ ok: false, detail: "The webhook answered 500." });
+    expect(await deliver(submission, { kind: "webhook", url: "https://hooks.example/lead" }, { pageId: "p1", fetch: down.fetch })).toMatchObject({ ok: false, detail: "The webhook address didn't accept it (error 500)." });
     const moved = recorder(() => new Response(null, { status: 302, headers: { location: "http://169.254.169.254/" } }));
     expect((await deliver(submission, { kind: "webhook", url: "https://hooks.example/lead" }, { pageId: "p1", fetch: moved.fetch })).ok).toBe(false);
     const broken = (async () => {

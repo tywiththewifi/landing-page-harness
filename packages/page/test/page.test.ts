@@ -113,10 +113,10 @@ describe("versions", () => {
 
   it("name the text they personalise in plain words", async () => {
     const { page } = await makePage();
-    expect(keyLabel(page, "hero.heading")).toBe("H1");
+    expect(keyLabel(page, "hero.heading")).toBe("Main heading");
     expect(keyLabel(page, "hero.lead")).toBe("Subheadline");
     expect(keyLabel(page, "features.items.1.title")).toBe("Features item 2 title");
-    expect(keyLabel(page, "seo.metaDescription")).toBe("Meta description");
+    expect(keyLabel(page, "seo.metaDescription")).toBe("Search result description");
     expect(textPaths(emptyBlock("form", "form"))).not.toContain("form.fields.0.name");
   });
 });

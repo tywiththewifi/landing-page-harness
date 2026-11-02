@@ -103,7 +103,7 @@ async function post(url: string, init: RequestInit, meta: DeliveryMeta): Promise
 export async function deliver(submission: Submission, connector: Connector, meta: DeliveryMeta): Promise<DeliveryResult> {
   const now = meta.now ?? new Date();
   try {
-    if (connector.kind === "none") return { ok: true, status: "stored", message: "Thanks, we got it.", detail: "No connector is set up, so the lead was kept for testing." };
+    if (connector.kind === "none") return { ok: true, status: "stored", message: "Thanks, we got it.", detail: "The form is in test mode, so this sign-up was saved here and not sent anywhere." };
 
     if (connector.kind === "webhook") {
       const body = JSON.stringify(webhookBody(submission, { pageId: meta.pageId, id: crypto.randomUUID(), now }));
@@ -112,7 +112,7 @@ export async function deliver(submission: Submission, connector: Connector, meta
       // Redirects aren't followed: the URL was checked, wherever it redirects to wasn't.
       const res = await post(connector.url, { headers, body, redirect: "manual" }, meta);
       if (res.ok) return { ok: true, status: "sent", message: "Thanks, we got it." };
-      return { ok: false, status: "failed", message: FAILED, detail: `The webhook answered ${res.status}.` };
+      return { ok: false, status: "failed", message: FAILED, detail: `The webhook address didn't accept it (error ${res.status}).` };
     }
 
     const secure = !!connector.token;
@@ -125,16 +125,16 @@ export async function deliver(submission: Submission, connector: Connector, meta
       meta,
     );
     // HubSpot's own thank-you message is HTML set in HubSpot; the page shows its own instead.
-    if (res.ok) return { ok: true, status: "sent", message: "Thanks, we got it.", detail: "HubSpot accepted the lead." };
+    if (res.ok) return { ok: true, status: "sent", message: "Thanks, we got it.", detail: "Sent to HubSpot." };
     const data = (await res.json().catch(() => ({}))) as { errors?: { message: string; errorType: string }[]; message?: string };
     const types = data.errors?.map((e) => e.errorType) ?? [];
     const detail = types.includes("FORM_HAS_RECAPTCHA_ENABLED")
-      ? "The HubSpot form has CAPTCHA turned on, which blocks API submissions. Turn it off in the form's settings."
-      : `HubSpot answered ${res.status}: ${data.errors?.map((e) => e.message).join("; ") || data.message || "no details"}`;
+      ? "The HubSpot form has CAPTCHA turned on, which blocks sign-ups from this page. Turn it off in the form's settings in HubSpot."
+      : `HubSpot didn't accept it (error ${res.status}): ${data.errors?.map((e) => e.message).join("; ") || data.message || "no details"}`;
     // Field errors (an invalid or blocked email) are the visitor's to fix.
     const visitor = types.some((t) => t === "INVALID_EMAIL" || t === "BLOCKED_EMAIL") ? "Please check your email address and try again." : FAILED;
     return { ok: false, status: "failed", message: visitor, detail };
   } catch (err) {
-    return { ok: false, status: "failed", message: FAILED, detail: (err as Error).name === "TimeoutError" ? "The request timed out." : (err as Error).message };
+    return { ok: false, status: "failed", message: FAILED, detail: (err as Error).name === "TimeoutError" ? "It took too long to respond." : (err as Error).message };
   }
 }

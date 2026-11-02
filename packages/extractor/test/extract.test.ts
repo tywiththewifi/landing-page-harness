@@ -7,7 +7,7 @@ import { brandKitFiles } from "@lph/kit";
 import { checkContrast, resolveConflict, toCss, toDtcg, type Brand } from "@lph/tokens";
 import { serveFixture } from "../../../scripts/serve-fixture.mjs";
 import { brandName, unifyFamilies, type PageCapture } from "../src/analyze.ts";
-import { extractBrand, pickProductPage } from "../src/extract.ts";
+import { extractBrand, pickProductPage, plainError } from "../src/extract.ts";
 import type { PageSample } from "../src/collect.ts";
 
 describe("pickProductPage", () => {
@@ -25,6 +25,16 @@ describe("pickProductPage", () => {
 
   it("returns null when nothing qualifies", () => {
     expect(pickProductPage([{ href: "https://x.com/pricing", text: "Pricing" }], "https://x.com/")).toBeNull();
+  });
+});
+
+describe("plainError", () => {
+  it("says what went wrong in plain words", () => {
+    const say = (m: string) => (plainError(new Error(m), "https://www.example.com/") as Error).message;
+    expect(say("page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.example.com/")).toBe("We couldn't find a website at www.example.com. Check the address and try again.");
+    expect(say("page.goto: Timeout 30000ms exceeded.")).toMatch(/took too long to load/);
+    expect(say("page.goto: net::ERR_CONNECTION_REFUSED")).toMatch(/didn't respond/);
+    expect(say("Something else")).toBe("Something else");
   });
 });
 
@@ -68,7 +78,7 @@ describe("extractBrand (headerless page)", () => {
   it("finds the logo at the top of the page", () => {
     expect(brand.logo).toMatchObject({ kind: "img" });
     expect(brand.logo?.src).toMatch(/\/logo\.svg$/);
-    expect(brand.warnings.join(" ")).not.toMatch(/No logo found/);
+    expect(brand.warnings.join(" ")).not.toMatch(/couldn't find your logo/);
   });
 });
 
@@ -191,7 +201,7 @@ describe("extractBrand (fixture site)", () => {
   });
 
   it("writes rules from measurements only", () => {
-    expect(brand.usageRules).toContain("Buttons use 12px rounded corners, never a pill, with sentence-case labels, never uppercase.");
+    expect(brand.usageRules).toContain("Buttons use 12px rounded corners, never a pill, with labels in sentence case, never in capitals.");
     expect(brand.summary).toContain("#1a3e35");
   });
 

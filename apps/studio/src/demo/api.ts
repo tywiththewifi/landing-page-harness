@@ -132,7 +132,7 @@ async function advance(id: string): Promise<Job> {
 
 const importSteps = (brand: Brand) => {
   const [home, product] = brand.pages.map((p) => p.replace(/^https?:\/\//, "").replace(/\/$/, ""));
-  return [`Reading the home page (${home})`, `Reading the product page (${product})`, "Checking mobile type sizes", "Building the design system"];
+  return [`Reading the home page (${home})`, `Reading the product page (${product})`, "Checking how text looks on phones", "Putting your brand together"];
 };
 
 /** A fresh copy of the sample, as if the extractor had just measured it. */
@@ -229,7 +229,7 @@ async function service<T>(path: string, body?: unknown): Promise<T> {
   try {
     res = await fetch(`${IMPORT_SERVICE}${path}`, body === undefined ? undefined : { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   } catch {
-    throw new Error("Couldn't reach the import service. It sleeps when nobody has used it for a while; try again in a minute.");
+    throw new Error("We couldn't reach the scanner. It takes a minute to start when nobody has used it for a while, so please try again shortly.");
   }
   const data = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
   if (res.ok && data) return data;
@@ -323,7 +323,7 @@ export const demoApi: typeof api = {
   },
   async allowSiteTools(id, allowed) {
     const brand = mustGet(id);
-    if (!brand.siteMcp) throw new Error("No MCP server is connected");
+    if (!brand.siteMcp) throw new Error("No data source is connected");
     const siteMcp = isSample(brand.siteMcp.url) ? inspectSample(allowed) : await inspectRemote(brand.siteMcp.url, allowed);
     return saveBrand({ ...mustGet(id), siteMcp });
   },
@@ -379,7 +379,7 @@ export const demoApi: typeof api = {
   async createPage(briefId) {
     const brief = mustGetBrief(briefId);
     const brand = mustGet(brief.brandId);
-    if (checkBrief(brief, brand).some((i) => i.severity === "error")) throw new Error("Fix the brief's must-fix issues first.");
+    if (checkBrief(brief, brand).some((i) => i.severity === "error")) throw new Error("Fix the problems marked “Must fix” in the brief first.");
     return startJob(["Writing the page"], async () => {
       const page = toPage(await pageGenerator.generate({ brief, brand }), { id: crypto.randomUUID(), brief, generator: pageGenerator });
       state.pages[page.id] = page;
@@ -432,7 +432,7 @@ export const demoApi: typeof api = {
     return { target: null, config, gate, report: state.gates[page.id] ?? null, plan, published: page.published ?? null, overrideAllowed: true };
   },
   async publish() {
-    throw new Error("The demo doesn't push anywhere. Run the studio with a site repo connected to open pull requests.");
+    throw new Error("The demo can't publish to a website. Download the page instead.");
   },
   async siteZip(pageId, reason) {
     const page = mustGetPage(pageId);
@@ -440,7 +440,7 @@ export const demoApi: typeof api = {
     const gate = freshGate(page);
     if (!gate) throw new Error("Run the checks on this version of the page first.");
     const override = overrideFor(gate, reason ? { reason } : null);
-    if (gate.verdict === "blocked" && !override) throw new Error("The checks found errors. Fix them and run the checks again, or download it anyway with a reason.");
+    if (gate.verdict === "blocked" && !override) throw new Error("The checks found problems. Fix them and run the checks again, or download the page anyway and say why.");
     const bytes = await cloudflareZip({ page, brand, uiCss, config: siteConfig(brand), gate, override, targets: targetsOf(mustGetBrief(page.briefId)) });
     return new Blob([bytes], { type: "application/zip" });
   },

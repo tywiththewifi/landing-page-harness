@@ -94,7 +94,7 @@ async function capture(page: Page, url: string, timeoutMs: number): Promise<Page
   const check = await botCheck(page);
   if (check) {
     throw new BlockedByBotCheck(
-      `${new URL(url).hostname} showed ${check === "a bot check" ? check : `a ${check} bot check`} instead of the page, so it can't be measured. Sites that block automated browsers need importing from a browser that has passed the check.`,
+      `${new URL(url).hostname} showed ${check === "a bot check" ? check : `a ${check} bot check`} (an "are you a robot?" page) instead of the site, so we couldn't scan it. Some sites block automatic visits like ours.`,
     );
   }
   await page.evaluate(() => document.fonts?.ready).catch(() => {});
@@ -112,6 +112,23 @@ async function capture(page: Page, url: string, timeoutMs: number): Promise<Page
   // Consent banners can appear after a delay or on scroll.
   await page.evaluate(removeOverlays).catch(() => 0);
   return page.evaluate(collectPage);
+}
+
+/** The browser's own errors ("net::ERR_NAME_NOT_RESOLVED") said in words a person can act on. */
+export function plainError(err: unknown, url: string): unknown {
+  if (!(err instanceof Error) || err instanceof BlockedByBotCheck) return err;
+  let host = url;
+  try {
+    host = new URL(url).hostname;
+  } catch {}
+  const say = (message: string) => Object.assign(new Error(message), { cause: err });
+  const m = err.message;
+  if (/ERR_NAME_NOT_RESOLVED|ENOTFOUND/.test(m)) return say(`We couldn't find a website at ${host}. Check the address and try again.`);
+  if (/ERR_CERT|SSL_PROTOCOL|ERR_SSL/.test(m)) return say(`${host} has a problem with its security certificate, so we can't open it safely.`);
+  if (/Timeout \d+ms exceeded|TimeoutError|ERR_TIMED_OUT|ERR_CONNECTION_TIMED_OUT/.test(m)) return say(`${host} took too long to load. Try again in a minute.`);
+  if (/ERR_CONNECTION_(REFUSED|RESET|CLOSED)|ERR_ADDRESS_UNREACHABLE|ERR_EMPTY_RESPONSE|ECONNREFUSED/.test(m)) return say(`${host} didn't respond. Check the address, or try again in a minute.`);
+  if (/ERR_TOO_MANY_REDIRECTS/.test(m)) return say(`${host} kept redirecting to itself, so we couldn't open it.`);
+  return err;
 }
 
 export async function launchBrowser(): Promise<Browser> {
@@ -146,7 +163,7 @@ export async function capturePages(opts: ExtractOptions): Promise<PageCapture[]>
       captures.push({ desktop: await capture(page, productUrl, timeoutMs) });
     }
 
-    progress("Checking mobile type sizes");
+    progress("Checking how text looks on phones");
     await page.setViewportSize(MOBILE);
     for (const [i, url] of urls.entries()) {
       captures[i]!.mobile = await capture(page, url, timeoutMs);
@@ -156,7 +173,7 @@ export async function capturePages(opts: ExtractOptions): Promise<PageCapture[]>
   } catch (err) {
     // A refused address explains the failure better than the browser's error does.
     await guard?.check();
-    throw err;
+    throw plainError(err, opts.url);
   } finally {
     // A shared browser outlives the import, so its context is closed even on failure.
     await context?.close().catch(() => {});
@@ -203,7 +220,7 @@ async function guardNetwork(context: BrowserContext, allow: (ip: string) => bool
   return {
     async check() {
       await Promise.all(pending);
-      if (refused) throw new Error(`The page tried to load from ${refused}, an internal address, so it can't be imported.`);
+      if (refused) throw new Error(`The page tried to load from ${refused}, an internal address on a private network, so for safety we can't scan it.`);
     },
   };
 }
@@ -216,6 +233,6 @@ export function brandId(url: string): string {
 /** Samples the home page and the main product page and returns the measured brand. */
 export async function extractBrand(opts: ExtractOptions): Promise<Brand> {
   const captures = await capturePages(opts);
-  opts.onProgress?.("Building the design system");
+  opts.onProgress?.("Putting your brand together");
   return analyze(captures, { id: brandId(captures[0]!.desktop.url) });
 }

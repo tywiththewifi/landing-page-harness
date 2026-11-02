@@ -43,16 +43,16 @@ export function MarkdownView({ load, version, rawHref, notice }: { load: () => P
       <div className={styles.toolbar}>
         <div className={styles.toggle} role="group" aria-label="View">
           <button aria-pressed={!raw} onClick={() => setRaw(false)}>
-            Rendered
+            Formatted
           </button>
           <button aria-pressed={raw} onClick={() => setRaw(true)}>
-            Markdown
+            Plain text
           </button>
         </div>
         <div className={styles.links}>
           {DEMO ? null : (
             <a href={rawHref} target="_blank" rel="noreferrer">
-              Open raw
+              Open as a file
             </a>
           )}
           <button className="ui-button ui-button--small" onClick={copy}>
@@ -61,7 +61,7 @@ export function MarkdownView({ load, version, rawHref, notice }: { load: () => P
         </div>
       </div>
       {md === null ? (
-        <p className={styles.loading}>Generating…</p>
+        <p className={styles.loading}>Loading…</p>
       ) : raw ? (
         <pre className={styles.raw}>{md}</pre>
       ) : (

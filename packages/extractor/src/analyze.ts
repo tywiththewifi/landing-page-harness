@@ -633,7 +633,7 @@ function usageRules(brand: Omit<Brand, "usageRules" | "summary">): string[] {
       [
         `Buttons use ${corner.length ? corner.map((r) => `${r}px`).join("/") + " rounded corners" : "pill shapes"}`,
         pill && corner.length ? "; one variant is a pill" : !pill ? ", never a pill" : "",
-        transforms.has("uppercase") ? ", with uppercase labels." : sentence ? ", with sentence-case labels, never uppercase." : ".",
+        transforms.has("uppercase") ? ", with labels in capitals." : sentence ? ", with labels in sentence case, never in capitals." : ".",
       ].join(""),
     );
     const outline = btns.find((b) => b.kind === "outline");
@@ -643,12 +643,12 @@ function usageRules(brand: Omit<Brand, "usageRules" | "summary">): string[] {
   const body = brand.typography.find((t) => t.role === "body");
   if (h && body) {
     rules.push(
-      `Headings use ${brand.fonts.heading} at weight ${h.fontWeight}${h.letterSpacing < 0 ? " with tight negative tracking" : ""}; body text uses ${brand.fonts.body} at ${body.fontSize}px/${body.lineHeight}px.`,
+      `Headings use ${brand.fonts.heading} in weight ${h.fontWeight}${h.letterSpacing < 0 ? ", with the letters set close together" : ""}. Body text uses ${brand.fonts.body} at ${body.fontSize}px, with lines ${body.lineHeight}px apart.`,
     );
   }
   const small = brand.typography.find((t) => t.role === "small");
   if (small?.textTransform === "uppercase") {
-    rules.push(`Small labels (eyebrows) are uppercase, ${small.fontSize}px, with ${small.letterSpacing}px letter spacing.`);
+    rules.push(`Small labels above headings are in capitals, ${small.fontSize}px, with ${small.letterSpacing}px of extra space between letters.`);
   }
   const brandColor = brand.colors.find((c) => c.role === "brand");
   if (brandColor && brandColor.usage.length) {
@@ -666,7 +666,7 @@ function usageRules(brand: Omit<Brand, "usageRules" | "summary">): string[] {
   const card = brand.cards[0];
   if (card) {
     rules.push(
-      `Cards use ${card.radius}px corners and ${card.padding}px padding${card.borderColor ? `, with a ${card.borderWidth}px ${card.borderColor} border` : ""}${card.shadow ? " and a drop shadow" : card.borderColor ? " and no shadow" : ""}.`,
+      `Cards have ${card.radius}px rounded corners and ${card.padding}px of space inside${card.borderColor ? `, with a ${card.borderWidth}px ${card.borderColor} border` : ""}${card.shadow ? " and a shadow" : card.borderColor ? " and no shadow" : ""}.`,
     );
   }
   return rules;
@@ -677,10 +677,10 @@ function summarize(brand: Omit<Brand, "usageRules" | "summary">): string {
   const accent = brand.colors.find((c) => c.role === "accent");
   const btn = brand.buttons.find((b) => b.kind !== "text");
   const parts = [
-    brandColor ? `${hueName(brandColor.value)}-led palette (${brandColor.value})` : "neutral palette",
+    brandColor ? `mostly ${hueName(brandColor.value)} (${brandColor.value})` : "neutral colours",
     accent ? `with a ${hueName(accent.value)} accent (${accent.value})` : "",
   ].filter(Boolean);
-  return `${brand.name}'s visual system: a ${parts.join(" ")}, ${brand.fonts.heading} for headings and ${brand.fonts.body} for body text${
+  return `${brand.name}'s look: ${parts.join(" ")}, ${brand.fonts.heading} for headings and ${brand.fonts.body} for body text${
     btn ? `, and ${btn.radius >= 9999 ? "pill-shaped" : `${btn.radius}px rounded`} buttons` : ""
   }.`;
 }
@@ -725,9 +725,9 @@ export function analyze(pages: PageCapture[], opts: { id: string; now?: Date }):
   const declaredVariables = Object.assign({}, ...pages.map((p) => p.desktop.rootVars)) as Record<string, string>;
 
   const warnings: string[] = [];
-  if (!home.logo) warnings.push("No logo found in the site header. Add it manually.");
-  if (pages.length < 2) warnings.push("Only the home page was sampled, so values are less certain.");
-  if (!buttons.some((b) => b.kind !== "text")) warnings.push("No button styles were detected.");
+  if (!home.logo) warnings.push("We couldn't find your logo on the site.");
+  if (pages.length < 2) warnings.push("We could only scan your home page, so some styles may be less accurate.");
+  if (!buttons.some((b) => b.kind !== "text")) warnings.push("We couldn't find any button styles on your site.");
 
   const draft: Omit<Brand, "usageRules" | "summary"> = {
     id: opts.id,

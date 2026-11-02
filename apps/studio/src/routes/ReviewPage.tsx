@@ -120,17 +120,17 @@ export function ReviewPage() {
       <div className={styles.head}>
         <div>
           <h1>Review your brand</h1>
-          <p>Check what we measured. Edit anything that's off; Design.md and the exports update with you.</p>
+          <p>Here's what we found on your site. Change anything that looks wrong, and everything else updates to match.</p>
         </div>
         <div className={styles.actions}>
           <span className={styles.save} aria-live="polite">
-            {retrying ?? { idle: "", saving: "Saving…", saved: "All changes saved", error: "Couldn't save. Retrying on next edit." }[save]}
+            {retrying ?? { idle: "", saving: "Saving…", saved: "All changes saved", error: "Couldn't save. We'll try again when you make your next change." }[save]}
           </span>
           <button className="ui-button" onClick={retry} disabled={!!retrying}>
             <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
               <path d="M12 7a5 5 0 11-1.5-3.6M12 1.5V4H9.5" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" />
             </svg>
-            Try again
+            Scan again
           </button>
           <button className="ui-button ui-button--primary" onClick={confirm} disabled={!!retrying}>
             Confirm
@@ -152,7 +152,7 @@ export function ReviewPage() {
             {(
               [
                 ["theme", "Theme"],
-                ["design", "Design.md"],
+                ["design", "Style guide"],
                 ["preview", "Preview"],
               ] as const
             ).map(([key, label]) => (

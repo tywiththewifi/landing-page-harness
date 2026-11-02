@@ -8,14 +8,14 @@ export function ConfirmPanel({ brand, result, onClose }: { brand: Brand; result:
   return (
     <div className={styles.panel} role="status">
       <div className={styles.head}>
-        <strong>{DEMO ? `Brand confirmed. With the server running, this writes ${result.files.length} files.` : `Brand confirmed. ${result.files.length} files written.`}</strong>
+        <strong>{DEMO ? `Brand saved. Outside the demo, this also creates ${result.files.length} files you can use elsewhere.` : `Brand saved. We created ${result.files.length} files you can use elsewhere.`}</strong>
         <button className="ui-button ui-button--ghost ui-button--small" onClick={onClose} aria-label="Dismiss">
           ✕
         </button>
       </div>
       <div className={styles.cols}>
         <div>
-          <span className="ui-label">In {result.dir}</span>
+          <span className="ui-label">Saved in {result.dir}</span>
           <ul>
             {result.files.map((f) => (
               <li key={f}>
@@ -25,7 +25,7 @@ export function ConfirmPanel({ brand, result, onClose }: { brand: Brand; result:
           </ul>
         </div>
         <div>
-          <span className="ui-label">For any agent</span>
+          <span className="ui-label">For developers and AI tools</span>
           <ul>
             <li>
               <code>GET {base}/design.md</code>
@@ -38,7 +38,7 @@ export function ConfirmPanel({ brand, result, onClose }: { brand: Brand; result:
             </li>
             <li>
               <a href={DEMO ? "https://github.com/tywiththewifi/landing-page-harness#for-agents" : "/api/openapi.json"} target="_blank" rel="noreferrer">
-                OpenAPI description
+                API reference
               </a>
             </li>
           </ul>

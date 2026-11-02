@@ -893,14 +893,14 @@
     }
   ],
   "usageRules": [
-    "Buttons use 12px rounded corners, never a pill, with sentence-case labels, never uppercase.",
+    "Buttons use 12px rounded corners, never a pill, with labels in sentence case, never in capitals.",
     "The outline button (\"tertiary\") is used on #1a3e35 backgrounds.",
-    "Headings use Archivo at weight 600 with tight negative tracking; body text uses Plus Jakarta Sans at 16px/25px.",
-    "Small labels (eyebrows) are uppercase, 14px, with 1px letter spacing.",
+    "Headings use Archivo in weight 600, with the letters set close together. Body text uses Plus Jakarta Sans at 16px, with lines 25px apart.",
+    "Small labels above headings are in capitals, 14px, with 1px of extra space between letters.",
     "Use primary-green (#1a3e35) for navigation, hero band, section backgrounds.",
     "Reserve accent-lime (#c6f29d) for calls to action and highlights.",
     "There are no warm colours (reds, oranges, yellows) in the palette.",
-    "Cards use 16px corners and 32px padding, with a 1px #dfe7e3 border and no shadow."
+    "Cards have 16px rounded corners and 32px of space inside, with a 1px #dfe7e3 border and no shadow."
   ],
-  "summary": "Northloop's visual system: a green-led palette (#1a3e35) with a lime accent (#c6f29d), Archivo for headings and Plus Jakarta Sans for body text, and 12px rounded buttons."
+  "summary": "Northloop's look: mostly green (#1a3e35) with a lime accent (#c6f29d), Archivo for headings and Plus Jakarta Sans for body text, and 12px rounded buttons."
 }

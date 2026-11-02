@@ -23,24 +23,23 @@ export function Confidence({ value, sources }: { value: number; sources: Source[
         className={`${styles.pill} ${styles[level.toLowerCase()]}`}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        title={`${level} confidence (${Math.round(value * 100)}%). Click for sources.`}
+        title={`How sure we are: ${level.toLowerCase()}. Click to see where we found it.`}
       >
         {level}
       </button>
       {open ? (
-        <span className={styles.pop} role="dialog" aria-label="Sources">
-          <strong>Measured from</strong>
+        <span className={styles.pop} role="dialog" aria-label="Where we found it">
+          <strong>Found on</strong>
           {sources.length ? (
             sources.map((s) => (
-              <span key={s.page + s.selector} className={styles.source}>
+              <span key={s.page + s.selector} className={styles.source} title={s.selector}>
                 <span>
-                  {pagePath(s.page)} · {s.count}×
+                  {pagePath(s.page)} · seen {s.count === 1 ? "once" : `${s.count} times`}
                 </span>
-                <code>{s.selector}</code>
               </span>
             ))
           ) : (
-            <span className={styles.source}>No sources recorded</span>
+            <span className={styles.source}>You added this yourself</span>
           )}
         </span>
       ) : null}

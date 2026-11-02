@@ -8,13 +8,13 @@ export function DemoBanner({ onReset }: { onReset: () => void }) {
     <div className={styles.banner} role="note">
       {IMPORT_SERVICE ? (
         <span>
-          <strong>Live demo.</strong> Import any public site, or Northloop, a fictional sample. A small service reads the sites; everything
-          else runs in your browser, with briefs from the offline writer. Edits stay in this browser.
+          <strong>Live demo.</strong> Scan any public site, or try Northloop, a made-up sample. Briefs are written from templates, not by AI,
+          and your changes are only saved in this browser.
         </span>
       ) : (
         <span>
-          <strong>Live demo.</strong> It runs in your browser on Northloop, a fictional sample site: imports replay a real extraction, and
-          briefs come from the offline writer. Edits stay in this browser.
+          <strong>Live demo.</strong> It uses Northloop, a made-up sample site, and replays a real scan of it. Briefs are written from
+          templates, not by AI, and your changes are only saved in this browser.
         </span>
       )}
       <span className={styles.actions}>

@@ -109,6 +109,6 @@ describe("lph-site (the site repo's CI)", () => {
     const res = run(repo.dir, "check", "--offline");
     expect(res.status).toBe(1);
     expect(res.output.verdict).toBe("blocked");
-    expect(res.stdout).toContain("The page has no H1.");
+    expect(res.stdout).toContain("The page has no main heading.");
   });
 });

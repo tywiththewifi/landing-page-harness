@@ -6,7 +6,7 @@ import markdown from "./MarkdownView.module.scss";
 import styles from "./PublishPanel.module.scss";
 
 const STATUS: Record<string, string> = { added: "New", changed: "Changed", removed: "Removed", unchanged: "Same" };
-const KIND: Record<string, string> = { page: "Page", source: "Source", config: "Site config", other: "Other" };
+const KIND: Record<string, string> = { page: "Page", source: "Page content", config: "Site settings", other: "Other" };
 
 interface Props {
   info: PublishInfo;
@@ -32,7 +32,7 @@ export function PublishPanel({ info, blocked, overridable, demo, busy, result, e
   const [reason, setReason] = useState("");
   const overriding = overridable && anyway;
   const override = overriding ? reason.trim() : "";
-  const stopped = overriding ? (override ? null : "Say why it goes out with errors.") : blocked;
+  const stopped = overriding ? (override ? null : "Say why you're publishing with problems.") : blocked;
   const body = useMemo(() => (showBody ? DOMPurify.sanitize(marked.parse(plan.body, { async: false })) : ""), [showBody, plan.body]);
   const changed = plan.changes.filter((c) => c.status !== "unchanged");
   const files = showSame ? plan.changes : changed;
@@ -42,44 +42,51 @@ export function PublishPanel({ info, blocked, overridable, demo, busy, result, e
     <div className={styles.panel}>
       <div className={styles.target}>
         <div>
-          <span className="ui-label">Destination</span>
+          <span className="ui-label">Where it goes</span>
           {target ? (
             <p>
-              A pull request into <strong>{target.repo}</strong> ({target.base}), on <code>{plan.branch}</code>
-              {target.reviewers.length ? <>, reviewed by {target.reviewers.join(", ")}</> : null}.
+              To your website's code on GitHub (<strong title={`${target.base}, on ${plan.branch}`}>{target.repo}</strong>), as a pull request: a proposed change your
+              team can check before it goes live
+              {target.reviewers.length ? <>. {target.reviewers.join(", ")} will review it</> : null}.
             </p>
           ) : demo ? (
-            <p>In the demo nothing is pushed. This is the pull request the studio would open in the company's site repo, and the folder it would host on Cloudflare Pages.</p>
+            <p>In the demo, nothing is actually published. This shows what would be sent to your website, and the files you'd get if you download the page.</p>
           ) : (
-            <p>
-              No site repo is connected. Set <code>LPH_GITHUB_REPO</code> and <code>LPH_GITHUB_TOKEN</code> on the server to publish as pull requests, or download the page for Cloudflare Pages.
-            </p>
+            <>
+              <p>
+                Softlander isn't connected to your website yet, so download the page and upload it to Cloudflare Pages. To publish straight to your website, ask whoever
+                set up Softlander to connect it to GitHub.
+              </p>
+              <details>
+                <summary>Details for developers</summary>
+                Set <code>LPH_GITHUB_REPO</code> and <code>LPH_GITHUB_TOKEN</code> on the server to publish as pull requests.
+              </details>
+            </>
           )}
           <p className={styles.url}>
-            Live at <code>{info.config.origin}{plan.previews[0]?.path ?? ""}</code>
+            Goes live at <code>{info.config.origin}{plan.previews[0]?.path ?? ""}</code>
             {published ? (
               <>
                 {" "}
-                · latest pull request{" "}
+                · last published in{" "}
                 <a href={published.url} target="_blank" rel="noreferrer">
                   #{published.number}
                 </a>
-                {published.override ? <>, published over the checks ({published.override.reason})</> : null}
+                {published.override ? <>, even though the checks found problems ({published.override.reason})</> : null}
               </>
             ) : null}
           </p>
         </div>
       </div>
 
-      <div className={`${styles.risk} ${content ? styles.content : styles.review}`}>
-        <strong>{content ? "Copy only: merges itself once the checks pass" : "Needs a reviewer"}</strong>
+      <div className={`${styles.risk} ${content ? styles.content : styles.review}`} title={plan.labels.join(", ")}>
+        <strong>{content ? "Only words changed, so it goes live by itself once the checks pass" : "Someone needs to review this before it goes live"}</strong>
         <ul>
           {plan.classification.reasons.map((r) => (
             <li key={r}>{r}</li>
           ))}
-          {content ? <li>The site's CI checks the diff again before it merges.</li> : null}
+          {content ? <li>Your website runs the checks again before it goes live.</li> : null}
         </ul>
-        <span className={styles.label}>{plan.labels.join(", ")}</span>
       </div>
 
       <div className={styles.files}>
@@ -111,7 +118,7 @@ export function PublishPanel({ info, blocked, overridable, demo, busy, result, e
 
       <div className={styles.pr}>
         <button type="button" className="ui-button ui-button--ghost ui-button--small" aria-expanded={showBody} onClick={() => setShowBody(!showBody)}>
-          {showBody ? "Hide" : "Show"} the pull request description
+          {showBody ? "Hide" : "Show"} the description your team will see
         </button>
         {showBody ? (
           <div className={styles.body}>
@@ -131,17 +138,17 @@ export function PublishPanel({ info, blocked, overridable, demo, busy, result, e
       {result ? (
         <div className={styles.done} role="status">
           <strong>
-            {result.created ? "Pull request opened" : result.unchanged ? "Pull request already up to date" : "Pull request updated"}:{" "}
+            {result.created ? "Sent for review" : result.unchanged ? "Already sent, nothing new to add" : "Updated"}: pull request{" "}
             <a href={result.url} target="_blank" rel="noreferrer">
               #{result.number}
             </a>
           </strong>
           <p>
             {result.override
-              ? "It was published over the checks' errors, so it waits for a reviewer and the site's checks fail until the errors are fixed."
+              ? "It was published even though the checks found problems, so someone has to review it, and your website's checks will keep failing until the problems are fixed."
               : result.risk === "content"
-                ? "It merges itself once the site's checks pass."
-                : "It waits for a reviewer."}
+                ? "It goes live by itself once your website's checks pass."
+                : "It goes live once someone on your team reviews and approves it."}
           </p>
           {result.previews.length ? (
             <p>
@@ -166,16 +173,16 @@ export function PublishPanel({ info, blocked, overridable, demo, busy, result, e
             <span>
               <strong>Publish anyway</strong>
               <small>
-                For a test, or when you've looked at the errors and they don't matter here.{" "}
+                For a test, or when you've looked at the problems and they don't matter here.{" "}
                 {target
-                  ? "The pull request is labelled lph:override and always waits for a reviewer, and the site's checks still fail on it."
-                  : "The reason is kept with the page in the folder, and the site's checks still fail on it if it goes through them."}
+                  ? "It's flagged so someone always reviews it first, and your website's checks will still fail on it."
+                  : "Your reason is saved with the page's files."}
               </small>
             </span>
           </label>
           {overriding ? (
             <label className={styles.reason}>
-              <span className="ui-label">Why it goes out with errors</span>
+              <span className="ui-label">Why are you publishing with problems?</span>
               <textarea className="ui-input" rows={2} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Testing the publishing flow; the copy gets written next." />
             </label>
           ) : null}
@@ -199,9 +206,9 @@ export function PublishPanel({ info, blocked, overridable, demo, busy, result, e
           disabled={!!stopped}
           onClick={() => onDownload(override || undefined)}
         >
-          {overriding ? "Download anyway" : "Download for Cloudflare Pages"}
+          {overriding ? "Download anyway" : "Download the page (for Cloudflare Pages)"}
         </button>
-        <span className={styles.why}>{plan.unchanged ? `${target?.base ?? "The site"} already has this version of the page.` : stopped}</span>
+        <span className={styles.why}>{plan.unchanged ? "Your website already has this version of the page." : stopped}</span>
       </div>
     </div>
   );

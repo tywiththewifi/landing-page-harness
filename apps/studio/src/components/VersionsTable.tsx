@@ -28,19 +28,19 @@ export function VersionsTable({
   return (
     <div className={styles.wrap}>
       <p className={styles.intro}>
-        Each persona gets its own URL with its own hero. Everything else is shared with the general page, so a fix there reaches every version. Versions point search
-        engines at the general page, so they're for email, outreach and ads rather than search.
+        Each audience gets its own version of the page, at its own address, with its own top section. Everything else matches the general page, so a fix
+        there fixes every version. Search engines only show the general page, so use versions in emails, outreach and ads.
       </p>
       <div className={styles.scroll}>
         <table className={styles.table}>
           <thead>
             <tr>
               <th scope="col">Version</th>
-              <th scope="col">URL</th>
+              <th scope="col">Address</th>
               <th scope="col">H1</th>
               <th scope="col">Subheadline</th>
-              <th scope="col">CTA</th>
-              <th scope="col">Personalised</th>
+              <th scope="col">Button</th>
+              <th scope="col">Changed for this version</th>
               <th scope="col">
                 <span className="ui-visually-hidden">Actions</span>
               </th>
@@ -73,7 +73,7 @@ export function VersionsTable({
                         <span>/{page.slug}/</span>
                         <input
                           className={`ui-input ${styles.cell}`}
-                          aria-label={`URL for ${v.name}`}
+                          aria-label={`Address for ${v.name}`}
                           value={v.slug}
                           onChange={(e) => update((d) => void (d.variants.find((x) => x.id === v.id)!.slug = e.target.value))}
                           onBlur={(e) => update((d) => void (d.variants.find((x) => x.id === v.id)!.slug = slugify(e.target.value)))}
@@ -100,7 +100,7 @@ export function VersionsTable({
                         <span className={styles.muted}>Nothing yet</span>
                       )
                     ) : (
-                      <span className={styles.muted}>Base for every version</span>
+                      <span className={styles.muted}>Every version starts from this</span>
                     )}
                   </td>
                   <td className={styles.actions}>
