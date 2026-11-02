@@ -551,6 +551,35 @@ export async function collectPage(): Promise<PageSample> {
       logo = { kind: "text", text: ownText(logoLink), selector: path(logoLink) };
     }
   }
+  // Ad and campaign landing pages often drop the header and show the logo, unlinked, above
+  // the hero. Take an image or SVG near the top whose markup says it's the logo (or names the
+  // site), so a decorative icon or hero picture isn't mistaken for it.
+  if (!logo) {
+    const site = location.hostname.replace(/^www\./, "").split(".")[0]!.toLowerCase();
+    const describes = (el: Element) => {
+      const bits = [el.getAttribute("alt"), el.getAttribute("aria-label"), el.getAttribute("title"), el.id, el.getAttribute("class"), el.querySelector("title")?.textContent];
+      if (el instanceof HTMLImageElement) bits.push(decodeURIComponent(new URL(el.currentSrc || el.src, location.href).pathname.split("/").pop() ?? ""));
+      const parent = el.parentElement;
+      if (parent && parent !== document.body) bits.push(parent.id, parent.getAttribute("class"), parent.getAttribute("aria-label"));
+      const text = bits.filter(Boolean).join(" ").toLowerCase();
+      return /logo|wordmark|brand/.test(text) || (site.length > 2 && /[a-z]/.test(site) && text.includes(site));
+    };
+    const mark = [...document.body.querySelectorAll("img, svg")]
+      .filter((el) => !el.parentElement?.closest("svg") && !el.closest("footer") && visible(el))
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.top + window.scrollY < 240 && r.width >= 24 && r.width <= vw * 0.5 && r.height >= 12 && r.height <= 160;
+      })
+      .filter(describes)
+      .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)[0];
+    if (mark instanceof SVGElement && mark.outerHTML.length < 30000) {
+      const clean = cleanSvg(mark, { live: mark });
+      if (!clean.getAttribute("color")) clean.setAttribute("color", getComputedStyle(mark).color);
+      logo = { kind: "svg", svg: clean.outerHTML, selector: path(mark) };
+    } else if (mark instanceof HTMLImageElement) {
+      logo = { kind: "img", src: mark.currentSrc || mark.src, selector: path(mark) };
+    }
+  }
 
   // The logo usually links home (sometimes to /homepage), so it is never the product page.
   const navLinks = header
