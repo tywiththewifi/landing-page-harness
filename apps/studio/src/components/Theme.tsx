@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { checkContrast, replaceColor, type Brand, type ButtonStyle, type ColorToken, type TypeToken } from "@lph/tokens";
+import { checkContrast, drawingContrast, replaceColor, semanticColors, type Brand, type ColorShare, type ButtonStyle, type ColorToken, type TypeToken } from "@lph/tokens";
 import { Confidence } from "./Confidence.tsx";
 import { ColorField, NumberField, TextField, WeightField } from "./Fields.tsx";
+import { navTone } from "@lph/page/browser";
+import { useLogoColors } from "./sampleColors.ts";
 import styles from "./Theme.module.scss";
 
 type Update = (fn: (draft: Brand) => void) => void;
@@ -319,26 +321,48 @@ function LogoMark({ brand }: { brand: Brand }) {
   return <span className={styles.logoMark}>{logo.text}</span>;
 }
 
+/** How much of the logo stands out on a background: all of it, part, or too little to read. */
+function legibility(colors: ColorShare[] | null, background: string) {
+  if (!colors) return null;
+  const { share, main } = drawingContrast(colors, background);
+  return { level: share >= 0.8 ? "ok" : share >= 0.5 ? "partly" : "lost", main: main.toFixed(1) } as const;
+}
+
+function LogoTile({ brand, background, color, verdict }: { brand: Brand; background: string; color: string; verdict: ReturnType<typeof legibility> }) {
+  return (
+    <div style={{ background, color }}>
+      <LogoMark brand={brand} />
+      {verdict && verdict.level !== "ok" ? (
+        <span className={styles.logoVerdict}>
+          {verdict.level === "lost" ? "Gets lost here" : "Partly hard to see"} · {verdict.main}:1
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function LogoSection({ brand, update }: { brand: Brand; update: Update }) {
   const customers = brand.customers ?? [];
-  const brandColor = brand.colors.find((c) => c.role === "brand")?.value ?? "#111";
-  const surface = brand.colors.find((c) => c.role === "surface")?.value ?? "#fff";
-  const ink = brand.colors.find((c) => c.role === "ink")?.value ?? "#111";
+  const sem = semanticColors(brand);
+  const onBrand = legibility(useLogoColors(brand.logo, sem.onBrand), sem.brand);
+  const onSurface = legibility(useLogoColors(brand.logo, sem.ink), sem.surface);
   return (
-    <Section id="logo" title="Logo" intro="Taken from the site header.">
-      {brand.logo && /fill="(#fff(fff)?|white)"/i.test(brand.logo.svg ?? "") ? (
+    <Section id="logo" title="Logo" intro="Taken from the site header. Each tile checks that the logo stands out: graphics need 3:1 contrast against what's behind them.">
+      {onBrand && onBrand.level !== "ok" ? (
         <div className={`${styles.notice} ${styles.warn}`}>
-          Part of this logo is white, so it disappears on light backgrounds. Add a dark version before using it on light sections.
+          {onBrand.level === "lost" ? "Most of this logo" : "Part of this logo"} is close to the brand colour ({onBrand.main}:1), so it gets lost on brand-coloured bands
+          {navTone(brand) === "brand" ? ", including the header of your pages" : ""}. Keep it on light sections, or add a version that stands out on the brand colour.
+        </div>
+      ) : null}
+      {onSurface && onSurface.level !== "ok" ? (
+        <div className={`${styles.notice} ${styles.warn}`}>
+          {onSurface.level === "lost" ? "Most of this logo" : "Part of this logo"} is close to the page background ({onSurface.main}:1), so it fades on light sections. Add a dark version before using it there.
         </div>
       ) : null}
       {brand.logo ? (
         <div className={styles.logos}>
-          <div style={{ background: brandColor, color: "#fff" }}>
-            <LogoMark brand={brand} />
-          </div>
-          <div style={{ background: surface, color: ink }}>
-            <LogoMark brand={brand} />
-          </div>
+          <LogoTile brand={brand} background={sem.brand} color={sem.onBrand} verdict={onBrand} />
+          <LogoTile brand={brand} background={sem.surface} color={sem.ink} verdict={onSurface} />
         </div>
       ) : (
         <div className={`${styles.notice} ${styles.bad}`}>We couldn't find a logo in the site header. Add it manually or skip for now.</div>
@@ -353,7 +377,7 @@ function LogoSection({ brand, update }: { brand: Brand; update: Update }) {
         <ul className={styles.customers}>
           {customers.map((c, i) => (
             <li key={c.svg ?? c.src ?? i}>
-              <span className={styles.customerLogo} style={{ color: ink }}>
+              <span className={styles.customerLogo} style={{ color: sem.ink }}>
                 {/* Sanitised at extraction time, like the header logo. */}
                 {c.svg ? <span dangerouslySetInnerHTML={{ __html: c.svg }} /> : <img src={c.src} alt="" />}
               </span>

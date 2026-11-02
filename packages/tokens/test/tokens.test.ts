@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contrastRatio, hueName, isChromatic, normalizeColor, parseColor } from "../src/color.ts";
+import { contrastRatio, drawingContrast, hueName, isChromatic, normalizeColor, parseColor } from "../src/color.ts";
 
 describe("colour utilities", () => {
   it("parses the formats getComputedStyle returns", () => {
@@ -27,6 +27,20 @@ describe("colour utilities", () => {
     expect(isChromatic("#5b6b65")).toBe(false);
     expect(hueName("#1a3e35")).toBe("green");
     expect(hueName("#c6f29d")).toBe("lime");
+  });
+
+  it("finds a logo that gets lost on a background", () => {
+    // Genki: a red wordmark with a small green leaf.
+    const genki = [
+      { color: "#ff3e3e", weight: 90 },
+      { color: "#8dc63f", weight: 10 },
+    ];
+    const onRed = drawingContrast(genki, "#ff3e3e");
+    expect(onRed.share).toBeCloseTo(0, 5);
+    expect(onRed.main).toBeCloseTo(1, 5);
+    expect(drawingContrast(genki, "#ffffff").share).toBeCloseTo(0.9, 5);
+    expect(drawingContrast(genki, "#ffffff").main).toBeGreaterThan(3);
+    expect(drawingContrast([], "#ffffff")).toEqual({ share: 1, main: 21 });
   });
 });
 
