@@ -93,11 +93,11 @@ export function BriefPage() {
       <div className={styles.head}>
         <div>
           <h1>Review the brief</h1>
-          <p>Edit anything. The checks on the right update as you go, and the page is built from this in the next step.</p>
+          <p>Change anything you like. The checks on the right update as you go, and the next step builds the page from this brief.</p>
         </div>
         <div className={styles.actions}>
           <span className={styles.save} aria-live="polite">
-            {{ idle: "", saving: "Saving…", saved: "All changes saved", error: "Couldn't save. Retrying on next edit." }[save]}
+            {{ idle: "", saving: "Saving…", saved: "All changes saved", error: "Couldn't save. We'll try again when you make your next change." }[save]}
           </span>
           <Link className="ui-button" to={`/brands/${brand.id}/briefs/new`}>
             New brief
@@ -133,7 +133,7 @@ export function BriefPage() {
             {(
               [
                 ["brief", "Brief"],
-                ["markdown", "Brief.md"],
+                ["markdown", "Shareable version"],
               ] as const
             ).map(([key, label]) => (
               <button key={key} role="tab" aria-selected={tab === key} className={tab === key ? styles.tabOn : undefined} onClick={() => setTab(key)}>
@@ -153,7 +153,7 @@ export function BriefPage() {
             load={() => api.briefMd(brief.id)}
             version={brief.updatedAt}
             rawHref={`/api/briefs/${brief.id}/brief.md`}
-            notice="Edit the brief in the Brief tab. This is the version to share, and what agents read before building the page."
+            notice="This is the brief as a document you can share, and what AI tools read before building the page. To change it, edit the Brief tab."
           />
         ) : null}
       </div>

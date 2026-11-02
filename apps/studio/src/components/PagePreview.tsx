@@ -73,7 +73,7 @@ export function PagePreview({ html, title, focus, path }: { html: string; title:
         <span className={styles.url}>
           <span aria-hidden="true">🔒</span> yoursite.com<strong>{path}</strong>
         </span>
-        <div className={styles.toggle} role="group" aria-label="Viewport">
+        <div className={styles.toggle} role="group" aria-label="Screen size">
           {(["desktop", "mobile"] as const).map((w) => (
             <button key={w} type="button" aria-pressed={width === w} onClick={() => setWidth(w)}>
               {w === "desktop" ? "Desktop" : "Mobile"}
@@ -86,7 +86,7 @@ export function PagePreview({ html, title, focus, path }: { html: string; title:
         {ready ? null : (
           <div className={styles.loading} role="status">
             <span className={styles.spinner} aria-hidden="true" />
-            Rendering the preview…
+            Loading the preview…
           </div>
         )}
         {link ? (

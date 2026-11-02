@@ -145,7 +145,7 @@ export interface Page extends PageEdit {
 export type PageDraft = Omit<PageEdit, "form"> & { form?: FormSettings };
 
 export const BLOCK_NAMES: Record<BlockType, string> = {
-  hero: "Hero",
+  hero: "Top section",
   logos: "Logo row",
   features: "Features",
   steps: "How it works",
@@ -153,6 +153,6 @@ export const BLOCK_NAMES: Record<BlockType, string> = {
   testimonial: "Testimonial",
   comparison: "Comparison",
   faq: "FAQ",
-  form: "Lead form",
-  cta: "Closing CTA",
+  form: "Sign-up form",
+  cta: "Closing call to action",
 };

@@ -58,8 +58,8 @@ export function checkPage(page: Page, brief: Brief, brand: Brand): PageIssue[] {
 
   // Structure: one hero first, so the page has one H1 and it's the first thing read.
   if (!blocks.length) add("error", "page", "empty", "The page has no sections.");
-  else if (blocks[0]!.type !== "hero") add("error", blocks[0]!.id, "hero-first", "The page has to open with the hero: it holds the H1.");
-  if (blocks.filter((b) => b.type === "hero").length > 1) add("error", "page", "one-hero", "Use one hero. A page has one H1.");
+  else if (blocks[0]!.type !== "hero") add("error", blocks[0]!.id, "hero-first", "The page has to start with the top section, because it holds the main heading.");
+  if (blocks.filter((b) => b.type === "hero").length > 1) add("error", "page", "one-hero", "Use only one top section. A page should have just one main heading.");
 
   // Grounding: numbers and quotes must come from the site, its data, the request or the brief's sourced proof.
   const sources = [
@@ -88,20 +88,20 @@ export function checkPage(page: Page, brief: Brief, brand: Brand): PageIssue[] {
         for (const n of numbersIn(value)) {
           if (flagged.has(n) || numberIsSourced(n, sources)) continue;
           flagged.add(n);
-          add("warning", area(key), `number-${flagged.size}`, `${who}"${n}" isn't on your site, in its data or in the request. Add the source to the brief's proof points or remove it.`, { ...v, path: key });
+          add("warning", area(key), `number-${flagged.size}`, `${who}"${n}" isn't on your site, in your connected data or in your request. Add where it comes from to the brief's Proof section, or remove it.`, { ...v, path: key });
         }
     }
     for (const [where, list] of unwritten) {
       const block = view.blocks.find((b) => b.id === where);
-      const label = where === "seo" ? "SEO" : block ? name(block) : where;
+      const label = where === "seo" ? "Search" : block ? name(block) : where;
       const what = list.length === 1 ? `${keyLabel(view, list[0]!)} still needs` : `${label}: ${list.length} fields still need`;
       add("error", where, "placeholders", `${who}${what} writing (marked ${PLACEHOLDER}).`, { ...v, path: list[0] });
     }
 
     for (const b of view.blocks) {
       if (b.type === "hero") {
-        if (touched(`${b.id}.heading`) && b.heading.length > 70) add("warning", b.id, "h1-length", `${who}The H1 is ${b.heading.length} characters. Under 70 reads at a glance.`, { ...v, path: `${b.id}.heading` });
-        if (touched(`${b.id}.lead`) && b.lead.length > 220) add("info", b.id, "lead-length", `${who}The subheadline is ${b.lead.length} characters. One or two short sentences work best.`, { ...v, path: `${b.id}.lead` });
+        if (touched(`${b.id}.heading`) && b.heading.length > 70) add("warning", b.id, "h1-length", `${who}The main heading is ${b.heading.length} characters long. Under 70 is easier to read at a glance.`, { ...v, path: `${b.id}.heading` });
+        if (touched(`${b.id}.lead`) && b.lead.length > 220) add("info", b.id, "lead-length", `${who}The subheadline is ${b.lead.length} characters long. One or two short sentences work best.`, { ...v, path: `${b.id}.lead` });
       }
       if (b.type === "hero" || b.type === "cta") {
         for (const [slot, link] of [["primaryCta", b.primaryCta], ["secondaryCta", b.secondaryCta]] as const) {
@@ -113,7 +113,7 @@ export function checkPage(page: Page, brief: Brief, brand: Brand): PageIssue[] {
       }
       if (b.type === "faq") {
         const short = b.items.filter((q, i) => touched(`${b.id}.items.${i}.answer`) && q.answer.trim() && !q.answer.includes(PLACEHOLDER) && words(q.answer) < 25).length;
-        if (short) add("info", b.id, "answers", `${who}${short} FAQ answer${short === 1 ? " is" : "s are"} under 25 words. Answer engines quote complete 40 to 60 word answers.`, v);
+        if (short) add("info", b.id, "answers", `${who}${short} FAQ answer${short === 1 ? " is" : "s are"} under 25 words. AI search tools prefer complete answers of 40 to 60 words.`, v);
       }
     }
   };
@@ -132,67 +132,67 @@ export function checkPage(page: Page, brief: Brief, brand: Brand): PageIssue[] {
         const href = link.href.trim();
         const path = `${b.id}.${slot}.label`;
         if (!href || href === "#") add("error", b.id, `${slot}-href`, `Set where "${link.label}" goes.`, { path });
-        else if (!SAFE_HREF.test(href)) add("error", b.id, `${slot}-href`, `"${href}" isn't a link the page can use. Use a section (#form), a path (/pricing) or an https address.`, { path });
-        else if (href.startsWith("#") && !ids.has(href.slice(1))) add("error", b.id, `${slot}-href`, `"${link.label}" points at ${href}, but there's no section with that id.`, { path });
-        else if (href.startsWith("http://")) add("warning", b.id, `${slot}-href`, `"${link.label}" links over http. Use https.`, { path });
+        else if (!SAFE_HREF.test(href)) add("error", b.id, `${slot}-href`, `"${href}" isn't a link we can use. Link to a section (like #form), a page on your site (like /pricing) or a full address starting with https://.`, { path });
+        else if (href.startsWith("#") && !ids.has(href.slice(1))) add("error", b.id, `${slot}-href`, `"${link.label}" links to ${href}, but there's no section with that name on the page.`, { path });
+        else if (href.startsWith("http://")) add("warning", b.id, `${slot}-href`, `"${link.label}" links to an address starting with http://. Use https:// so visitors don't see a security warning.`, { path });
       }
     }
     if (b.type === "features" && brand.cards.length && !brand.cards.some((c) => c.name === b.cardVariant)) {
       add("warning", b.id, "card", `"${b.cardVariant}" isn't one of ${brand.name}'s card styles (${brand.cards.map((c) => c.name).join(", ")}).`);
     }
-    if (b.type === "features" && (b.items.length < 2 || b.items.length > 6)) add("info", b.id, "items", `${b.items.length} features. Three to six reads best.`);
-    if (b.type === "stats" && b.items.length > 4) add("info", b.id, "items", "More than four stats dilutes them. Keep the strongest.");
+    if (b.type === "features" && (b.items.length < 2 || b.items.length > 6)) add("info", b.id, "items", `${b.items.length} features. Three to six is easiest to read.`);
+    if (b.type === "stats" && b.items.length > 4) add("info", b.id, "items", "More than four numbers weakens each one. Keep the strongest.");
   }
   // Buttons are picked per band; say so when none of the brand's would stand out on one.
   for (const b of blocks) {
     if ((b.type === "hero" || b.type === "cta") && !buttonsFor(brand, b.type === "hero" ? "hero" : b.tone).visible) {
-      add("warning", b.id, "buttons", `None of ${brand.name}'s button styles stands out on this ${b.type === "hero" ? "hero" : `${b.tone} band`}. Change the band's tone, or add a button style to the brand.`);
+      add("warning", b.id, "buttons", `None of ${brand.name}'s button styles stands out on this ${b.type === "hero" ? "top section" : "section's background"}. Change the section's background, or add a button style to the brand.`);
     }
   }
 
   // The form and where its leads go.
   const forms = blocks.filter((b) => b.type === "form");
   for (const f of forms) {
-    if (!f.fields.some((x) => x.name === "email" || x.name === "phone")) add("error", f.id, "contact", "The form needs an email or phone field, or there's no way to reply.");
+    if (!f.fields.some((x) => x.name === "email" || x.name === "phone")) add("error", f.id, "contact", "The form needs an email or phone field, or you'll have no way to reply.");
     const names = f.fields.map((x) => x.name);
     if (new Set(names).size !== names.length) add("error", f.id, "duplicate", "The form asks for the same field twice.");
-    if (f.fields.length > 6) add("info", f.id, "length", `${f.fields.length} fields. Every extra field costs submissions: ask only what sales needs.`);
+    if (f.fields.length > 6) add("info", f.id, "length", `${f.fields.length} fields. Every extra field means fewer people fill in the form, so only ask for what you need.`);
     if (f.fields.some((x) => !x.label.trim())) add("error", f.id, "label", "Every form field needs a label.");
   }
   const { form } = page;
   if (forms.length) {
-    if (form.connector === "none") add("warning", "leads", "connector", "Leads aren't sent anywhere yet. Connect HubSpot or a webhook.");
+    if (form.connector === "none") add("warning", "leads", "connector", "Form sign-ups aren't sent anywhere yet. Choose where they go in the Leads tab.");
     if (form.connector === "hubspot") {
-      if (!/^\d+$/.test(form.hubspotPortalId.trim())) add("error", "leads", "hubspot-portal", "Add your HubSpot portal ID (a number, shown in HubSpot's account menu).");
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(form.hubspotFormId.trim())) add("error", "leads", "hubspot-form", "Add the HubSpot form's ID (the GUID in the form editor's URL).");
+      if (!/^\d+$/.test(form.hubspotPortalId.trim())) add("error", "leads", "hubspot-portal", "Add your HubSpot account number (the Hub ID, shown in HubSpot's account menu).");
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(form.hubspotFormId.trim())) add("error", "leads", "hubspot-form", "Add your HubSpot form's ID. It's the long code in the web address when you edit the form in HubSpot.");
     }
-    if (form.connector === "webhook" && !/^https:\/\/\S+$/.test(form.webhookUrl.trim())) add("error", "leads", "webhook", "The webhook needs an https URL.");
-  } else if (form.connector !== "none") add("info", "leads", "unused", "A form connector is set up, but the page has no form block.");
+    if (form.connector === "webhook" && !/^https:\/\/\S+$/.test(form.webhookUrl.trim())) add("error", "leads", "webhook", "The webhook address has to start with https://.");
+  } else if (form.connector !== "none") add("info", "leads", "unused", "You've chosen where sign-ups go, but the page has no form section.");
 
   // Search and answer engines.
   const kw = brief.seo.primaryKeyword.trim().toLowerCase();
   const seoFor = (seo: Page["seo"], variant?: Variant) => {
     const v = variant ? { variant: variant.id } : {};
     const who = variant ? `${variant.name}: ` : "";
-    if (seo.title.length < 30 || seo.title.length > 60) add("warning", "seo", "title-length", `${who}The title is ${seo.title.length} characters. Search results show about 30 to 60.`, { ...v, path: "seo.title" });
-    if (seo.metaDescription.length < 120 || seo.metaDescription.length > 160) add("warning", "seo", "meta-length", `${who}The meta description is ${seo.metaDescription.length} characters. Aim for 120 to 160.`, { ...v, path: "seo.metaDescription" });
-    if (!variant && kw && !seo.title.toLowerCase().includes(kw)) add("warning", "seo", "keyword-title", `The title doesn't contain "${brief.seo.primaryKeyword}".`, { path: "seo.title" });
+    if (seo.title.length < 30 || seo.title.length > 60) add("warning", "seo", "title-length", `${who}The title in search results is ${seo.title.length} characters long. Aim for 30 to 60 so it isn't cut off.`, { ...v, path: "seo.title" });
+    if (seo.metaDescription.length < 120 || seo.metaDescription.length > 160) add("warning", "seo", "meta-length", `${who}The description in search results is ${seo.metaDescription.length} characters long. Aim for 120 to 160.`, { ...v, path: "seo.metaDescription" });
+    if (!variant && kw && !seo.title.toLowerCase().includes(kw)) add("warning", "seo", "keyword-title", `The title in search results doesn't include "${brief.seo.primaryKeyword}".`, { path: "seo.title" });
   };
   seoFor(page.seo);
   for (const v of page.variants) if (v.overrides["seo.title"] !== undefined || v.overrides["seo.metaDescription"] !== undefined) seoFor(applyVariant(page, v).seo, v);
-  if (!SLUG.test(page.slug)) add("error", "seo", "slug", `"/${page.slug}" isn't a clean URL. Use lowercase words separated by hyphens.`);
+  if (!SLUG.test(page.slug)) add("error", "seo", "slug", `"/${page.slug}" can't be used as a page address. Use lowercase words joined by hyphens, like "spring-offer".`);
   const hero = blocks.find((b) => b.type === "hero");
-  if (kw && hero?.type === "hero" && !hero.heading.toLowerCase().includes(kw)) add("info", "seo", "keyword-h1", `The H1 doesn't contain "${brief.seo.primaryKeyword}".`, { path: `${hero.id}.heading` });
-  if (brief.seo.schemaTypes.includes("FAQPage") && !blocks.some((b) => b.type === "faq")) add("warning", "seo", "faq", "The brief plans FAQPage markup, but the page has no FAQ section.");
+  if (kw && hero?.type === "hero" && !hero.heading.toLowerCase().includes(kw)) add("info", "seo", "keyword-h1", `The main heading doesn't include "${brief.seo.primaryKeyword}".`, { path: `${hero.id}.heading` });
+  if (brief.seo.schemaTypes.includes("FAQPage") && !blocks.some((b) => b.type === "faq")) add("warning", "seo", "faq", "The brief says the page answers questions, but there's no FAQ section.");
 
   // Persona versions: each on its own URL, each actually different.
   const slugs = new Set<string>();
   for (const v of page.variants) {
     const at = { variant: v.id };
-    if (!SLUG.test(v.slug)) add("error", "versions", "slug", `${v.name}: "${v.slug}" isn't a clean URL part. Use lowercase words separated by hyphens.`, at);
+    if (!SLUG.test(v.slug)) add("error", "versions", "slug", `${v.name}: "${v.slug}" can't be used in a page address. Use lowercase words joined by hyphens.`, at);
     else if (slugs.has(v.slug)) add("error", "versions", "slug-taken", `${v.name}: ${versionPath(page, v)} is already used by another version.`, at);
     slugs.add(v.slug);
-    if (!Object.keys(v.overrides).length) add("warning", "versions", "same", `${v.name} is the same as the general page. Personalise its hero or remove it.`, at);
+    if (!Object.keys(v.overrides).length) add("warning", "versions", "same", `${v.name} is the same as the general page. Change its top section for this audience, or remove it.`, at);
   }
   for (const p of brief.personas) {
     if (!page.variants.some((v) => v.personaId === p.id)) add("info", "versions", `persona-${p.id}`, `${p.name} has no version of the page yet.`);

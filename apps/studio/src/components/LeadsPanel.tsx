@@ -5,9 +5,9 @@ import { TextField } from "./Fields.tsx";
 import styles from "./LeadsPanel.module.scss";
 
 const CONNECTOR_TEXT: Record<FormSettings["connector"], [string, string]> = {
-  none: ["Test mode", "Leads are kept in the studio so you can try the form. Nothing leaves it."],
-  hubspot: ["HubSpot", "Each lead is submitted to a HubSpot form, as if it were filled in on your site, with the visitor's tracking cookie and page."],
-  webhook: ["Webhook", "Each lead is posted as JSON to your URL (Zapier, Make, n8n, your own API), signed so you can check it came from here."],
+  none: ["Test mode", "Sign-ups are saved here so you can try the form. They aren't sent anywhere."],
+  hubspot: ["HubSpot", "Each sign-up goes to a form in your HubSpot account, just as if it was filled in on your website."],
+  webhook: ["Webhook", "Each sign-up is sent to a web address you choose, for tools like Zapier, Make or n8n."],
 };
 
 /** Where the page's form sends leads, and the leads it has received. */
@@ -27,8 +27,8 @@ export function LeadsPanel({ page, update }: { page: Page; update: (fn: (draft: 
     <div className={styles.wrap}>
       <section className={styles.panel} aria-labelledby="leads-where">
         <h2 id="leads-where">Where leads go</h2>
-        {hasForm ? null : <p className={styles.warn}>This page has no form section yet. Add a Lead form in the editor to collect leads.</p>}
-        <div className={styles.options} role="radiogroup" aria-label="Form connector">
+        {hasForm ? null : <p className={styles.warn}>This page has no form yet. Add a Sign-up form section in the editor to collect leads.</p>}
+        <div className={styles.options} role="radiogroup" aria-label="Where leads go">
           {CONNECTORS.map((c) => (
             <button key={c} type="button" role="radio" aria-checked={form.connector === c} className={form.connector === c ? styles.on : undefined} onClick={() => set({ connector: c })}>
               <strong>{CONNECTOR_TEXT[c][0]}</strong>
@@ -39,23 +39,29 @@ export function LeadsPanel({ page, update }: { page: Page; update: (fn: (draft: 
         {form.connector === "hubspot" ? (
           <div className={styles.fields}>
             <div className={styles.row}>
-              <TextField label="Portal ID" value={form.hubspotPortalId} placeholder="e.g. 1234567" onChange={(v) => set({ hubspotPortalId: v.trim() })} />
-              <TextField label="Form ID" value={form.hubspotFormId} placeholder="The GUID in the form editor's URL" onChange={(v) => set({ hubspotFormId: v.trim() })} />
+              <TextField label="HubSpot account number (Hub ID)" value={form.hubspotPortalId} placeholder="e.g. 1234567" onChange={(v) => set({ hubspotPortalId: v.trim() })} />
+              <TextField label="Form ID" value={form.hubspotFormId} placeholder="The long code in the form's web address in HubSpot" onChange={(v) => set({ hubspotFormId: v.trim() })} />
             </div>
             <p className={styles.note}>
-              Fields are named after HubSpot's contact properties (email, firstname, company…), so add the same fields to the HubSpot form. Turn off CAPTCHA on it: HubSpot
-              refuses API submissions to forms with CAPTCHA. With <code>HUBSPOT_ACCESS_TOKEN</code> set on the server (a private app token), the authenticated endpoint is
-              used, with higher rate limits.
+              Add the same fields to your HubSpot form as this page asks for (email, first name, company and so on). Turn off CAPTCHA on the HubSpot form, or HubSpot will
+              turn the sign-ups away.
             </p>
+            <details className={styles.note}>
+              <summary>Details for developers</summary>
+              Fields are named after HubSpot's contact properties (email, firstname, company…). With <code>HUBSPOT_ACCESS_TOKEN</code> set on the server (a private app
+              token), the authenticated endpoint is used, with higher rate limits.
+            </details>
           </div>
         ) : null}
         {form.connector === "webhook" ? (
           <div className={styles.fields}>
-            <TextField label="Webhook URL" value={form.webhookUrl} placeholder="https://hooks.example.com/leads" onChange={(v) => set({ webhookUrl: v.trim() })} />
-            <p className={styles.note}>
+            <TextField label="Webhook address" value={form.webhookUrl} placeholder="https://hooks.example.com/leads" onChange={(v) => set({ webhookUrl: v.trim() })} />
+            <p className={styles.note}>Paste the address your tool gives you for receiving data. It has to start with https://.</p>
+            <details className={styles.note}>
+              <summary>Details for developers</summary>
               Posts <code>{"{ type: \"lead\", id, pageId, variant, submittedAt, fields, context }"}</code>. With <code>LPH_WEBHOOK_SECRET</code> set on the server, each post
               carries <code>x-lph-signature: t=…,v1=…</code>, an HMAC-SHA256 of <code>t.body</code>; <code>verifyWebhook</code> in <code>@lph/forms</code> checks it.
-            </p>
+            </details>
           </div>
         ) : null}
       </section>
@@ -84,8 +90,8 @@ export function LeadsPanel({ page, update }: { page: Page; update: (fn: (draft: 
                 <th scope="col">Received</th>
                 <th scope="col">Email</th>
                 <th scope="col">Version</th>
-                <th scope="col">Source</th>
-                <th scope="col">Delivery</th>
+                <th scope="col">Came from</th>
+                <th scope="col">Sent?</th>
               </tr>
             </thead>
             <tbody>

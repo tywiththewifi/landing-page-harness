@@ -97,7 +97,7 @@ export function github(target: GitHubTarget) {
       const baseCommit = await api<{ tree: { sha: string } }>("GET", `/git/commits/${base.object.sha}`);
       const existing = await ref(plan.branch);
       if (existing && opts.expectedHead && existing.object.sha !== opts.expectedHead) {
-        throw new GitHubError(`Someone pushed to ${plan.branch} since it was last published. Merge or close its pull request, or delete the branch, then publish again.`, 409);
+        throw new GitHubError(`Someone changed this page on GitHub (${plan.branch}) since it was last published. Ask your developer to merge or close its pull request, then publish again.`, 409);
       }
 
       const tree = await api<{ sha: string }>("POST", "/git/trees", {
@@ -107,7 +107,7 @@ export function github(target: GitHubTarget) {
           ...plan.removed.map((path) => ({ path, mode: "100644", type: "blob", sha: null })),
         ],
       });
-      if (!existing && tree!.sha === baseCommit!.tree.sha) throw new GitHubError(`${target.base} already has this version of the page: there's nothing to publish.`, 409);
+      if (!existing && tree!.sha === baseCommit!.tree.sha) throw new GitHubError("Your website already has this version of the page, so there's nothing to publish.", 409);
       let commit = existing?.object.sha ?? "";
       let unchanged = false;
       const head = existing ? await api<{ tree: { sha: string } }>("GET", `/git/commits/${existing.object.sha}`) : null;

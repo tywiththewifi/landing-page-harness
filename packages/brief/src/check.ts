@@ -27,22 +27,22 @@ export function checkBrief(brief: Brief, brand: Brand): BriefIssue[] {
 
   // Objective
   const { kpi } = brief.objective;
-  if (!kpi.metric.trim()) add("error", "objective", "kpi-metric", "Say what the KPI counts.");
-  if (!kpi.target.trim() || /^set a target$/i.test(kpi.target.trim())) add("warning", "objective", "kpi-target", "Set a KPI target so the page has a goal to be judged against.");
+  if (!kpi.metric.trim()) add("error", "objective", "kpi-metric", "Say what you'll measure to know the page worked.");
+  if (!kpi.target.trim() || /^set a target$/i.test(kpi.target.trim())) add("warning", "objective", "kpi-target", "Set a target so you can tell whether the page worked.");
 
   // Personas: each becomes its own page variant in the build step.
-  if (!brief.personas.length) add("error", "personas", "none", "Add at least one persona.");
-  if (brief.personas.length > 4) add("warning", "personas", "too-many", `${brief.personas.length} personas means ${brief.personas.length} page variants. Three or fewer is easier to keep up to date.`);
+  if (!brief.personas.length) add("error", "personas", "none", "Add at least one audience.");
+  if (brief.personas.length > 4) add("warning", "personas", "too-many", `${brief.personas.length} audiences means ${brief.personas.length} versions of the page. Three or fewer is easier to keep up to date.`);
 
   if (!brief.channels.length) add("warning", "channels", "none", "Pick at least one channel that will bring people to the page.");
   if (!brief.keyMessages.length) add("error", "messages", "none", "Add at least one key message.");
 
   // Offer and call to action
   const cta = brief.offer.primaryCta.trim();
-  if (!cta) add("error", "offer", "cta-missing", "Add a primary call to action.");
+  if (!cta) add("error", "offer", "cta-missing", "Add the text for the main button.");
   else if (words(cta) > 5) add("warning", "offer", "cta-length", `"${cta}" is long for a button. Aim for two to four words.`);
-  if (brief.funnelStage === "awareness" && TRANSACTIONAL.test(cta)) add("warning", "funnel", "cta-too-hard", `"${cta}" asks a lot of someone who has just heard of you. Awareness pages usually offer something lighter.`);
-  if (brief.funnelStage === "decision" && SOFT.test(cta)) add("warning", "funnel", "cta-too-soft", `"${cta}" is a soft ask for a decision-stage page. Offer the demo, trial or quote.`);
+  if (brief.funnelStage === "awareness" && TRANSACTIONAL.test(cta)) add("warning", "funnel", "cta-too-hard", `"${cta}" asks a lot of someone who has just heard of you. Ask for something smaller, like reading a guide.`);
+  if (brief.funnelStage === "decision" && SOFT.test(cta)) add("warning", "funnel", "cta-too-soft", `"${cta}" asks too little of people who are ready to decide. Offer a demo, trial or quote instead.`);
   const siteCtas = (brand.content ?? []).flatMap((p) => p.ctas);
   if (cta && siteCtas.length && !siteCtas.some((c) => c.toLowerCase() === cta.toLowerCase())) {
     add("info", "offer", "cta-new", `"${cta}" isn't a button label the site uses today (${[...new Set(siteCtas)].slice(0, 3).map((c) => `"${c}"`).join(", ")}). Fine if it's deliberate.`);
@@ -50,8 +50,8 @@ export function checkBrief(brief: Brief, brand: Brand): BriefIssue[] {
 
   // Outline
   const types = brief.outline.map((s) => s.type);
-  if (types[0] !== "hero") add("error", "outline", "hero-first", "The page has to open with a hero section.");
-  if (types.filter((t) => t === "hero").length > 1) add("error", "outline", "one-hero", "Use one hero: it holds the page's only H1.");
+  if (types[0] !== "hero") add("error", "outline", "hero-first", "The page has to start with a top section.");
+  if (types.filter((t) => t === "hero").length > 1) add("error", "outline", "one-hero", "Use only one top section. It holds the page's main heading, and a page should have just one.");
   if (cta && ASKS_FOR_DETAILS.test(cta) && !types.includes("form")) add("warning", "outline", "form", `"${cta}" asks for details but there's no form section to collect them.`);
   if (types.includes("testimonial") && !brief.proofPoints.some((p) => p.source !== "needed" && /["“”]/.test(p.evidence))) {
     add("info", "outline", "testimonial-source", "There's a testimonial section but no sourced quote yet.");
@@ -64,8 +64,8 @@ export function checkBrief(brief: Brief, brand: Brand): BriefIssue[] {
   for (const [i, p] of brief.proofPoints.entries()) {
     const n = i + 1;
     if (p.source === "needed") add("warning", "proof", `needed-${n}`, `"${p.claim}" needs evidence before it can go on the page: ${p.evidence}`);
-    else if (p.source === "site" && !textIsSourced(p.evidence, site)) add("warning", "proof", `site-${n}`, `The evidence for "${p.claim}" wasn't found on the sampled pages.`);
-    else if (p.source === "data" && !textIsSourced(p.evidence, data)) add("warning", "proof", `data-${n}`, `The evidence for "${p.claim}" isn't in the site data${brief.siteData?.server ? ` from ${brief.siteData.server.name}` : ""}.`);
+    else if (p.source === "site" && !textIsSourced(p.evidence, site)) add("warning", "proof", `site-${n}`, `The evidence for "${p.claim}" isn't on the pages we scanned.`);
+    else if (p.source === "data" && !textIsSourced(p.evidence, data)) add("warning", "proof", `data-${n}`, `The evidence for "${p.claim}" isn't in your connected data${brief.siteData?.server ? ` from ${brief.siteData.server.name}` : ""}.`);
     else if (p.source === "prompt" && !textIsSourced(p.evidence, prompt)) add("warning", "proof", `prompt-${n}`, `The evidence for "${p.claim}" isn't in your request.`);
   }
   const sourced = [...site, ...data, ...prompt, ...brief.proofPoints.filter((p) => p.source !== "needed").map((p) => p.evidence)];
@@ -83,20 +83,20 @@ export function checkBrief(brief: Brief, brand: Brand): BriefIssue[] {
     for (const num of numbersIn(text)) {
       if (flagged.has(num) || numberIsSourced(num, sourced)) continue;
       flagged.add(num);
-      add("warning", section, `number-${flagged.size}`, `"${num}" isn't on the site${brief.siteData?.facts.length ? ", in the site data" : ""} or in your request. Add a source or remove it.`);
+      add("warning", section, `number-${flagged.size}`, `"${num}" isn't on your site${brief.siteData?.facts.length ? ", in your connected data" : ""} or in your request. Say where it comes from or remove it.`);
     }
   }
 
   // Unfinished text left by a generator, reported where it is.
   const parts: [BriefIssue["section"], string, unknown][] = [
     ["objective", "Objective", [brief.objective, brief.summary]],
-    ["personas", "Personas", brief.personas],
+    ["personas", "Audiences", brief.personas],
     ["funnel", "Channels", brief.channels],
     ["messages", "Key messages", brief.keyMessages],
     ["offer", "Offer", brief.offer],
-    ["proof", "Proof points", brief.proofPoints],
+    ["proof", "Proof", brief.proofPoints],
     ["outline", "Page outline", brief.outline],
-    ["seo", "SEO", brief.seo],
+    ["seo", "Search", brief.seo],
   ];
   for (const [section, label, value] of parts) {
     const n = JSON.stringify(value).split(PLACEHOLDER).length - 1;
@@ -122,23 +122,23 @@ export function checkSeo(brief: Brief): BriefIssue[] {
   const kw = seo.primaryKeyword.trim().toLowerCase();
   const has = (s: string) => !!kw && s.toLowerCase().includes(kw);
 
-  if (!kw) add("error", "keyword", "Choose a primary keyword.");
-  if (seo.title.length < 30 || seo.title.length > 60) add("warning", "title-length", `The title is ${seo.title.length} characters. Search results show about 30 to 60.`);
-  if (seo.metaDescription.length < 120 || seo.metaDescription.length > 160) add("warning", "meta-length", `The meta description is ${seo.metaDescription.length} characters. Aim for 120 to 160.`);
-  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(seo.slug)) add("error", "slug", `"${seo.slug}" isn't a clean slug. Use lowercase words separated by hyphens.`);
-  if (kw && !has(seo.title)) add("warning", "keyword-title", `The title doesn't contain "${seo.primaryKeyword}".`);
-  if (kw && !has(seo.metaDescription)) add("info", "keyword-meta", `The meta description doesn't contain "${seo.primaryKeyword}".`);
+  if (!kw) add("error", "keyword", "Choose a main keyword.");
+  if (seo.title.length < 30 || seo.title.length > 60) add("warning", "title-length", `The title in search results is ${seo.title.length} characters long. Aim for 30 to 60 so it isn't cut off.`);
+  if (seo.metaDescription.length < 120 || seo.metaDescription.length > 160) add("warning", "meta-length", `The description in search results is ${seo.metaDescription.length} characters long. Aim for 120 to 160.`);
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(seo.slug)) add("error", "slug", `"${seo.slug}" can't be used as a page address. Use lowercase words joined by hyphens, like "spring-offer".`);
+  if (kw && !has(seo.title)) add("warning", "keyword-title", `The title in search results doesn't include "${seo.primaryKeyword}".`);
+  if (kw && !has(seo.metaDescription)) add("info", "keyword-meta", `The description in search results doesn't include "${seo.primaryKeyword}".`);
   const hero = brief.outline.find((s) => s.type === "hero");
-  if (kw && hero && !has(hero.heading)) add("info", "keyword-h1", `The hero heading (the page's H1) doesn't contain "${seo.primaryKeyword}".`);
-  if (seo.secondaryKeywords.length > 8) add("info", "secondary", "More than eight secondary keywords dilutes the page. Keep the closest ones.");
+  if (kw && hero && !has(hero.heading)) add("info", "keyword-h1", `The page's main heading doesn't include "${seo.primaryKeyword}".`);
+  if (seo.secondaryKeywords.length > 8) add("info", "secondary", "More than eight other keywords spreads the page too thin. Keep the closest ones.");
 
   // Answer engines quote direct answers to real questions.
   const faq = brief.outline.some((s) => s.type === "faq");
-  if (seo.questions.length < 3) add("warning", "questions", "Add at least three questions with direct answers so answer engines can quote the page.");
-  if (seo.questions.length && !faq) add("warning", "faq-section", "There are questions but no FAQ section in the outline to show them.");
-  if (seo.schemaTypes.includes("FAQPage") && !faq) add("error", "faq-schema", "FAQPage markup needs an FAQ section on the page.");
-  if (faq && !seo.schemaTypes.includes("FAQPage")) add("info", "faq-markup", "Add FAQPage to the schema types so the FAQ is marked up.");
+  if (seo.questions.length < 3) add("warning", "questions", "Add at least three questions with direct answers so AI search tools can quote the page.");
+  if (seo.questions.length && !faq) add("warning", "faq-section", "There are questions but no FAQ section in the page outline to show them.");
+  if (seo.schemaTypes.includes("FAQPage") && !faq) add("error", "faq-schema", "You've told search engines the page has questions and answers, but there's no FAQ section. Add one, or untick FAQ under Search.");
+  if (faq && !seo.schemaTypes.includes("FAQPage")) add("info", "faq-markup", "Tick FAQ under Search so search engines know the page answers questions.");
   const short = seo.questions.filter((q) => !q.answer.startsWith(PLACEHOLDER) && words(q.answer) < 25);
-  if (short.length) add("info", "answers", `${short.length} answer${short.length === 1 ? " is" : "s are"} under 25 words. Answer engines favour complete 40 to 60 word answers.`);
+  if (short.length) add("info", "answers", `${short.length} answer${short.length === 1 ? " is" : "s are"} under 25 words. AI search tools prefer complete answers of 40 to 60 words.`);
   return issues;
 }

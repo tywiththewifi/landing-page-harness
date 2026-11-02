@@ -22,7 +22,7 @@ export function brandLint(doc: Document, path: string, brand?: Brand): GateIssue
   // Inline styles and <font>-era attributes skip the tokens entirely. The logo's own SVG is the brand's.
   const styled = Array.from(doc.body.querySelectorAll("[style], font, [bgcolor], [color]")).filter((el) => !el.closest("svg"));
   if (styled.length) {
-    add("error", "inline-style", `${styled.length === 1 ? "An element is" : `${styled.length} elements are`} styled inline instead of through the brand's tokens.`, {
+    add("error", "inline-style", `${styled.length === 1 ? "An element is" : `${styled.length} elements are`} styled by hand instead of with the brand's styles.`, {
       nodes: styled.slice(0, 5).map(describe),
     });
   }
@@ -36,8 +36,8 @@ export function brandLint(doc: Document, path: string, brand?: Brand): GateIssue
   }
   const missing = [...fallbacks].filter(([, hasFallback]) => !hasFallback).map(([n]) => n);
   const defaulted = [...fallbacks].filter(([, hasFallback]) => hasFallback).map(([n]) => n);
-  if (missing.length) add("error", "token-missing", `The components use tokens the brand doesn't define, so those parts render unstyled: ${missing.join(", ")}.`);
-  if (defaulted.length) add("warning", "token-default", `The brand doesn't define ${defaulted.join(", ")}, so the components use their built-in defaults. Set ${defaulted.length === 1 ? "it" : "them"} in the brand's Theme tab.`);
+  if (missing.length) add("error", "token-missing", `Some parts of the page use brand styles that don't exist, so they show without styling: ${missing.join(", ")}.`);
+  if (defaulted.length) add("warning", "token-default", `The brand is missing ${defaulted.join(", ")}, so the page uses a standard look instead. Set ${defaulted.length === 1 ? "it" : "them"} in the brand's Theme tab.`);
 
   // Button and card variants come from the brand's measured styles.
   const used = (prefix: string) =>
@@ -60,11 +60,11 @@ export function brandLint(doc: Document, path: string, brand?: Brand): GateIssue
     if (!name || GENERIC_FONTS.test(name)) continue;
     const faced = new RegExp(`font-family:\\s*["']?${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']?\\s*[;}]`, "i").test(css);
     const linked = links.some((href) => href.toLowerCase().includes(`family=${name.toLowerCase()}`));
-    if (!faced && !linked) add("warning", `font-${role}`, `The ${role} font, ${name}, isn't loaded on the page, so visitors see a fallback. Add its web font to the brand.`);
+    if (!faced && !linked) add("warning", `font-${role}`, `The ${role} font, ${name}, isn't loading on the page, so visitors see a different font.`);
   }
 
   // The header carries the logo.
   const logo = doc.querySelector(".lph-nav__logo");
-  if (logo && !logo.querySelector("svg, img")) add("info", "logo", `The header shows "${logo.textContent?.trim()}" as text. Add the logo in the brand's Theme tab.`);
+  if (logo && !logo.querySelector("svg, img")) add("info", "logo", `The top of the page shows "${logo.textContent?.trim()}" as text, because we didn't find your logo.`);
   return issues;
 }

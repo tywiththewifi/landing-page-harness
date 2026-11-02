@@ -90,7 +90,7 @@ function summarise(id: CheckId, issues: GateIssue[], what: string): CheckResult 
   const summary =
     status === "pass"
       ? `${what}: nothing to fix${count(issues, "info") ? `, ${plural(count(issues, "info"), "note")}` : ""}.`
-      : [errors && plural(errors, "error"), warnings && plural(warnings, "warning")].filter(Boolean).join(", ") + ".";
+      : [errors && `${errors} to fix`, warnings && `${warnings} to check`].filter(Boolean).join(", ") + ".";
   return { id, title: CHECK_TITLES[id], status, summary, issues };
 }
 
@@ -135,7 +135,7 @@ export async function runGate(input: GateInput, runner: GateRunner, opts: { now?
 
     const sample = await staticPerf(v.html, doc, v.path);
     if (runner.measure) {
-      progress(`Measuring ${v.path}`);
+      progress(`Measuring the speed of ${v.path}`);
       Object.assign(sample, await runner.measure(v.html, v.path));
     }
     samples.push(sample);
@@ -150,11 +150,11 @@ export async function runGate(input: GateInput, runner: GateRunner, opts: { now?
   }
 
   const checks: CheckResult[] = [
-    model ? summarise("content", content.filter((i) => i.check === "content"), "Copy, links, the form and versions") : skipped("content", "The copy is checked in the studio, against the brief."),
-    summarise("brand", [...content.filter((i) => i.check === "brand"), ...mergeVersions(brandFound, paths)], "Tokens, components, fonts"),
-    summarise("seo", mergeVersions(seo, paths), "Search and answer engines"),
-    runner.axe ? summarise("a11y", mergeVersions(a11y, paths), "WCAG 2.2 AA and best practices") : skipped("a11y", "Accessibility runs in a browser."),
-    summarise("performance", mergeVersions(perfIssues(samples, budget, (p) => docs.get(p)), paths), runner.measure ? "Size, requests and lab timings" : "Size and requests (timings run on the server)"),
+    model ? summarise("content", content.filter((i) => i.check === "content"), "Words, links, the form and versions") : skipped("content", "The words are checked in the editor, against the brief."),
+    summarise("brand", [...content.filter((i) => i.check === "brand"), ...mergeVersions(brandFound, paths)], "Colours, fonts and styles"),
+    summarise("seo", mergeVersions(seo, paths), "Search engines and AI search"),
+    runner.axe ? summarise("a11y", mergeVersions(a11y, paths), "Whether everyone, including people using screen readers, can use the page") : skipped("a11y", "Accessibility is only checked when the checks run on the server."),
+    summarise("performance", mergeVersions(perfIssues(samples, budget, (p) => docs.get(p)), paths), runner.measure ? "Size and loading time" : "Size (loading time is measured on the server)"),
   ];
 
   return {

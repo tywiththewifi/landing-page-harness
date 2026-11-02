@@ -97,10 +97,10 @@ export async function collectSiteData(url: string, topic: string, opts: McpOptio
           .filter((c) => c.type === "text" && c.text)
           .map((c) => c.text)
           .join("\n");
-        if (res.isError) notes.push(`${t.title ?? t.name} returned an error: ${clean(text).slice(0, 200)}`);
+        if (res.isError) notes.push(`${t.title ?? t.name} didn't work: ${clean(text).slice(0, 200)}`);
         else add({ source: `tool:${t.name}`, label: t.title ?? t.annotations?.title ?? t.name, text: clean(text) });
       } catch (err) {
-        notes.push(`${t.title ?? t.name} failed (${(err as Error).message}).`);
+        notes.push(`${t.title ?? t.name} didn't respond (${(err as Error).message}).`);
       }
     }
     const textual = resources.filter((r) => !r.mimeType || /^text\/|json|xml|markdown/.test(r.mimeType));
@@ -114,7 +114,7 @@ export async function collectSiteData(url: string, topic: string, opts: McpOptio
       }
     }
     const skipped = tools.length - usable.length;
-    if (skipped) notes.push(`${skipped} tool${skipped === 1 ? " was" : "s were"} skipped: not read-only, or ${skipped === 1 ? "it needs" : "they need"} inputs Softlander can't fill.`);
+    if (skipped) notes.push(`${skipped} tool${skipped === 1 ? " was" : "s were"} skipped, because ${skipped === 1 ? "it" : "they"} might change things or ${skipped === 1 ? "needs" : "need"} details we can't fill in.`);
     return { server: { name, url }, facts, notes };
   } finally {
     await client.close().catch(() => {});

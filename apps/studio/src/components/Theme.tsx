@@ -13,10 +13,10 @@ const SECTIONS = [
   ["color", "Colour"],
   ["type", "Typography"],
   ["logo", "Logo"],
-  ["ui", "UI elements"],
-  ["radius", "Radius"],
+  ["ui", "Buttons and cards"],
+  ["radius", "Corners"],
   ["spacing", "Spacing"],
-  ["rules", "Usage rules"],
+  ["rules", "Brand rules"],
 ] as const;
 
 const ROLE_GROUPS: [string, ColorToken["role"][]][] = [
@@ -26,6 +26,23 @@ const ROLE_GROUPS: [string, ColorToken["role"][]][] = [
 ];
 
 const family = (f: string) => `"${f}", system-ui, sans-serif`;
+
+const ROLE_NAMES: Partial<Record<ColorToken["role"], string>> = { ink: "text", surface: "background" };
+
+const TYPE_NAMES: Record<TypeToken["role"], string> = {
+  display: "Extra large heading",
+  h1: "Main heading",
+  h2: "Section heading",
+  h3: "Subheading",
+  h4: "Small heading",
+  body: "Body text",
+  small: "Small text",
+  label: "Button text",
+};
+
+const BUTTON_KINDS: Record<ButtonStyle["kind"], string> = { filled: "Filled", outline: "Outline", text: "Text link" };
+
+const READABILITY: Record<string, string> = { AAA: "Very easy to read", AA: "Easy to read", "AA-large": "Large text only", fail: "Hard to read" };
 
 export function Theme({ brand, update, resolve }: { brand: Brand; update: Update; resolve: (id: string, value: string) => void }) {
   const scroller = useRef<HTMLDivElement>(null);
@@ -99,9 +116,9 @@ function Overview({ brand, update, resolve }: { brand: Brand; update: Update; re
   const conflicts = brand.conflicts.filter((c) => c.options.length > 1);
   const chips = [
     `${brand.colors.length} colours`,
-    `${brand.typography.length} type tokens`,
-    `${brand.radii.length} radius tokens`,
-    `${brand.spacing.length} spacing tokens`,
+    `${brand.typography.length} text styles`,
+    `${brand.radii.length} corner sizes`,
+    `${brand.spacing.length} spacing sizes`,
     `${brand.buttons.length} button styles`,
     `${brand.cards.length} card styles`,
   ];
@@ -147,13 +164,14 @@ function Overview({ brand, update, resolve }: { brand: Brand; update: Update; re
       ))}
 
       <div className={styles.contrast}>
-        <h3>Contrast</h3>
+        <h3>Is the text easy to read?</h3>
         {failing.length ? (
           <p className={styles.bad}>
-            {failing.length} pair{failing.length === 1 ? "" : "s"} only pass{failing.length === 1 ? "es" : ""} for large text or fail. Fix them before generating pages.
+            {failing.length === 1 ? "One text colour is" : `${failing.length} text colours are`} hard to read on {failing.length === 1 ? "its" : "their"} background. Fix{" "}
+            {failing.length === 1 ? "it" : "them"} before building pages.
           </p>
         ) : (
-          <p>Every text pair the components use passes WCAG AA.</p>
+          <p>All text is easy to read on its background.</p>
         )}
         <ul>
           {contrast.map((c) => (
@@ -162,8 +180,8 @@ function Overview({ brand, update, resolve }: { brand: Brand; update: Update; re
                 Aa
               </span>
               <span>{c.subject}</span>
-              <span className={styles[`level${c.level.replace("-", "")}`]}>
-                {c.ratio}:1 {c.level === "fail" ? "Fail" : c.level}
+              <span className={styles[`level${c.level.replace("-", "")}`]} title={`Contrast ${c.ratio}:1`}>
+                {READABILITY[c.level]}
               </span>
             </li>
           ))}
@@ -186,7 +204,7 @@ function Colors({ brand, update }: { brand: Brand; update: Update }) {
     <Section
       id="color"
       title="Colour"
-      intro="Grouped by the role each colour plays. Names become CSS variables (--color-name)."
+      intro="Grouped by how each colour is used. You can rename any of them."
       action={
         <button className="ui-button ui-button--small" onClick={add}>
           + Add
@@ -203,17 +221,17 @@ function Colors({ brand, update }: { brand: Brand; update: Update }) {
               {list.map(({ c, i }) => (
                 <div key={i} className={styles.swatch}>
                   <div className={styles.chip} style={{ background: c.value }}>
-                    <span className={styles.role}>{c.role}</span>
+                    <span className={styles.role}>{ROLE_NAMES[c.role] ?? c.role}</span>
                   </div>
                   <div className={styles.swatchBody}>
                     <input
                       className={styles.nameInput}
                       value={c.name}
-                      aria-label="Token name"
+                      aria-label="Colour name"
                       onChange={(e) => update((d) => void (d.colors[i]!.name = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-")))}
                     />
                     <ColorField value={c.value} onChange={(v) => update((d) => Object.assign(d, replaceColor(d, d.colors[i]!.value, v)))} />
-                    <p className={styles.usage}>{c.usage.join(", ") || "No usage recorded"}</p>
+                    <p className={styles.usage}>{c.usage.join(", ") || "Not used on your site yet"}</p>
                     <div className={styles.meta}>
                       <Confidence value={c.confidence} sources={c.sources} />
                       {c.sources.length === 0 || c.usage.includes("added by hand") ? (
@@ -263,17 +281,17 @@ function Typography({ brand, update }: { brand: Brand; update: Update }) {
       for (const t of d.typography) if (t.fontFamily === previous) t.fontFamily = value;
     });
   return (
-    <Section id="type" title="Typography" intro="Sizes are desktop; mobile sizes were measured at 390px wide.">
+    <Section id="type" title="Typography" intro="Sizes are in pixels on a computer screen. Mobile is the size on phones.">
       <div className={styles.fonts}>
         <div className={styles.fontCard}>
           <span className="ui-label">Headings</span>
           <p style={{ fontFamily: family(brand.fonts.heading), fontSize: 28, fontWeight: 600 }}>{brand.fonts.heading}</p>
-          <TextField label="Font family" value={brand.fonts.heading} onChange={(v) => setFamily("heading", v)} />
+          <TextField label="Font" value={brand.fonts.heading} onChange={(v) => setFamily("heading", v)} />
         </div>
         <div className={styles.fontCard}>
           <span className="ui-label">Body</span>
           <p style={{ fontFamily: family(brand.fonts.body), fontSize: 28 }}>{brand.fonts.body}</p>
-          <TextField label="Font family" value={brand.fonts.body} onChange={(v) => setFamily("body", v)} />
+          <TextField label="Font" value={brand.fonts.body} onChange={(v) => setFamily("body", v)} />
         </div>
       </div>
       <div className={styles.typeList}>
@@ -282,7 +300,7 @@ function Typography({ brand, update }: { brand: Brand; update: Update }) {
           return (
             <div key={t.role} className={styles.typeRow}>
               <div className={styles.typeHead}>
-                <strong>{t.role}</strong>
+                <strong>{TYPE_NAMES[t.role]}</strong>
                 <span>{t.fontFamily}</span>
                 <Confidence value={t.confidence} sources={t.sources} />
               </div>
@@ -334,7 +352,7 @@ function LogoTile({ brand, background, color, verdict }: { brand: Brand; backgro
       <LogoMark brand={brand} />
       {verdict && verdict.level !== "ok" ? (
         <span className={styles.logoVerdict}>
-          {verdict.level === "lost" ? "Gets lost here" : "Partly hard to see"} · {verdict.main}:1
+          {verdict.level === "lost" ? "Hard to see here" : "Partly hard to see"}
         </span>
       ) : null}
     </div>
@@ -347,16 +365,16 @@ function LogoSection({ brand, update }: { brand: Brand; update: Update }) {
   const onBrand = legibility(useLogoColors(brand.logo, sem.onBrand), sem.brand);
   const onSurface = legibility(useLogoColors(brand.logo, sem.ink), sem.surface);
   return (
-    <Section id="logo" title="Logo" intro="Taken from the site header. Each tile checks that the logo stands out: graphics need 3:1 contrast against what's behind them.">
+    <Section id="logo" title="Logo" intro="Taken from your site. Each tile shows your logo on one of your brand's backgrounds, so you can check it's easy to see.">
       {onBrand && onBrand.level !== "ok" ? (
         <div className={`${styles.notice} ${styles.warn}`}>
-          {onBrand.level === "lost" ? "Most of this logo" : "Part of this logo"} is close to the brand colour ({onBrand.main}:1), so it gets lost on brand-coloured bands
-          {navTone(brand) === "brand" ? ", including the header of your pages" : ""}. Keep it on light sections, or add a version that stands out on the brand colour.
+          {onBrand.level === "lost" ? "Most of this logo" : "Part of this logo"} is close to your brand colour, so it's hard to see on brand-coloured sections
+          {navTone(brand) === "brand" ? ", including the top bar of your pages" : ""}. Keep it on light sections, or add a version that stands out on the brand colour.
         </div>
       ) : null}
       {onSurface && onSurface.level !== "ok" ? (
         <div className={`${styles.notice} ${styles.warn}`}>
-          {onSurface.level === "lost" ? "Most of this logo" : "Part of this logo"} is close to the page background ({onSurface.main}:1), so it fades on light sections. Add a dark version before using it there.
+          {onSurface.level === "lost" ? "Most of this logo" : "Part of this logo"} is close to the page background, so it fades on light sections. Add a darker version before using it there.
         </div>
       ) : null}
       {brand.logo ? (
@@ -365,13 +383,13 @@ function LogoSection({ brand, update }: { brand: Brand; update: Update }) {
           <LogoTile brand={brand} background={sem.surface} color={sem.ink} verdict={onSurface} />
         </div>
       ) : (
-        <div className={`${styles.notice} ${styles.bad}`}>We couldn't find a logo in the site header. Add it manually or skip for now.</div>
+        <div className={`${styles.notice} ${styles.bad}`}>We couldn't find your logo on the site. You can skip this for now.</div>
       )}
       <h3 className={styles.sub}>Customer logos</h3>
       <p className={styles.subIntro}>
         {customers.length
-          ? "From the site's strip of customer logos. A logo row on a page shows each customer whose name matches as their logo; fix a name here if it was read wrong."
-          : "The site has no strip of customer logos we could read, so logo rows show customers by name."}
+          ? "Found in the row of customer logos on your site. When a page lists one of these customers, it shows their logo. If we read a name wrong, fix it here."
+          : "We couldn't find a row of customer logos on your site, so pages will list customers by name."}
       </p>
       {customers.length ? (
         <ul className={styles.customers}>
@@ -419,7 +437,7 @@ function ButtonPreview({ b }: { b: ButtonStyle }) {
 function UiElements({ brand, update }: { brand: Brand; update: Update }) {
   const rules = brand.usageRules.find((r) => r.startsWith("Buttons use"));
   return (
-    <Section id="ui" title="UI elements">
+    <Section id="ui" title="Buttons and cards">
       <h3 className={styles.sub}>Buttons</h3>
       {rules ? <p className={styles.subIntro}>{rules}</p> : null}
       <div className={styles.tiles}>
@@ -433,14 +451,14 @@ function UiElements({ brand, update }: { brand: Brand; update: Update }) {
               <div className={styles.tileBody}>
                 <div className={styles.tileHead}>
                   <strong>{b.name}</strong>
-                  <span>{b.kind}</span>
+                  <span>{BUTTON_KINDS[b.kind]}</span>
                   <Confidence value={b.confidence} sources={b.sources} />
                 </div>
                 <ColorField label="Text" value={b.color} onChange={(v) => set((x) => void (x.color = v))} />
                 {b.kind === "filled" ? <ColorField label="Background" value={b.background} onChange={(v) => set((x) => void (x.background = v))} /> : null}
                 {b.kind === "outline" ? <ColorField label="Border" value={b.borderColor} onChange={(v) => set((x) => void (x.borderColor = v))} /> : null}
                 {b.kind !== "text" ? (
-                  <NumberField label="Corner radius" value={b.radius >= 9999 ? 999 : b.radius} min={0} onChange={(v) => set((x) => void (x.radius = v))} />
+                  <NumberField label="Corner rounding" value={b.radius >= 9999 ? 999 : b.radius} min={0} onChange={(v) => set((x) => void (x.radius = v))} />
                 ) : null}
               </div>
             </div>
@@ -476,8 +494,8 @@ function UiElements({ brand, update }: { brand: Brand; update: Update }) {
               <ColorField label="Background" value={c.background} onChange={(v) => update((d) => void (d.cards[i]!.background = v))} />
               <ColorField label="Border" value={c.borderColor} onChange={(v) => update((d) => void (d.cards[i]!.borderColor = v))} />
               <div className={styles.pairFields}>
-                <NumberField label="Radius" value={c.radius} min={0} onChange={(v) => update((d) => void (d.cards[i]!.radius = v))} />
-                <NumberField label="Padding" value={c.padding} min={0} onChange={(v) => update((d) => void (d.cards[i]!.padding = v))} />
+                <NumberField label="Corner rounding" value={c.radius} min={0} onChange={(v) => update((d) => void (d.cards[i]!.radius = v))} />
+                <NumberField label="Inner space" value={c.padding} min={0} onChange={(v) => update((d) => void (d.cards[i]!.padding = v))} />
               </div>
             </div>
           </div>
@@ -514,7 +532,7 @@ function UiElements({ brand, update }: { brand: Brand; update: Update }) {
 
 function Radius({ brand, update }: { brand: Brand; update: Update }) {
   return (
-    <Section id="radius" title="Radius" intro="Collected from buttons, cards and form fields.">
+    <Section id="radius" title="Corners" intro="How rounded the corners of your buttons, cards and form fields are.">
       <div className={styles.radii}>
         {brand.radii.map((r, i) => (
           <div key={r.name} className={styles.radius}>
@@ -524,9 +542,9 @@ function Radius({ brand, update }: { brand: Brand; update: Update }) {
               <Confidence value={r.confidence} sources={r.sources} />
             </div>
             {r.value >= 9999 ? (
-              <span className={styles.subIntro}>Pill</span>
+              <span className={styles.subIntro}>Fully rounded</span>
             ) : (
-              <NumberField label="Value" value={r.value} min={0} onChange={(v) => update((d) => void (d.radii[i]!.value = v))} />
+              <NumberField label="Size" value={r.value} min={0} onChange={(v) => update((d) => void (d.radii[i]!.value = v))} />
             )}
           </div>
         ))}
@@ -538,7 +556,7 @@ function Radius({ brand, update }: { brand: Brand; update: Update }) {
 function Spacing({ brand, update }: { brand: Brand; update: Update }) {
   const max = Math.max(...brand.spacing.map((s) => s.value), 1);
   return (
-    <Section id="spacing" title="Spacing" intro="The most repeated paddings and gaps, smallest to largest.">
+    <Section id="spacing" title="Spacing" intro="The amounts of space your site uses most around and between things, smallest to largest.">
       <div className={styles.spacing}>
         {brand.spacing.map((s, i) => (
           <div key={s.name} className={styles.space}>
@@ -560,8 +578,8 @@ function Rules({ brand, update }: { brand: Brand; update: Update }) {
   return (
     <Section
       id="rules"
-      title="Usage rules"
-      intro="Written from what we measured. Agents follow these when generating pages, so add anything the CSS can't show."
+      title="Brand rules"
+      intro="Written from what we found on your site. New pages follow these rules, so add anything else your brand should always or never do."
       action={
         <button className="ui-button ui-button--small" onClick={() => update((d) => void d.usageRules.push(""))}>
           + Add rule

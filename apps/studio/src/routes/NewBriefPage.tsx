@@ -51,7 +51,7 @@ export function NewBriefPage() {
     }
   }
 
-  const steps = [...(brand?.siteMcp && useSiteData ? ["Reading site data"] : []), "Researching keywords", "Writing the brief"];
+  const steps = [...(brand?.siteMcp && useSiteData ? ["Reading your connected data"] : []), "Researching keywords", "Writing the brief"];
   const activeIndex = step ? steps.findIndex((s) => step.startsWith(s)) : -1;
   const current = providers.find((p) => p.id === provider);
 
@@ -62,8 +62,8 @@ export function NewBriefPage() {
       </Link>
       <h1 className={styles.title}>What do you want to make?</h1>
       <p className={styles.lead}>
-        Describe the page or campaign. We'll write a standard marketing brief from it, grounded in what {brand?.name ?? "your site"} already says, for you to
-        edit before anything is built.
+        Describe the page or campaign. We'll write a marketing brief for it, based on what {brand?.name ?? "your site"} already says. You can
+        edit it before anything is built.
       </p>
 
       <form className={styles.form} onSubmit={submit}>
@@ -93,7 +93,7 @@ export function NewBriefPage() {
 
         <div className={styles.options}>
           <label className={styles.option}>
-            <span className="ui-label">SEO and AEO data</span>
+            <span className="ui-label">Keyword data</span>
             <select className="ui-input" value={provider} onChange={(e) => setProvider(e.target.value)} disabled={!!step}>
               {providers.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -104,7 +104,7 @@ export function NewBriefPage() {
             {current ? <span className={styles.hint}>{current.description}</span> : null}
             {providers.length === 1 ? (
               <span className={styles.hint}>
-                Connect Semrush, Ahrefs, Search Console or any tool through one endpoint:{" "}
+                You can connect Semrush, Ahrefs, Google Search Console or another SEO tool:{" "}
                 <a href="https://github.com/tywiththewifi/landing-page-harness/blob/main/docs/seo-providers.md" target="_blank" rel="noreferrer">
                   how to connect
                 </a>
@@ -115,13 +115,13 @@ export function NewBriefPage() {
           <div className={styles.option}>
             <span className="ui-label">Written by</span>
             <span className={styles.writer}>
-              {generator?.name === "claude" ? `Claude (${generator.model})` : generator ? "Offline template" : "…"}
+              {generator?.name === "claude" ? "Claude" : generator ? "A template (not AI)" : "…"}
             </span>
             {generator?.name === "template" ? (
               <span className={styles.hint}>
                 {DEMO
-                  ? "In the demo, the offline template writes the brief: it reuses the site's copy and marks the gaps. With an API key on your own server, Claude writes it."
-                  : "Set ANTHROPIC_API_KEY on the server for a brief tailored to your request. The template reuses your site's copy and marks the gaps."}
+                  ? "In the demo, a template writes the brief. It reuses your site's wording and marks what's missing. In the full app, Claude writes a brief tailored to your request."
+                  : "A template writes the brief. It reuses your site's wording and marks what's missing. To have Claude write a brief tailored to your request, ask whoever set up Softlander to add an Anthropic API key."}
               </span>
             ) : null}
           </div>

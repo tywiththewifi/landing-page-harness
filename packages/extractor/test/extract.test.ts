@@ -6,8 +6,8 @@ import { generateDesignMd } from "@lph/design-md";
 import { brandKitFiles } from "@lph/kit";
 import { checkContrast, resolveConflict, toCss, toDtcg, type Brand } from "@lph/tokens";
 import { serveFixture } from "../../../scripts/serve-fixture.mjs";
-import { brandName } from "../src/analyze.ts";
-import { extractBrand, pickProductPage } from "../src/extract.ts";
+import { brandName, unifyFamilies, type PageCapture } from "../src/analyze.ts";
+import { extractBrand, pickProductPage, plainError } from "../src/extract.ts";
 import type { PageSample } from "../src/collect.ts";
 
 describe("pickProductPage", () => {
@@ -28,6 +28,16 @@ describe("pickProductPage", () => {
   });
 });
 
+describe("plainError", () => {
+  it("says what went wrong in plain words", () => {
+    const say = (m: string) => (plainError(new Error(m), "https://www.example.com/") as Error).message;
+    expect(say("page.goto: net::ERR_NAME_NOT_RESOLVED at https://www.example.com/")).toBe("We couldn't find a website at www.example.com. Check the address and try again.");
+    expect(say("page.goto: Timeout 30000ms exceeded.")).toMatch(/took too long to load/);
+    expect(say("page.goto: net::ERR_CONNECTION_REFUSED")).toMatch(/didn't respond/);
+    expect(say("Something else")).toBe("Something else");
+  });
+});
+
 describe("brandName", () => {
   const sample = (url: string, title: string, siteName: string | null = null) => ({ url, title, siteName, logo: null }) as unknown as PageSample;
 
@@ -35,6 +45,22 @@ describe("brandName", () => {
     expect(brandName(sample("https://webflow.com/", "Webflow: Build a website", "Webflow: The agentic web platform for modern businesses"))).toBe("Webflow");
     expect(brandName(sample("https://stripe.com/", "Stripe | Financial Infrastructure to Grow Your Revenue"))).toBe("Stripe");
     expect(brandName(sample("https://linear.app/", "Linear – Plan and build products", "Linear"))).toBe("Linear");
+  });
+});
+
+describe("unifyFamilies", () => {
+  const text = (family: string) => ({ tag: "p", family }) as PageSample["texts"][number];
+  const page = (families: string[]) => ({ desktop: { url: "https://x.com/", texts: families.map(text) } }) as unknown as PageCapture;
+
+  it("treats one typeface under different names as one font", () => {
+    // vidIQ: "satoshi" from next/font, plus "Satoshi:Medium" and "Satoshi:Bold" for single weights.
+    const [p] = unifyFamilies([page(["satoshi", "satoshi", "Satoshi:Medium", "Satoshi:Bold", "Satoshi", "Inter"])]);
+    expect(p!.desktop.texts.map((t) => t.family)).toEqual(["satoshi", "satoshi", "satoshi", "satoshi", "satoshi", "Inter"]);
+  });
+
+  it("keeps a name the site uses when there's no plain one", () => {
+    const [p] = unifyFamilies([page(["Satoshi:Medium", "Satoshi:Medium", "Satoshi:Bold"])]);
+    expect(new Set(p!.desktop.texts.map((t) => t.family))).toEqual(new Set(["Satoshi:Medium"]));
   });
 });
 
@@ -52,7 +78,7 @@ describe("extractBrand (headerless page)", () => {
   it("finds the logo at the top of the page", () => {
     expect(brand.logo).toMatchObject({ kind: "img" });
     expect(brand.logo?.src).toMatch(/\/logo\.svg$/);
-    expect(brand.warnings.join(" ")).not.toMatch(/No logo found/);
+    expect(brand.warnings.join(" ")).not.toMatch(/couldn't find your logo/);
   });
 });
 
@@ -175,7 +201,7 @@ describe("extractBrand (fixture site)", () => {
   });
 
   it("writes rules from measurements only", () => {
-    expect(brand.usageRules).toContain("Buttons use 12px rounded corners, never a pill, with sentence-case labels, never uppercase.");
+    expect(brand.usageRules).toContain("Buttons use 12px rounded corners, never a pill, with labels in sentence case, never in capitals.");
     expect(brand.summary).toContain("#1a3e35");
   });
 

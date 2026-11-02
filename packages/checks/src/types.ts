@@ -99,9 +99,9 @@ export const DEFAULT_BUDGET: Budget = {
 export const CHECK_TITLES: Record<CheckId, string> = {
   content: "Content",
   brand: "Brand",
-  seo: "SEO and answer engines",
+  seo: "Search",
   a11y: "Accessibility",
-  performance: "Performance",
+  performance: "Speed",
 };
 
 export function statusOf(issues: GateIssue[]): CheckResult["status"] {

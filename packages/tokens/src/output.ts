@@ -291,11 +291,11 @@ function level(ratio: number): ContrastCheck["level"] {
 export function checkContrast(brand: Brand): ContrastCheck[] {
   const sem = semanticColors(brand);
   const pairs: [string, string, string][] = [
-    ["Body text on surface", sem.ink, sem.surface],
-    ["Muted text on surface", sem.muted, sem.surface],
-    ["Text on brand band", sem.onBrand, sem.brand],
+    ["Body text on the page background", sem.ink, sem.surface],
+    ["Grey text on the page background", sem.muted, sem.surface],
+    ["Text on brand-coloured sections", sem.onBrand, sem.brand],
     ...brand.buttons.map(
-      (b) => [`Button "${b.name}"`, b.color, b.background ?? b.context] as [string, string, string],
+      (b) => [`Text on the ${b.name} button`, b.color, b.background ?? b.context] as [string, string, string],
     ),
   ];
   return pairs.map(([subject, foreground, background]) => {

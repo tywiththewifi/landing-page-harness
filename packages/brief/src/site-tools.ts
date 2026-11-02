@@ -19,22 +19,22 @@ const QUERY_NAMES = /^(query|q|search|topic|term|keywords?|question|text)$/i;
  */
 export function toolUse(tool: ToolInfo, allowed = false): Pick<SiteMcpTool, "use" | "arg" | "reason"> {
   const readOnly = tool.annotations?.readOnlyHint === true;
-  if (!readOnly && !allowed) return { use: null, reason: "Not marked read-only, so it's only called if you allow it." };
-  const who = readOnly ? "Read-only" : "Allowed by you";
+  if (!readOnly && !allowed) return { use: null, reason: "It might change things, not just look them up, so we only use it if you allow it." };
+  const who = readOnly ? "Only looks things up" : "You allowed this";
   const props = tool.inputSchema?.properties ?? {};
   const required = tool.inputSchema?.required ?? [];
   const isText = (name: string) => props[name]?.type === "string" || props[name]?.type === undefined;
   if (!required.length) {
     const optionalQuery = Object.keys(props).find((k) => QUERY_NAMES.test(k) && isText(k));
     return optionalQuery
-      ? { use: "query", arg: optionalQuery, reason: `${who}. Called with the page's topic as "${optionalQuery}".` }
-      : { use: "auto", reason: `${who}, with no inputs, so it's called as is.` };
+      ? { use: "query", arg: optionalQuery, reason: `${who}. We ask it about the page's topic.` }
+      : { use: "auto", reason: `${who}. We use it as it is.` };
   }
   // Only a search-like input gets the topic; an input like "page" or "slug" needs a real value.
   if (required.length === 1 && QUERY_NAMES.test(required[0]!) && isText(required[0]!)) {
-    return { use: "query", arg: required[0], reason: `${who}. Called with the page's topic as "${required[0]}".` };
+    return { use: "query", arg: required[0], reason: `${who}. We ask it about the page's topic.` };
   }
-  return { use: null, reason: `Needs inputs Softlander can't fill (${required.join(", ")}).` };
+  return { use: null, reason: "It needs details we can't fill in for you, so we skip it." };
 }
 
 /** A tool definition as the studio shows it. */

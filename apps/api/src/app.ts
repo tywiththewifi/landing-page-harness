@@ -296,7 +296,7 @@ export function createApp(opts: AppOptions) {
     try {
       return await store.save({ ...brand, siteMcp: await inspectMcp(url.href, { allowed }) });
     } catch (err) {
-      throw new HTTPException(502, { message: `Couldn't connect to an MCP server at ${url.href} (${(err as Error).message}).` });
+      throw new HTTPException(502, { message: `We couldn't connect to ${url.href}. Check the address and try again. (${(err as Error).message})` });
     }
   };
   app.post("/api/brands/:id/site-mcp", async (c) => {
@@ -307,7 +307,7 @@ export function createApp(opts: AppOptions) {
   // Change which tools a person allows. Re-reads the server so the list is current.
   app.patch("/api/brands/:id/site-mcp", async (c) => {
     const brand = await mustGet(c.req.param("id"));
-    if (!brand.siteMcp) throw new HTTPException(404, { message: "No MCP server is connected" });
+    if (!brand.siteMcp) throw new HTTPException(404, { message: "No data source is connected" });
     const { allowed } = z.object({ allowed: z.array(z.string()) }).parse(await c.req.json());
     return c.json(await connectSiteMcp(brand, brand.siteMcp.url, allowed));
   });
@@ -355,7 +355,7 @@ export function createApp(opts: AppOptions) {
     const brief = await mustGetBrief(c.req.param("id"));
     const brand = await mustGet(brief.brandId);
     const blocking = checkBrief(brief, brand).filter((i) => i.severity === "error");
-    if (blocking.length) return c.json({ error: "Fix the brief's must-fix issues first.", issues: blocking }, 409);
+    if (blocking.length) return c.json({ error: "Fix the problems marked “Must fix” in the brief first.", issues: blocking }, 409);
     const { job, done } = runJob(async (job) => {
       job.step = "Writing the page";
       const draft = await pageGenerator.generate({ brief, brand });
@@ -522,14 +522,14 @@ export function createApp(opts: AppOptions) {
     return { brand, brief, config, gate, plan: result };
   };
   const allowOverride = opts.allowOverride ?? true;
-  const overrideBody = z.object({ override: z.object({ reason: z.string().trim().min(1, "Say why it's published anyway").max(500) }).optional() });
+  const overrideBody = z.object({ override: z.object({ reason: z.string().trim().min(1, "Say why you're publishing with problems").max(500) }).optional() });
   /** Why a page can't be published or downloaded now, or null when it can. The override only gets past errors. */
   const refusal = (gate: GateReport | null, override: { reason: string } | null | undefined, action: string): string | null => {
     if (!gate) return "Run the checks on this version of the page first.";
     if (gate.verdict !== "blocked" || override) return null;
     return allowOverride
-      ? `The checks found errors. Fix them and run the checks again, or ${action} anyway with a reason.`
-      : `The checks found errors. Fix them, run the checks again, then ${action}.`;
+      ? `The checks found problems. Fix them and run the checks again, or ${action} anyway and say why.`
+      : `The checks found problems. Fix them, run the checks again, then ${action}.`;
   };
   app.get("/api/pages/:id/publish", async (c) => {
     const page = await mustGetPage(c.req.param("id"));
@@ -548,16 +548,16 @@ export function createApp(opts: AppOptions) {
   });
   app.post("/api/pages/:id/publish", async (c) => {
     const page = await mustGetPage(c.req.param("id"));
-    if (!repo) throw new HTTPException(400, { message: "No site repo is connected. Set LPH_GITHUB_REPO and LPH_GITHUB_TOKEN on the server, or download the page for Cloudflare Pages." });
+    if (!repo) throw new HTTPException(400, { message: "Softlander isn't connected to your website yet. Download the page instead, or ask whoever set up Softlander to connect it to GitHub (LPH_GITHUB_REPO and LPH_GITHUB_TOKEN)." });
     const body = overrideBody.safeParse(await c.req.json().catch(() => ({})));
     if (!body.success) return c.json({ error: body.error.issues.map((i) => i.message).join("; ") }, 400);
     const override = allowOverride ? body.data.override : null;
-    if (body.data.override && !override) return c.json({ error: "Publishing over the checks is turned off on this server." }, 403);
+    if (body.data.override && !override) return c.json({ error: "Publishing with problems is turned off. Fix what the checks found first." }, 403);
     const { gate, plan: p } = await plan(page, override);
     const refused = refusal(gate, override, "publish");
     if (refused) return c.json({ error: refused }, 409);
-    if (gate!.environment !== "server") return c.json({ error: "The checks have to run on the server before publishing." }, 409);
-    if (p.unchanged) return c.json({ error: `${opts.publish!.github!.base} already has this version of the page.` }, 409);
+    if (gate!.environment !== "server") return c.json({ error: "Run the checks again before publishing." }, 409);
+    if (p.unchanged) return c.json({ error: "Your website already has this version of the page." }, 409);
     const result = await repo.publish(p, { expectedHead: page.published?.branch === p.branch ? page.published.commit : null });
     // Not an edit: updatedAt stays, so the checks stay current.
     await pages.save({
@@ -574,7 +574,7 @@ export function createApp(opts: AppOptions) {
     const gate = await freshGate(page);
     // ?override=<reason> downloads a page the checks blocked; the reason is kept in its source file.
     const reason = c.req.query("override")?.trim().slice(0, 500);
-    if (reason && !allowOverride) return c.json({ error: "Downloading over the checks is turned off on this server." }, 403);
+    if (reason && !allowOverride) return c.json({ error: "Downloading with problems is turned off. Fix what the checks found first." }, 403);
     const refused = refusal(gate, reason ? { reason } : null, "download it");
     if (refused) return c.json({ error: refused }, 409);
     const override = overrideFor(gate, reason ? { reason } : null);

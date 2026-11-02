@@ -106,7 +106,7 @@ export function textPaths(block: Block): string[] {
 }
 
 const FIELD_LABELS: Record<string, string> = {
-  eyebrow: "Eyebrow",
+  eyebrow: "Text above the heading",
   heading: "Heading",
   lead: "Subheadline",
   intro: "Intro",
@@ -117,7 +117,7 @@ const FIELD_LABELS: Record<string, string> = {
   company: "Company",
   submitLabel: "Button",
   successMessage: "Thank-you message",
-  consent: "Consent line",
+  consent: "Text under the button",
   title: "Title",
   question: "Question",
   answer: "Answer",
@@ -127,21 +127,21 @@ const FIELD_LABELS: Record<string, string> = {
   theirs: "Theirs",
 };
 
-/** A short name for an override key, for the versions table: "H1", "Subheadline", "Features item 2 title". */
+/** A short name for an override key, for the versions table: "Main heading", "Subheadline", "Features item 2 title". */
 export function keyLabel(page: Pick<PageEdit, "blocks">, key: string): string {
   const { head, rest } = split(key);
-  if (head === "seo") return rest[0] === "title" ? "SEO title" : "Meta description";
+  if (head === "seo") return rest[0] === "title" ? "Search result title" : "Search result description";
   const block = page.blocks.find((b) => b.id === head);
   if (block?.type === "hero") {
-    if (rest[0] === "heading") return "H1";
+    if (rest[0] === "heading") return "Main heading";
     if (rest[0] === "lead") return "Subheadline";
-    if (rest[0] === "eyebrow") return "Eyebrow";
-    if (rest[0] === "primaryCta") return "CTA";
-    if (rest[0] === "secondaryCta") return "Secondary CTA";
+    if (rest[0] === "eyebrow") return "Text above the headline";
+    if (rest[0] === "primaryCta") return "Main button";
+    if (rest[0] === "secondaryCta") return "Second button";
   }
   const name = block ? BLOCK_NAMES[block.type] : head;
   const parts = rest.map((p, i) => (/^\d+$/.test(p) ? `${Number(p) + 1}` : i === 0 && /^(items|rows|fields)$/.test(p) ? p.replace(/s$/, "") : (FIELD_LABELS[p] ?? p).toLowerCase()));
-  if (rest[0] === "primaryCta" || rest[0] === "secondaryCta") return `${name} ${rest[0] === "primaryCta" ? "button" : "secondary button"}`;
+  if (rest[0] === "primaryCta" || rest[0] === "secondaryCta") return `${name} ${rest[0] === "primaryCta" ? "button" : "second button"}`;
   return `${name} ${parts.join(" ")}`;
 }
 

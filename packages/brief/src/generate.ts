@@ -92,9 +92,9 @@ export function claudeGenerator(opts: { client?: Anthropic; model?: string } = {
           },
         ],
       });
-      if (res.stop_reason === "refusal") throw new GenerationError("The model declined to write this brief. Try rephrasing the request.");
+      if (res.stop_reason === "refusal") throw new GenerationError("Claude declined to write this brief. Try describing the page differently.");
       if (res.stop_reason === "max_tokens") throw new GenerationError("The brief was cut off before it was finished. Try a narrower request.");
-      if (!res.parsed_output) throw new GenerationError("The model's answer didn't match the brief format.");
+      if (!res.parsed_output) throw new GenerationError("Something went wrong while writing the brief. Please try again.");
       return res.parsed_output;
     },
   };

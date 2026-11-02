@@ -48,6 +48,6 @@ export function axeIssues(outcome: AxeOutcome, path: string): GateIssue[] {
   });
   return [
     ...outcome.violations.map((r) => issue(r, severityOf(r))),
-    ...outcome.incomplete.filter((r) => r.nodes.length).map((r) => issue(r, "info", ": needs a person to check")),
+    ...outcome.incomplete.filter((r) => r.nodes.length).map((r) => issue(r, "info", ": a person needs to check this")),
   ];
 }

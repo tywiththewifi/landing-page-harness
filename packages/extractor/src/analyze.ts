@@ -269,6 +269,36 @@ export function nameColors(tokens: ColorToken[]) {
 
 // --- Typography ----------------------------------------------------------------------
 
+/**
+ * One typeface often shows up under several names: "satoshi" and "Satoshi", or design-tool
+ * names for single weights like "Satoshi:Bold". These are the same font, not a choice to make,
+ * so each group gets one name: the plain one the site uses most, else its most used name.
+ */
+export function unifyFamilies(pages: PageCapture[]): PageCapture[] {
+  const base = (f: string) => f.replace(/^(.+?)\s*:\s*[\w ]+$/, "$1");
+  const counts = new Map<string, number>();
+  for (const { desktop, mobile } of pages) {
+    for (const s of [...desktop.texts, ...(mobile?.texts ?? [])]) counts.set(s.family, (counts.get(s.family) ?? 0) + 1);
+  }
+  const groups = new Map<string, string[]>();
+  for (const f of counts.keys()) {
+    const key = base(f).toLowerCase();
+    groups.set(key, [...(groups.get(key) ?? []), f]);
+  }
+  const name = new Map<string, string>();
+  for (const names of groups.values()) {
+    const byUse = [...names].sort((a, b) => counts.get(b)! - counts.get(a)!);
+    const pick = byUse.find((f) => base(f) === f) ?? byUse[0]!;
+    for (const f of names) name.set(f, pick);
+  }
+  const fix = (s: TextSample) => (name.has(s.family) ? { ...s, family: name.get(s.family)! } : s);
+  return pages.map((p) => ({
+    ...p,
+    desktop: { ...p.desktop, texts: p.desktop.texts.map(fix) },
+    ...(p.mobile ? { mobile: { ...p.mobile, texts: p.mobile.texts.map(fix) } } : {}),
+  }));
+}
+
 function familyTally(pages: PageCapture[], tags: string[]) {
   const t = new Tally<string>();
   for (const { desktop: p } of pages) {
@@ -285,23 +315,11 @@ function familyConflict(field: string, label: string, tally: Tally<string>): Con
   return {
     id: field,
     field,
-    message: `${label} text uses more than one font: ${sorted
-      .slice(0, 3)
-      .map((b) => `${b.key} (${Math.round((b.weight / total) * 100)}%, on ${[...b.pages].map(shortPath).join(", ")})`)
-      .join(" vs ")}. Pick the one that should be canonical.`,
+    message: `Your site uses ${Math.min(sorted.length, 3)} different fonts for ${label}. Which one should your pages use? The percentage shows how much of that text uses each font.`,
     options: sorted.slice(0, 3).map((b) => ({ value: b.key, sources: sourcesOf(b), share: r2(b.weight / total) })),
     resolved: sorted[0]!.key,
   };
 }
-
-const shortPath = (url: string) => {
-  try {
-    const u = new URL(url);
-    return u.pathname === "/" ? "home" : u.pathname;
-  } catch {
-    return url;
-  }
-};
 
 function typeToken(role: TypeRole, samples: { s: TextSample; page: string }[], mobile: TextSample[]): TypeToken | null {
   if (!samples.length) return null;
@@ -332,14 +350,15 @@ function typeToken(role: TypeRole, samples: { s: TextSample; page: string }[], m
   };
 }
 
-function analyzeTypography(pages: PageCapture[], buttons: ButtonStyle[]) {
+function analyzeTypography(captured: PageCapture[], buttons: ButtonStyle[]) {
+  const pages = unifyFamilies(captured);
   const headingTally = familyTally(pages, ["h1", "h2", "h3"]);
   const bodyTally = familyTally(pages, ["p", "li"]);
   const heading = headingTally.sorted()[0]?.key ?? pages[0]?.desktop.body.family ?? "system-ui";
   const body = bodyTally.sorted()[0]?.key ?? pages[0]?.desktop.body.family ?? "system-ui";
   const conflicts = [
-    familyConflict("fonts.heading", "Heading", headingTally),
-    familyConflict("fonts.body", "Body", bodyTally),
+    familyConflict("fonts.heading", "headings", headingTally),
+    familyConflict("fonts.body", "body text", bodyTally),
   ].filter((c): c is Conflict => !!c);
 
   const collect = (tags: string[], family?: string) =>
@@ -614,7 +633,7 @@ function usageRules(brand: Omit<Brand, "usageRules" | "summary">): string[] {
       [
         `Buttons use ${corner.length ? corner.map((r) => `${r}px`).join("/") + " rounded corners" : "pill shapes"}`,
         pill && corner.length ? "; one variant is a pill" : !pill ? ", never a pill" : "",
-        transforms.has("uppercase") ? ", with uppercase labels." : sentence ? ", with sentence-case labels, never uppercase." : ".",
+        transforms.has("uppercase") ? ", with labels in capitals." : sentence ? ", with labels in sentence case, never in capitals." : ".",
       ].join(""),
     );
     const outline = btns.find((b) => b.kind === "outline");
@@ -624,12 +643,12 @@ function usageRules(brand: Omit<Brand, "usageRules" | "summary">): string[] {
   const body = brand.typography.find((t) => t.role === "body");
   if (h && body) {
     rules.push(
-      `Headings use ${brand.fonts.heading} at weight ${h.fontWeight}${h.letterSpacing < 0 ? " with tight negative tracking" : ""}; body text uses ${brand.fonts.body} at ${body.fontSize}px/${body.lineHeight}px.`,
+      `Headings use ${brand.fonts.heading} in weight ${h.fontWeight}${h.letterSpacing < 0 ? ", with the letters set close together" : ""}. Body text uses ${brand.fonts.body} at ${body.fontSize}px, with lines ${body.lineHeight}px apart.`,
     );
   }
   const small = brand.typography.find((t) => t.role === "small");
   if (small?.textTransform === "uppercase") {
-    rules.push(`Small labels (eyebrows) are uppercase, ${small.fontSize}px, with ${small.letterSpacing}px letter spacing.`);
+    rules.push(`Small labels above headings are in capitals, ${small.fontSize}px, with ${small.letterSpacing}px of extra space between letters.`);
   }
   const brandColor = brand.colors.find((c) => c.role === "brand");
   if (brandColor && brandColor.usage.length) {
@@ -647,7 +666,7 @@ function usageRules(brand: Omit<Brand, "usageRules" | "summary">): string[] {
   const card = brand.cards[0];
   if (card) {
     rules.push(
-      `Cards use ${card.radius}px corners and ${card.padding}px padding${card.borderColor ? `, with a ${card.borderWidth}px ${card.borderColor} border` : ""}${card.shadow ? " and a drop shadow" : card.borderColor ? " and no shadow" : ""}.`,
+      `Cards have ${card.radius}px rounded corners and ${card.padding}px of space inside${card.borderColor ? `, with a ${card.borderWidth}px ${card.borderColor} border` : ""}${card.shadow ? " and a shadow" : card.borderColor ? " and no shadow" : ""}.`,
     );
   }
   return rules;
@@ -658,10 +677,10 @@ function summarize(brand: Omit<Brand, "usageRules" | "summary">): string {
   const accent = brand.colors.find((c) => c.role === "accent");
   const btn = brand.buttons.find((b) => b.kind !== "text");
   const parts = [
-    brandColor ? `${hueName(brandColor.value)}-led palette (${brandColor.value})` : "neutral palette",
+    brandColor ? `mostly ${hueName(brandColor.value)} (${brandColor.value})` : "neutral colours",
     accent ? `with a ${hueName(accent.value)} accent (${accent.value})` : "",
   ].filter(Boolean);
-  return `${brand.name}'s visual system: a ${parts.join(" ")}, ${brand.fonts.heading} for headings and ${brand.fonts.body} for body text${
+  return `${brand.name}'s look: ${parts.join(" ")}, ${brand.fonts.heading} for headings and ${brand.fonts.body} for body text${
     btn ? `, and ${btn.radius >= 9999 ? "pill-shaped" : `${btn.radius}px rounded`} buttons` : ""
   }.`;
 }
@@ -706,9 +725,9 @@ export function analyze(pages: PageCapture[], opts: { id: string; now?: Date }):
   const declaredVariables = Object.assign({}, ...pages.map((p) => p.desktop.rootVars)) as Record<string, string>;
 
   const warnings: string[] = [];
-  if (!home.logo) warnings.push("No logo found in the site header. Add it manually.");
-  if (pages.length < 2) warnings.push("Only the home page was sampled, so values are less certain.");
-  if (!buttons.some((b) => b.kind !== "text")) warnings.push("No button styles were detected.");
+  if (!home.logo) warnings.push("We couldn't find your logo on the site.");
+  if (pages.length < 2) warnings.push("We could only scan your home page, so some styles may be less accurate.");
+  if (!buttons.some((b) => b.kind !== "text")) warnings.push("We couldn't find any button styles on your site.");
 
   const draft: Omit<Brand, "usageRules" | "summary"> = {
     id: opts.id,

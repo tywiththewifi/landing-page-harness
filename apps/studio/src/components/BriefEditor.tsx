@@ -20,38 +20,38 @@ import styles from "./BriefEditor.module.scss";
 type Update = (fn: (draft: Brief) => void) => void;
 
 const SECTIONS = [
-  ["objective", "Objective & KPI"],
-  ["personas", "Personas"],
-  ["funnel", "Funnel & channels"],
+  ["objective", "Goal"],
+  ["personas", "Audiences"],
+  ["funnel", "Buying stage & channels"],
   ["messages", "Key messages"],
-  ["offer", "Offer & CTA"],
-  ["proof", "Proof points"],
+  ["offer", "Offer & button"],
+  ["proof", "Proof"],
   ["outline", "Page outline"],
-  ["seo", "SEO & AEO"],
+  ["seo", "Search"],
   ["assumptions", "Assumptions"],
 ] as const;
 
 const STAGE_HELP: Record<(typeof FUNNEL_STAGES)[number], string> = {
   awareness: "They don't know you yet. Teach, don't sell.",
   consideration: "They're comparing approaches. Show how it works.",
-  decision: "They're choosing a vendor. Remove the last doubts.",
+  decision: "They're choosing who to buy from. Answer their last doubts.",
   retention: "They're already customers. Help them get more out of it.",
 };
 
 const CHANNEL_NAMES: Record<Channel, string> = {
-  "organic-search": "Organic search",
-  "answer-engines": "Answer engines (ChatGPT, Perplexity, AI Overviews)",
+  "organic-search": "Search engines (Google and others)",
+  "answer-engines": "AI search (ChatGPT, Perplexity, Google's AI answers)",
   email: "Email",
-  "organic-social": "Organic social",
+  "organic-social": "Social media",
   partners: "Partners",
   events: "Events and webinars",
   "sales-outreach": "Sales outreach",
   community: "Community",
-  "in-product": "In-product",
+  "in-product": "Inside your product",
 };
 
 const SECTION_NAMES: Record<SectionType, string> = {
-  hero: "Hero",
+  hero: "Top section",
   logos: "Logo row",
   features: "Features",
   steps: "How it works",
@@ -59,8 +59,8 @@ const SECTION_NAMES: Record<SectionType, string> = {
   testimonial: "Testimonial",
   comparison: "Comparison",
   faq: "FAQ",
-  form: "Lead form",
-  cta: "Closing CTA",
+  form: "Sign-up form",
+  cta: "Closing call to action",
 };
 
 const slugId = (name: string, taken: string[]) => {
@@ -109,21 +109,21 @@ export function BriefEditor({ brief, issues, update }: { brief: Brief; issues: B
       </nav>
 
       <div className={styles.content} ref={scroller}>
-        <Section id="objective" title="Objective & KPI" intro="What the page is for, and how you'll know it worked.">
-          <TextAreaField label="Objective" value={brief.objective.statement} onChange={(v) => update((d) => void (d.objective.statement = v))} rows={2} />
+        <Section id="objective" title="Goal" intro="What the page is for, and how you'll know it worked.">
+          <TextAreaField label="Goal" value={brief.objective.statement} onChange={(v) => update((d) => void (d.objective.statement = v))} rows={2} />
           <div className={styles.row3}>
-            <TextField label="KPI" value={brief.objective.kpi.metric} onChange={(v) => update((d) => void (d.objective.kpi.metric = v))} />
+            <TextField label="What you'll measure" value={brief.objective.kpi.metric} onChange={(v) => update((d) => void (d.objective.kpi.metric = v))} />
             <TextField label="Target" value={brief.objective.kpi.target} onChange={(v) => update((d) => void (d.objective.kpi.target = v))} />
             <TextField label="Timeframe" value={brief.objective.kpi.timeframe} onChange={(v) => update((d) => void (d.objective.kpi.timeframe = v))} />
           </div>
-          <TextAreaField label="Summary for stakeholders" value={brief.summary} onChange={(v) => update((d) => void (d.summary = v))} rows={3} />
+          <TextAreaField label="Summary for your team" value={brief.summary} onChange={(v) => update((d) => void (d.summary = v))} rows={3} />
         </Section>
 
-        <Section id="personas" title="Personas" intro="Each persona gets its own page variant and URL when the page is built.">
+        <Section id="personas" title="Audiences" intro="Each audience gets its own version of the page, with its own web address.">
           <ListEditor
             items={brief.personas}
             onChange={(next) => update((d) => void (d.personas = next))}
-            label={(i) => `Persona ${i + 1}`}
+            label={(i) => `Audience ${i + 1}`}
             addLabel="Add persona"
             min={1}
             create={() => ({
@@ -138,25 +138,25 @@ export function BriefEditor({ brief, issues, update }: { brief: Brief; issues: B
             render={(p, set) => (
               <>
                 <div className={styles.row2}>
-                  <TextField label="Segment" value={p.name} onChange={(v) => set({ ...p, name: v })} />
+                  <TextField label="Audience name" value={p.name} onChange={(v) => set({ ...p, name: v })} />
                   <TextField label="Role" value={p.role} onChange={(v) => set({ ...p, role: v })} />
                 </div>
                 <TextAreaField label="Context" value={p.context} onChange={(v) => set({ ...p, context: v })} rows={2} />
                 <div className={styles.row3}>
-                  <StringList label="Pains" items={p.pains} onChange={(v) => set({ ...p, pains: v })} />
-                  <StringList label="Motivations" items={p.motivations} onChange={(v) => set({ ...p, motivations: v })} />
-                  <StringList label="Objections" items={p.objections} onChange={(v) => set({ ...p, objections: v })} />
+                  <StringList label="Problems" items={p.pains} onChange={(v) => set({ ...p, pains: v })} />
+                  <StringList label="What they want" items={p.motivations} onChange={(v) => set({ ...p, motivations: v })} />
+                  <StringList label="Doubts" items={p.objections} onChange={(v) => set({ ...p, objections: v })} />
                 </div>
                 <span className={styles.variantUrl}>
-                  Variant URL: <code>/{brief.seo.slug}/{p.id}</code>
+                  Web address for this version: <code>/{brief.seo.slug}/{p.id}</code>
                 </span>
               </>
             )}
           />
         </Section>
 
-        <Section id="funnel" title="Funnel & channels" intro="Where the reader is in their journey sets how hard the page can ask. Paid ads are out of scope for now.">
-          <div className={styles.stages} role="radiogroup" aria-label="Funnel stage">
+        <Section id="funnel" title="Buying stage & channels" intro="How close readers are to buying decides how much the page should ask of them. Paid ads aren't supported yet.">
+          <div className={styles.stages} role="radiogroup" aria-label="Buying stage">
             {FUNNEL_STAGES.map((s) => (
               <button
                 key={s}
@@ -192,8 +192,8 @@ export function BriefEditor({ brief, issues, update }: { brief: Brief; issues: B
                   {entry ? (
                     <input
                       className="ui-input"
-                      placeholder="What this channel does for the page"
-                      aria-label={`${CHANNEL_NAMES[ch]} role`}
+                      placeholder="How this channel brings people to the page"
+                      aria-label={`How ${CHANNEL_NAMES[ch]} helps`}
                       value={entry.role}
                       onChange={(e) => update((d) => void (d.channels.find((c) => c.channel === ch)!.role = e.target.value))}
                     />
@@ -214,26 +214,26 @@ export function BriefEditor({ brief, issues, update }: { brief: Brief; issues: B
             render={(m, set) => (
               <>
                 <TextField label="Message" value={m.message} onChange={(v) => set({ ...m, message: v })} />
-                <TextAreaField label="Support" value={m.support} onChange={(v) => set({ ...m, support: v })} rows={2} />
+                <TextAreaField label="Supporting detail" value={m.support} onChange={(v) => set({ ...m, support: v })} rows={2} />
               </>
             )}
           />
         </Section>
 
-        <Section id="offer" title="Offer & CTA">
+        <Section id="offer" title="Offer & button">
           <TextAreaField label="Offer" value={brief.offer.offer} onChange={(v) => update((d) => void (d.offer.offer = v))} rows={2} />
           <div className={styles.row2}>
-            <TextField label="Primary CTA" value={brief.offer.primaryCta} onChange={(v) => update((d) => void (d.offer.primaryCta = v))} />
-            <TextField label="Secondary CTA (optional)" value={brief.offer.secondaryCta} onChange={(v) => update((d) => void (d.offer.secondaryCta = v))} />
+            <TextField label="Main button text" value={brief.offer.primaryCta} onChange={(v) => update((d) => void (d.offer.primaryCta = v))} />
+            <TextField label="Second button text (optional)" value={brief.offer.secondaryCta} onChange={(v) => update((d) => void (d.offer.secondaryCta = v))} />
           </div>
         </Section>
 
         <Section
           id="proof"
-          title="Proof points"
+          title="Proof"
           intro={
             <>
-              Anything marked “Needs evidence” has to be sourced or removed before the page is published.
+              Anything marked “Needs evidence” has to be backed up or removed before the page goes live.
               {brief.siteData ? <SiteDataSource brief={brief} /> : null}
             </>
           }
@@ -249,19 +249,19 @@ export function BriefEditor({ brief, issues, update }: { brief: Brief; issues: B
                 <div className={styles.rowWide}>
                   <TextField label="Claim" value={p.claim} onChange={(v) => set({ ...p, claim: v })} />
                   <SelectField
-                    label="Source"
+                    label="Where it comes from"
                     value={p.source}
                     options={PROOF_SOURCES.map((s) => [s, SOURCE_LABELS[s]] as [typeof s, string])}
                     onChange={(v) => set({ ...p, source: v })}
                   />
                 </div>
-                <TextAreaField label={p.source === "needed" ? "What would back it" : "Evidence (exact text)"} value={p.evidence} onChange={(v) => set({ ...p, evidence: v })} rows={2} />
+                <TextAreaField label={p.source === "needed" ? "What would prove it" : "Proof (copied word for word)"} value={p.evidence} onChange={(v) => set({ ...p, evidence: v })} rows={2} />
               </>
             )}
           />
         </Section>
 
-        <Section id="outline" title="Page outline" intro="Built from the component library, so every section here can be generated in the next step.">
+        <Section id="outline" title="Page outline" intro="The sections of the page, top to bottom. Each one can be built in the next step.">
           <ListEditor
             items={brief.outline}
             onChange={(next) => update((d) => void (d.outline = next))}
@@ -272,12 +272,12 @@ export function BriefEditor({ brief, issues, update }: { brief: Brief; issues: B
               <>
                 <div className={styles.rowNarrow}>
                   <SelectField
-                    label="Block"
+                    label="Section type"
                     value={s.type}
                     options={(Object.keys(SECTION_TYPES) as SectionType[]).map((t) => [t, SECTION_NAMES[t]] as [SectionType, string])}
                     onChange={(v) => set({ ...s, type: v })}
                   />
-                  <TextField label={s.type === "hero" ? "Heading (the page's H1)" : "Heading"} value={s.heading} onChange={(v) => set({ ...s, heading: v })} />
+                  <TextField label={s.type === "hero" ? "Heading (the page's main heading)" : "Heading"} value={s.heading} onChange={(v) => set({ ...s, heading: v })} />
                 </div>
                 <TextField label="Purpose" value={s.purpose} onChange={(v) => set({ ...s, purpose: v })} />
                 <TextAreaField label="Notes for the writer" value={s.notes} onChange={(v) => set({ ...s, notes: v })} rows={2} />
@@ -286,17 +286,17 @@ export function BriefEditor({ brief, issues, update }: { brief: Brief; issues: B
           />
         </Section>
 
-        <Section id="seo" title="SEO & AEO" intro={<SeoSource brief={brief} />}>
+        <Section id="seo" title="Search" intro={<SeoSource brief={brief} />}>
           <div className={styles.rowWide}>
-            <TextField label="Primary keyword" value={brief.seo.primaryKeyword} onChange={(v) => update((d) => void (d.seo.primaryKeyword = v))} />
-            <SelectField label="Search intent" value={brief.seo.searchIntent} options={SEARCH_INTENTS} onChange={(v) => update((d) => void (d.seo.searchIntent = v))} />
+            <TextField label="Main keyword" value={brief.seo.primaryKeyword} onChange={(v) => update((d) => void (d.seo.primaryKeyword = v))} />
+            <SelectField label="What searchers want" value={brief.seo.searchIntent} options={SEARCH_INTENTS.map((s) => [s, INTENT_NAMES[s]] as [typeof s, string])} onChange={(v) => update((d) => void (d.seo.searchIntent = v))} />
           </div>
-          <StringList label="Secondary keywords" items={brief.seo.secondaryKeywords} onChange={(v) => update((d) => void (d.seo.secondaryKeywords = v))} />
-          <TextField label="Title tag" value={brief.seo.title} range={[30, 60]} onChange={(v) => update((d) => void (d.seo.title = v))} />
-          <TextAreaField label="Meta description" value={brief.seo.metaDescription} range={[120, 160]} rows={2} onChange={(v) => update((d) => void (d.seo.metaDescription = v))} />
-          <TextField label="Slug" prefix="/" value={brief.seo.slug} onChange={(v) => update((d) => void (d.seo.slug = v))} />
+          <StringList label="Other keywords" items={brief.seo.secondaryKeywords} onChange={(v) => update((d) => void (d.seo.secondaryKeywords = v))} />
+          <TextField label="Title in search results" value={brief.seo.title} range={[30, 60]} onChange={(v) => update((d) => void (d.seo.title = v))} />
+          <TextAreaField label="Description in search results" value={brief.seo.metaDescription} range={[120, 160]} rows={2} onChange={(v) => update((d) => void (d.seo.metaDescription = v))} />
+          <TextField label="Page address" prefix="/" value={brief.seo.slug} onChange={(v) => update((d) => void (d.seo.slug = v))} />
           <div>
-            <span className="ui-label">Structured data</span>
+            <span className="ui-label">Tell search engines this page is about</span>
             <div className={styles.checks}>
               {SCHEMA_TYPES.map((t) => (
                 <label key={t}>
@@ -305,13 +305,13 @@ export function BriefEditor({ brief, issues, update }: { brief: Brief; issues: B
                     checked={brief.seo.schemaTypes.includes(t)}
                     onChange={(e) => update((d) => void (d.seo.schemaTypes = e.target.checked ? [...d.seo.schemaTypes, t] : d.seo.schemaTypes.filter((x) => x !== t)))}
                   />
-                  {t}
+                  {SCHEMA_NAMES[t]}
                 </label>
               ))}
             </div>
           </div>
           <h3 className={styles.sub}>Questions to answer</h3>
-          <p className={styles.subIntro}>Answer engines quote direct answers. Aim for 40 to 60 words each.</p>
+          <p className={styles.subIntro}>AI search tools quote clear, direct answers. Aim for 40 to 60 words each.</p>
           <ListEditor
             items={brief.seo.questions}
             onChange={(next) => update((d) => void (d.seo.questions = next))}
@@ -349,7 +349,25 @@ function Section({ id, title, intro, children }: { id: string; title: string; in
   );
 }
 
-const SOURCE_LABELS: Record<ProofPoint["source"], string> = { site: "Your site", data: "Site data", prompt: "Your request", needed: "Needs evidence" };
+const SOURCE_LABELS: Record<ProofPoint["source"], string> = { site: "Your site", data: "Your connected data", prompt: "Your request", needed: "Needs evidence" };
+
+const INTENT_NAMES: Record<(typeof SEARCH_INTENTS)[number], string> = {
+  informational: "To learn something",
+  commercial: "To compare options",
+  transactional: "To buy or sign up",
+  navigational: "To find a specific site",
+};
+
+const SCHEMA_NAMES: Record<(typeof SCHEMA_TYPES)[number], string> = {
+  FAQPage: "Questions and answers (FAQ)",
+  Product: "A product",
+  SoftwareApplication: "Software",
+  Service: "A service",
+  Organization: "Your company",
+  HowTo: "A how-to guide",
+  Event: "An event",
+  Article: "An article",
+};
 
 /** What the site's MCP server answered, so evidence can be checked or copied from it. */
 function SiteDataSource({ brief }: { brief: Brief }) {
@@ -357,7 +375,7 @@ function SiteDataSource({ brief }: { brief: Brief }) {
   return (
     <details className={styles.siteData}>
       <summary>
-        Site data from {server?.name ?? "your MCP server"}: {facts.length ? `${facts.length} answer${facts.length === 1 ? "" : "s"}` : "nothing came back"}
+        Data from {server?.name ?? "your connected data source"}: {facts.length ? `${facts.length} answer${facts.length === 1 ? "" : "s"}` : "nothing came back"}
       </summary>
       {facts.map((f) => (
         <div key={f.source} className={styles.fact}>
@@ -375,15 +393,15 @@ function SeoSource({ brief }: { brief: Brief }) {
   const connected = insights.provider !== "best-practices";
   return (
     <>
-      {connected ? `Keyword data from your SEO tool (${insights.keywords.length} keywords).` : "No SEO tool connected: keywords follow best practices and need validating."}
+      {connected ? `Keyword data from your SEO tool (${insights.keywords.length} keywords).` : "No SEO tool is connected, so these keywords are our best guess. Check them before you publish."}
       {insights.notes.length ? <span className={styles.seoNotes}>{insights.notes.join(" ")}</span> : null}
       {insights.keywords.some((k) => k.volume != null) ? (
         <table className={styles.keywords}>
           <thead>
             <tr>
               <th>Keyword</th>
-              <th>Volume</th>
-              <th>Difficulty</th>
+              <th>Searches a month</th>
+              <th>How hard to rank</th>
             </tr>
           </thead>
           <tbody>
@@ -414,7 +432,7 @@ function Checks({ issues, jump }: { issues: BriefIssue[]; jump: (section: string
     <aside className={styles.checksPanel} aria-label="Brief checks">
       <div className={`${styles.verdict} ${errors ? styles.verdictBad : warnings ? styles.verdictWarn : styles.verdictOk}`}>
         <strong>{errors ? `${errors} to fix before building` : warnings ? `Ready to build, ${warnings} to fix before publishing` : "Ready to build and publish"}</strong>
-        <span>Checked against your site, the funnel stage and search best practice.</span>
+        <span>Checked against your site, the buying stage and good search practice.</span>
       </div>
       {SEVERITY.map(([sev, title]) => {
         const list = issues.filter((i) => i.severity === sev);

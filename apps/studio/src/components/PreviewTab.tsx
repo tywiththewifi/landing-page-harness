@@ -16,8 +16,8 @@ export function PreviewTab({ brand }: { brand: Brand }) {
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar}>
-        <p>A sample page built only from the starter components and your tokens. If it looks like your site, the tokens are right.</p>
-        <div className={styles.toggle} role="group" aria-label="Viewport">
+        <p>A sample page built with your brand's styles. If it looks like your site, we picked everything up correctly.</p>
+        <div className={styles.toggle} role="group" aria-label="Screen size">
           {(["desktop", "mobile"] as const).map((w) => (
             <button key={w} aria-pressed={width === w} onClick={() => setWidth(w)}>
               {w === "desktop" ? "Desktop" : "Mobile"}

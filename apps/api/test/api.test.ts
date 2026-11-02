@@ -20,7 +20,7 @@ describe("assertPublicUrl", () => {
     await expect(assertPublicUrl("http://169.254.169.254/latest/meta-data", false)).rejects.toThrow(/private/);
     await expect(assertPublicUrl("http://[::1]/", false)).rejects.toThrow(/private/);
     await expect(assertPublicUrl("file:///etc/passwd", false)).rejects.toThrow(/http/);
-    await expect(assertPublicUrl("not a url", false)).rejects.toThrow(/URL/);
+    await expect(assertPublicUrl("not a url", false)).rejects.toThrow(/web address/);
   });
 });
 
@@ -355,7 +355,7 @@ describe("API", () => {
       expect(failed.status).toBe(502);
       expect((await failed.json()).message).toMatch(/didn't go through/);
       const list = await (await app.request(`/api/pages/${page.id}/submissions`)).json();
-      expect(list.some((s: { delivery: { status: string; detail?: string } }) => s.delivery.status === "failed" && s.delivery.detail === "The webhook answered 500.")).toBe(true);
+      expect(list.some((s: { delivery: { status: string; detail?: string } }) => s.delivery.status === "failed" && s.delivery.detail === "The webhook address didn't accept it (error 500).")).toBe(true);
     });
 
     it("refuses webhooks on private addresses when private URLs aren't allowed", async () => {
@@ -414,7 +414,7 @@ describe("API", () => {
       // The offline writer leaves copy for a person, so the gate blocks.
       const blocked = await gate();
       expect(blocked).toMatchObject({ pageId: page.id, environment: "server", verdict: "blocked" });
-      expect((await (await publish()).json()).error).toMatch(/found errors/);
+      expect((await (await publish()).json()).error).toMatch(/found problems/);
     });
 
     it("opens a pull request with the pages, their source and the form endpoint", async () => {
@@ -494,14 +494,14 @@ describe("API", () => {
       expect((await (await server.request(`/api/pages/${page.id}/publish`)).json()).overrideAllowed).toBe(true);
       const refused = await publish({});
       expect(refused.status).toBe(409);
-      expect((await refused.json()).error).toMatch(/anyway with a reason/);
+      expect((await refused.json()).error).toMatch(/anyway and say why/);
       expect((await publish({ override: { reason: "   " } })).status).toBe(400);
 
       const res = await publish({ override: { reason: "Testing the publishing flow" } });
       expect(res.status).toBe(201);
       const result = await res.json();
       expect(result).toMatchObject({ risk: "review", override: { reason: "Testing the publishing flow", errors } });
-      expect(result.reasons[result.reasons.length - 1]).toMatch(/^Published over .* the checks found\. The reason given: “Testing the publishing flow”/);
+      expect(result.reasons[result.reasons.length - 1]).toMatch(/^Published even though the checks found .*\. The reason given: “Testing the publishing flow”/);
       const pr = gh.pulls[0]!;
       expect([...pr.labels]).toEqual(["lph:needs-review", "lph:override"]);
       expect(pr.body).toMatch(/Published over blocking checks/);

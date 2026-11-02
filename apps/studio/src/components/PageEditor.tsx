@@ -83,9 +83,9 @@ function LinkField({ block, slot, label }: { block: BlockOf<"hero"> | BlockOf<"c
           className="ui-input"
           list="lph-anchors"
           value={block[slot].href}
-          placeholder="#form, /pricing or https://"
+          placeholder="A section like #form, a page like /pricing, or a full web address"
           disabled={!!api.variant}
-          title={api.variant ? "Links are shared by every version. Change them in the general page." : undefined}
+          title={api.variant ? "Every version uses the same links. Change them on the general page." : undefined}
           onChange={(e) => editBlock(api, block, (b) => void (b[slot].href = e.target.value))}
         />
       </label>
@@ -128,8 +128,8 @@ function BlockFields({ block }: { block: Block }) {
     case "hero":
       return (
         <>
-          <CopyField k={`${id}.eyebrow`} label="Eyebrow (optional)" />
-          <CopyField k={`${id}.heading`} label="Headline (the page's H1)" range={[20, 70]} />
+          <CopyField k={`${id}.eyebrow`} label="Small text above the headline (optional)" />
+          <CopyField k={`${id}.heading`} label="Headline (the page's main heading)" range={[20, 70]} />
           <CopyField k={`${id}.lead`} label="Subheadline" multiline range={[60, 220]} />
           <div className={styles.row2}>
             <LinkField block={block} slot="primaryCta" label="Main button" />
@@ -164,7 +164,7 @@ function BlockFields({ block }: { block: Block }) {
           />
           {!variant && unused.length ? (
             <div className={styles.siteLogos}>
-              <span className="ui-label">Logos from the site</span>
+              <span className="ui-label">Logos from your site</span>
               <div>
                 {unused.map((l) => (
                   <button key={l.name} type="button" className={styles.siteLogo} onClick={() => use(l)} title={`Add ${l.name}`}>
@@ -175,7 +175,7 @@ function BlockFields({ block }: { block: Block }) {
               </div>
             </div>
           ) : null}
-          {!logos.length ? <p className={styles.hint}>No logo strip was found on the site, so customers show as their names. Names that match a logo from the site show as the logo.</p> : null}
+          {!logos.length ? <p className={styles.hint}>We didn't find customer logos on your site, so customers show as their names.</p> : null}
         </>
       );
     }
@@ -183,12 +183,12 @@ function BlockFields({ block }: { block: Block }) {
       return (
         <>
           <div className={styles.row2}>
-            <CopyField k={`${id}.eyebrow`} label="Eyebrow (optional)" />
+            <CopyField k={`${id}.eyebrow`} label="Small text above the heading (optional)" />
             {variant ? null : (
               <SelectField
                 label="Card style"
                 value={block.cardVariant}
-                options={brand.cards.length ? brand.cards.map((c) => [c.name, c.name] as [string, string]) : [["", "From the tokens"]]}
+                options={brand.cards.length ? brand.cards.map((c) => [c.name, c.name] as [string, string]) : [["", "Your brand's default"]]}
                 onChange={(v) => editBlock(api, block, (b) => void (b.cardVariant = v))}
               />
             )}
@@ -234,7 +234,7 @@ function BlockFields({ block }: { block: Block }) {
       return (
         <>
           <CopyField k={`${id}.heading`} label="Heading (optional)" />
-          <p className={styles.hint}>Only real numbers from your site, its data or the brief's proof. Anything else is flagged.</p>
+          <p className={styles.hint}>Only use real numbers from your site, your connected data or the brief's proof. We flag anything else.</p>
           <Items
             items={block.items}
             onChange={list("items")}
@@ -291,7 +291,7 @@ function BlockFields({ block }: { block: Block }) {
       return (
         <>
           <CopyField k={`${id}.heading`} label="Heading" />
-          <p className={styles.hint}>Marked up as FAQPage. Answer engines quote direct answers of 40 to 60 words.</p>
+          <p className={styles.hint}>Search engines and AI search tools can show these answers. Aim for direct answers of 40 to 60 words.</p>
           <Items
             items={block.items}
             onChange={list("items")}
@@ -316,7 +316,7 @@ function BlockFields({ block }: { block: Block }) {
           {variant ? (
             <div className={styles.staticItems}>
               {block.fields.map((f, i) => (
-                <CopyField key={f.name} k={`${id}.fields.${i}.label`} label={`Label for ${f.name}`} />
+                <CopyField key={f.name} k={`${id}.fields.${i}.label`} label={`Label for ${FIELDS[f.name as FieldName]?.label.toLowerCase() ?? f.name}`} />
               ))}
             </div>
           ) : (
@@ -334,7 +334,7 @@ function BlockFields({ block }: { block: Block }) {
                   <SelectField<FieldName>
                     label="Asks for"
                     value={f.name}
-                    options={FIELD_NAMES.map((n) => [n, `${FIELDS[n].label} (${n})`] as [FieldName, string])}
+                    options={FIELD_NAMES.map((n) => [n, FIELDS[n].label] as [FieldName, string])}
                     onChange={(name) => set({ ...f, name, label: f.label === FIELDS[f.name].label ? FIELDS[name].label : f.label })}
                   />
                   <TextField label="Label" value={f.label} onChange={(label) => set({ ...f, label })} />
@@ -365,7 +365,7 @@ function BlockFields({ block }: { block: Block }) {
   }
 }
 
-const TONE_NAMES: Record<(typeof TONES)[number], string> = { default: "Plain", subtle: "Subtle band", brand: "Brand colour" };
+const TONE_NAMES: Record<(typeof TONES)[number], string> = { default: "Plain", subtle: "Lightly shaded", brand: "Brand colour" };
 
 /** A customer's logo as imported. The SVG was sanitised then (no scripts, handlers or outside links). */
 function LogoThumb({ logo }: { logo: CustomerLogo }) {
@@ -380,10 +380,10 @@ function LogoHint({ name, logos }: { name: string; logos: CustomerLogo[] }) {
     <span className={styles.logoHint}>
       {logo ? (
         <>
-          <LogoThumb logo={logo} /> Shows the logo from the site
+          <LogoThumb logo={logo} /> Shows the logo from your site
         </>
       ) : (
-        "Shown as text: no logo from the site has this name"
+        "Shown as text, because no logo on your site has this name"
       )}
     </span>
   );
@@ -507,7 +507,7 @@ export function PageEditor({ api, issues, open, setOpen }: { api: EditorApi; iss
       </datalist>
       {variant ? (
         <p className={styles.variantNote}>
-          Editing <strong>{variant.name}</strong>. Text you change here is personalised for this version; everything else is shared with the general page. Sections, items and links are added, removed and moved in the general page.
+          Editing <strong>{variant.name}</strong>. Text you change here only changes this version. Everything else matches the general page. To add, remove or move sections, items or links, edit the general page.
           {api.toGeneral ? (
             <>
               {" "}
@@ -518,13 +518,13 @@ export function PageEditor({ api, issues, open, setOpen }: { api: EditorApi; iss
           ) : null}
         </p>
       ) : null}
-      <section id="block-seo" className={styles.block} aria-label="Page and SEO">
+      <section id="block-seo" className={styles.block} aria-label="Page and search">
         <header className={styles.blockHead}>
           <button type="button" className={styles.toggle} aria-expanded={open.has("seo")} onClick={() => toggle("seo")}>
             <span className={styles.chevron} aria-hidden="true">
               {open.has("seo") ? "▾" : "▸"}
             </span>
-            <strong>Page &amp; SEO</strong>
+            <strong>Page &amp; search</strong>
             {counted("seo") ? <span className={styles.count}>{counted("seo")}</span> : null}
           </button>
         </header>
@@ -532,12 +532,12 @@ export function PageEditor({ api, issues, open, setOpen }: { api: EditorApi; iss
           <div className={styles.blockBody}>
             {variant ? null : (
               <div className={styles.rowWide}>
-                <TextField label="Page name (internal)" value={page.title} onChange={(v) => api.update((d) => void (d.title = v))} />
-                <TextField label="URL" prefix="/" value={page.slug} onChange={(v) => api.update((d) => void (d.slug = v))} />
+                <TextField label="Page name (only you see this)" value={page.title} onChange={(v) => api.update((d) => void (d.title = v))} />
+                <TextField label="Page address" prefix="/" value={page.slug} onChange={(v) => api.update((d) => void (d.slug = v))} />
               </div>
             )}
-            <CopyField k="seo.title" label="Title tag" range={[30, 60]} />
-            <CopyField k="seo.metaDescription" label="Meta description" multiline range={[120, 160]} />
+            <CopyField k="seo.title" label="Title in search results" range={[30, 60]} />
+            <CopyField k="seo.metaDescription" label="Description in search results" multiline range={[120, 160]} />
           </div>
         ) : null}
       </section>
