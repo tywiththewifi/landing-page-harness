@@ -6,7 +6,7 @@ import { generateDesignMd } from "@lph/design-md";
 import { brandKitFiles } from "@lph/kit";
 import { checkContrast, resolveConflict, toCss, toDtcg, type Brand } from "@lph/tokens";
 import { serveFixture } from "../../../scripts/serve-fixture.mjs";
-import { brandName } from "../src/analyze.ts";
+import { brandName, unifyFamilies, type PageCapture } from "../src/analyze.ts";
 import { extractBrand, pickProductPage } from "../src/extract.ts";
 import type { PageSample } from "../src/collect.ts";
 
@@ -35,6 +35,22 @@ describe("brandName", () => {
     expect(brandName(sample("https://webflow.com/", "Webflow: Build a website", "Webflow: The agentic web platform for modern businesses"))).toBe("Webflow");
     expect(brandName(sample("https://stripe.com/", "Stripe | Financial Infrastructure to Grow Your Revenue"))).toBe("Stripe");
     expect(brandName(sample("https://linear.app/", "Linear – Plan and build products", "Linear"))).toBe("Linear");
+  });
+});
+
+describe("unifyFamilies", () => {
+  const text = (family: string) => ({ tag: "p", family }) as PageSample["texts"][number];
+  const page = (families: string[]) => ({ desktop: { url: "https://x.com/", texts: families.map(text) } }) as unknown as PageCapture;
+
+  it("treats one typeface under different names as one font", () => {
+    // vidIQ: "satoshi" from next/font, plus "Satoshi:Medium" and "Satoshi:Bold" for single weights.
+    const [p] = unifyFamilies([page(["satoshi", "satoshi", "Satoshi:Medium", "Satoshi:Bold", "Satoshi", "Inter"])]);
+    expect(p!.desktop.texts.map((t) => t.family)).toEqual(["satoshi", "satoshi", "satoshi", "satoshi", "satoshi", "Inter"]);
+  });
+
+  it("keeps a name the site uses when there's no plain one", () => {
+    const [p] = unifyFamilies([page(["Satoshi:Medium", "Satoshi:Medium", "Satoshi:Bold"])]);
+    expect(new Set(p!.desktop.texts.map((t) => t.family))).toEqual(new Set(["Satoshi:Medium"]));
   });
 });
 

@@ -269,6 +269,36 @@ export function nameColors(tokens: ColorToken[]) {
 
 // --- Typography ----------------------------------------------------------------------
 
+/**
+ * One typeface often shows up under several names: "satoshi" and "Satoshi", or design-tool
+ * names for single weights like "Satoshi:Bold". These are the same font, not a choice to make,
+ * so each group gets one name: the plain one the site uses most, else its most used name.
+ */
+export function unifyFamilies(pages: PageCapture[]): PageCapture[] {
+  const base = (f: string) => f.replace(/^(.+?)\s*:\s*[\w ]+$/, "$1");
+  const counts = new Map<string, number>();
+  for (const { desktop, mobile } of pages) {
+    for (const s of [...desktop.texts, ...(mobile?.texts ?? [])]) counts.set(s.family, (counts.get(s.family) ?? 0) + 1);
+  }
+  const groups = new Map<string, string[]>();
+  for (const f of counts.keys()) {
+    const key = base(f).toLowerCase();
+    groups.set(key, [...(groups.get(key) ?? []), f]);
+  }
+  const name = new Map<string, string>();
+  for (const names of groups.values()) {
+    const byUse = [...names].sort((a, b) => counts.get(b)! - counts.get(a)!);
+    const pick = byUse.find((f) => base(f) === f) ?? byUse[0]!;
+    for (const f of names) name.set(f, pick);
+  }
+  const fix = (s: TextSample) => (name.has(s.family) ? { ...s, family: name.get(s.family)! } : s);
+  return pages.map((p) => ({
+    ...p,
+    desktop: { ...p.desktop, texts: p.desktop.texts.map(fix) },
+    ...(p.mobile ? { mobile: { ...p.mobile, texts: p.mobile.texts.map(fix) } } : {}),
+  }));
+}
+
 function familyTally(pages: PageCapture[], tags: string[]) {
   const t = new Tally<string>();
   for (const { desktop: p } of pages) {
@@ -285,23 +315,11 @@ function familyConflict(field: string, label: string, tally: Tally<string>): Con
   return {
     id: field,
     field,
-    message: `${label} text uses more than one font: ${sorted
-      .slice(0, 3)
-      .map((b) => `${b.key} (${Math.round((b.weight / total) * 100)}%, on ${[...b.pages].map(shortPath).join(", ")})`)
-      .join(" vs ")}. Pick the one that should be canonical.`,
+    message: `Your site uses ${Math.min(sorted.length, 3)} different fonts for ${label}. Which one should your pages use? The percentage shows how much of that text uses each font.`,
     options: sorted.slice(0, 3).map((b) => ({ value: b.key, sources: sourcesOf(b), share: r2(b.weight / total) })),
     resolved: sorted[0]!.key,
   };
 }
-
-const shortPath = (url: string) => {
-  try {
-    const u = new URL(url);
-    return u.pathname === "/" ? "home" : u.pathname;
-  } catch {
-    return url;
-  }
-};
 
 function typeToken(role: TypeRole, samples: { s: TextSample; page: string }[], mobile: TextSample[]): TypeToken | null {
   if (!samples.length) return null;
@@ -332,14 +350,15 @@ function typeToken(role: TypeRole, samples: { s: TextSample; page: string }[], m
   };
 }
 
-function analyzeTypography(pages: PageCapture[], buttons: ButtonStyle[]) {
+function analyzeTypography(captured: PageCapture[], buttons: ButtonStyle[]) {
+  const pages = unifyFamilies(captured);
   const headingTally = familyTally(pages, ["h1", "h2", "h3"]);
   const bodyTally = familyTally(pages, ["p", "li"]);
   const heading = headingTally.sorted()[0]?.key ?? pages[0]?.desktop.body.family ?? "system-ui";
   const body = bodyTally.sorted()[0]?.key ?? pages[0]?.desktop.body.family ?? "system-ui";
   const conflicts = [
-    familyConflict("fonts.heading", "Heading", headingTally),
-    familyConflict("fonts.body", "Body", bodyTally),
+    familyConflict("fonts.heading", "headings", headingTally),
+    familyConflict("fonts.body", "body text", bodyTally),
   ].filter((c): c is Conflict => !!c);
 
   const collect = (tags: string[], family?: string) =>

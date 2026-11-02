@@ -702,7 +702,7 @@
     {
       "id": "fonts.body",
       "field": "fonts.body",
-      "message": "Body text uses more than one font: Plus Jakarta Sans (54%, on home) vs Inter (46%, on /platform.html). Pick the one that should be canonical.",
+      "message": "Your site uses 2 different fonts for body text. Which one should your pages use? The percentage shows how much of that text uses each font.",
       "options": [
         {
           "value": "Plus Jakarta Sans",
