@@ -38,6 +38,24 @@ describe("brandName", () => {
   });
 });
 
+// An ad landing page with no header: the logo sits above the hero and links nowhere.
+describe("extractBrand (headerless page)", () => {
+  let site: { url: string; close: () => Promise<void> };
+  let brand: Brand;
+
+  beforeAll(async () => {
+    site = await serveFixture({ name: "headerless" });
+    brand = await extractBrand({ url: site.url });
+  });
+  afterAll(() => site?.close());
+
+  it("finds the logo at the top of the page", () => {
+    expect(brand.logo).toMatchObject({ kind: "img" });
+    expect(brand.logo?.src).toMatch(/\/logo\.svg$/);
+    expect(brand.warnings.join(" ")).not.toMatch(/No logo found/);
+  });
+});
+
 // Extracts the Northloop fixture site in a real browser.
 describe("extractBrand (fixture site)", () => {
   let site: { url: string; close: () => Promise<void> };
