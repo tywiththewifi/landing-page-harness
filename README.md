@@ -98,6 +98,10 @@ See [docs/publish.md](docs/publish.md) for the checks, the budget, the risk rule
 | ![The pull request for a new page](docs/screenshots/18-publish-pr.png) | ![A copy edit that merges itself](docs/screenshots/19-publish-copy-only.png) |
 |---|---|
 
+## Audio ad concepts (demo)
+
+[packages/ads](packages/ads) takes the brand kit, brief and landing page from the phases above and writes 15 to 20 second audio ads, one per page version. Each script is checked with the same grounding rules before it is voiced with ElevenLabs. Each clip is then transcribed and compared with its script, which catches a misread price or a mispronounced brand name. `pnpm ads` runs it on Hostinger. Ads are still out of scope for the studio itself.
+
 ## Quick start
 
 ```bash

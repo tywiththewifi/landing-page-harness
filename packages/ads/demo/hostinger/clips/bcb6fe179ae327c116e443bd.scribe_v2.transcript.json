@@ -1,0 +1,646 @@
+{
+  "language_code": "eng",
+  "language_probability": 1,
+  "text": "Want to sell online but don't code? With Hostinger, you describe your store and AI builds a first version in seconds, then customize every detail with drag and drop. Sell with zero percent transaction fees. Plans start from two point forty-nine a month. Choose plan today",
+  "words": [
+    {
+      "text": "Want",
+      "start": 0.12,
+      "end": 0.22,
+      "type": "word",
+      "logprob": -0.00005447716102935374
+    },
+    {
+      "text": " ",
+      "start": 0.22,
+      "end": 0.26,
+      "type": "spacing",
+      "logprob": -2.3841855067985307e-7
+    },
+    {
+      "text": "to",
+      "start": 0.26,
+      "end": 0.34,
+      "type": "word",
+      "logprob": -2.3841855067985307e-7
+    },
+    {
+      "text": " ",
+      "start": 0.34,
+      "end": 0.4,
+      "type": "spacing",
+      "logprob": -0.000022172682292875834
+    },
+    {
+      "text": "sell",
+      "start": 0.4,
+      "end": 0.58,
+      "type": "word",
+      "logprob": -0.000022172682292875834
+    },
+    {
+      "text": " ",
+      "start": 0.58,
+      "end": 0.66,
+      "type": "spacing",
+      "logprob": -7.152555099310121e-7
+    },
+    {
+      "text": "online",
+      "start": 0.66,
+      "end": 1.08,
+      "type": "word",
+      "logprob": -7.152555099310121e-7
+    },
+    {
+      "text": " ",
+      "start": 1.08,
+      "end": 1.12,
+      "type": "spacing",
+      "logprob": -0.006717361975461245
+    },
+    {
+      "text": "but",
+      "start": 1.12,
+      "end": 1.22,
+      "type": "word",
+      "logprob": -0.006717361975461245
+    },
+    {
+      "text": " ",
+      "start": 1.22,
+      "end": 1.26,
+      "type": "spacing",
+      "logprob": -0.0000029802276912960224
+    },
+    {
+      "text": "don't",
+      "start": 1.26,
+      "end": 1.42,
+      "type": "word",
+      "logprob": -0.000006651816329394933
+    },
+    {
+      "text": " ",
+      "start": 1.42,
+      "end": 1.46,
+      "type": "spacing",
+      "logprob": -9.536738616588991e-7
+    },
+    {
+      "text": "code?",
+      "start": 1.46,
+      "end": 1.72,
+      "type": "word",
+      "logprob": -9.059901913133217e-7
+    },
+    {
+      "text": " ",
+      "start": 1.72,
+      "end": 2.34,
+      "type": "spacing",
+      "logprob": -0.000003099436753473128
+    },
+    {
+      "text": "With",
+      "start": 2.34,
+      "end": 2.44,
+      "type": "word",
+      "logprob": -0.000003099436753473128
+    },
+    {
+      "text": " ",
+      "start": 2.44,
+      "end": 2.46,
+      "type": "spacing",
+      "logprob": -0.000514017534442246
+    },
+    {
+      "text": "Hostinger,",
+      "start": 2.46,
+      "end": 2.88,
+      "type": "word",
+      "logprob": -0.0006152945077701588
+    },
+    {
+      "text": " ",
+      "start": 2.88,
+      "end": 2.98,
+      "type": "spacing",
+      "logprob": -8.344646857949556e-7
+    },
+    {
+      "text": "you",
+      "start": 2.98,
+      "end": 3.06,
+      "type": "word",
+      "logprob": -8.344646857949556e-7
+    },
+    {
+      "text": " ",
+      "start": 3.06,
+      "end": 3.08,
+      "type": "spacing",
+      "logprob": -0.0000023841830625315197
+    },
+    {
+      "text": "describe",
+      "start": 3.1,
+      "end": 3.52,
+      "type": "word",
+      "logprob": -0.0000023841830625315197
+    },
+    {
+      "text": " ",
+      "start": 3.52,
+      "end": 3.56,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "your",
+      "start": 3.56,
+      "end": 3.62,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 3.62,
+      "end": 3.74,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "store",
+      "start": 3.74,
+      "end": 3.96,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 3.96,
+      "end": 3.98,
+      "type": "spacing",
+      "logprob": -0.00103586888872087
+    },
+    {
+      "text": "and",
+      "start": 3.98,
+      "end": 4.08,
+      "type": "word",
+      "logprob": -0.00103586888872087
+    },
+    {
+      "text": " ",
+      "start": 4.08,
+      "end": 4.24,
+      "type": "spacing",
+      "logprob": -2.3841855067985307e-7
+    },
+    {
+      "text": "AI",
+      "start": 4.24,
+      "end": 4.56,
+      "type": "word",
+      "logprob": -2.3841855067985307e-7
+    },
+    {
+      "text": " ",
+      "start": 4.56,
+      "end": 4.68,
+      "type": "spacing",
+      "logprob": -0.000015020257706055418
+    },
+    {
+      "text": "builds",
+      "start": 4.68,
+      "end": 4.88,
+      "type": "word",
+      "logprob": -0.000015020257706055418
+    },
+    {
+      "text": " ",
+      "start": 4.88,
+      "end": 4.92,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "a",
+      "start": 4.92,
+      "end": 5.02,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 5.02,
+      "end": 5.08,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "first",
+      "start": 5.08,
+      "end": 5.3,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 5.3,
+      "end": 5.38,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "version",
+      "start": 5.38,
+      "end": 5.68,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 5.68,
+      "end": 5.72,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "in",
+      "start": 5.72,
+      "end": 5.84,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 5.84,
+      "end": 5.92,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "seconds,",
+      "start": 5.92,
+      "end": 6.28,
+      "type": "word",
+      "logprob": -0.00012909657380077988
+    },
+    {
+      "text": " ",
+      "start": 6.28,
+      "end": 6.82,
+      "type": "spacing",
+      "logprob": -0.000002145764938177308
+    },
+    {
+      "text": "then",
+      "start": 6.82,
+      "end": 7,
+      "type": "word",
+      "logprob": -0.000002145764938177308
+    },
+    {
+      "text": " ",
+      "start": 7,
+      "end": 7.06,
+      "type": "spacing",
+      "logprob": -0.00002002696055569686
+    },
+    {
+      "text": "customize",
+      "start": 7.06,
+      "end": 7.68,
+      "type": "word",
+      "logprob": -0.00002002696055569686
+    },
+    {
+      "text": " ",
+      "start": 7.68,
+      "end": 7.84,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "every",
+      "start": 7.84,
+      "end": 8.06,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 8.06,
+      "end": 8.08,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "detail",
+      "start": 8.1,
+      "end": 8.46,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 8.46,
+      "end": 8.48,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "with",
+      "start": 8.48,
+      "end": 8.6,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 8.6,
+      "end": 8.64,
+      "type": "spacing",
+      "logprob": -0.000004291525328881107
+    },
+    {
+      "text": "drag",
+      "start": 8.64,
+      "end": 8.86,
+      "type": "word",
+      "logprob": -0.000004291525328881107
+    },
+    {
+      "text": " ",
+      "start": 8.86,
+      "end": 8.88,
+      "type": "spacing",
+      "logprob": -0.01416732743382454
+    },
+    {
+      "text": "and",
+      "start": 8.88,
+      "end": 8.94,
+      "type": "word",
+      "logprob": -0.01416732743382454
+    },
+    {
+      "text": " ",
+      "start": 8.94,
+      "end": 9,
+      "type": "spacing",
+      "logprob": -0.0000020265558760002023
+    },
+    {
+      "text": "drop.",
+      "start": 9,
+      "end": 9.32,
+      "type": "word",
+      "logprob": -0.0000016212447008001617
+    },
+    {
+      "text": " ",
+      "start": 9.32,
+      "end": 9.32,
+      "type": "spacing",
+      "logprob": -0.00002109982233378105
+    },
+    {
+      "text": "Sell",
+      "start": 9.94,
+      "end": 10.12,
+      "type": "word",
+      "logprob": -0.00002109982233378105
+    },
+    {
+      "text": " ",
+      "start": 10.12,
+      "end": 10.16,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "with",
+      "start": 10.16,
+      "end": 10.32,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 10.32,
+      "end": 10.4,
+      "type": "spacing",
+      "logprob": -0.0019328974885866046
+    },
+    {
+      "text": "zero",
+      "start": 10.4,
+      "end": 10.58,
+      "type": "word",
+      "logprob": -0.0019328974885866046
+    },
+    {
+      "text": " ",
+      "start": 10.58,
+      "end": 10.66,
+      "type": "spacing",
+      "logprob": -0.000004410734163684538
+    },
+    {
+      "text": "percent",
+      "start": 10.66,
+      "end": 10.94,
+      "type": "word",
+      "logprob": -0.000004410734163684538
+    },
+    {
+      "text": " ",
+      "start": 10.94,
+      "end": 11,
+      "type": "spacing",
+      "logprob": -0.0000016689286894688848
+    },
+    {
+      "text": "transaction",
+      "start": 11,
+      "end": 11.58,
+      "type": "word",
+      "logprob": -0.0000016689286894688848
+    },
+    {
+      "text": " ",
+      "start": 11.58,
+      "end": 11.62,
+      "type": "spacing",
+      "logprob": -0.0000034570634852570947
+    },
+    {
+      "text": "fees.",
+      "start": 11.62,
+      "end": 11.88,
+      "type": "word",
+      "logprob": -0.0000028133344983416463
+    },
+    {
+      "text": " ",
+      "start": 11.88,
+      "end": 12.46,
+      "type": "spacing",
+      "logprob": -0.000018954096958623268
+    },
+    {
+      "text": "Plans",
+      "start": 12.46,
+      "end": 12.72,
+      "type": "word",
+      "logprob": -0.000018954096958623268
+    },
+    {
+      "text": " ",
+      "start": 12.72,
+      "end": 12.78,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "start",
+      "start": 12.78,
+      "end": 12.98,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 12.98,
+      "end": 13.02,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "from",
+      "start": 13.02,
+      "end": 13.2,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 13.2,
+      "end": 13.26,
+      "type": "spacing",
+      "logprob": -0.000002622600959512056
+    },
+    {
+      "text": "two",
+      "start": 13.26,
+      "end": 13.38,
+      "type": "word",
+      "logprob": -0.000002622600959512056
+    },
+    {
+      "text": " ",
+      "start": 13.38,
+      "end": 13.5,
+      "type": "spacing",
+      "logprob": -0.000009536697689327411
+    },
+    {
+      "text": "point",
+      "start": 13.5,
+      "end": 13.7,
+      "type": "word",
+      "logprob": -0.000009536697689327411
+    },
+    {
+      "text": " ",
+      "start": 13.7,
+      "end": 13.8,
+      "type": "spacing",
+      "logprob": -0.00018904806347563863
+    },
+    {
+      "text": "forty-nine",
+      "start": 13.8,
+      "end": 14.26,
+      "type": "word",
+      "logprob": -0.00014078675521886908
+    },
+    {
+      "text": " ",
+      "start": 14.26,
+      "end": 14.32,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "a",
+      "start": 14.32,
+      "end": 14.36,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 14.36,
+      "end": 14.4,
+      "type": "spacing",
+      "logprob": -0.0000023841830625315197
+    },
+    {
+      "text": "month.",
+      "start": 14.4,
+      "end": 14.64,
+      "type": "word",
+      "logprob": -0.0000026822053011225457
+    },
+    {
+      "text": " ",
+      "start": 14.64,
+      "end": 15.12,
+      "type": "spacing",
+      "logprob": -0.04621461033821106
+    },
+    {
+      "text": "Choose",
+      "start": 15.12,
+      "end": 15.38,
+      "type": "word",
+      "logprob": -0.04621461033821106
+    },
+    {
+      "text": " ",
+      "start": 15.38,
+      "end": 15.48,
+      "type": "spacing",
+      "logprob": -0.00005876845170860179
+    },
+    {
+      "text": "plan",
+      "start": 15.48,
+      "end": 15.8,
+      "type": "word",
+      "logprob": -0.00005876845170860179
+    },
+    {
+      "text": " ",
+      "start": 15.8,
+      "end": 15.84,
+      "type": "spacing",
+      "logprob": -5.960462772236497e-7
+    },
+    {
+      "text": "today",
+      "start": 15.84,
+      "end": 16.14,
+      "type": "word",
+      "logprob": -5.960462772236497e-7
+    }
+  ],
+  "transcription_id": "WghlXhvDaFelz2jye3hy",
+  "audio_duration_secs": 16.532625
+}

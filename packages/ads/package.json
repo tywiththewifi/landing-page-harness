@@ -1,0 +1,25 @@
+{
+  "name": "@lph/ads",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "lph-ads": "./src/cli.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "evals": "tsx evals/run.ts",
+    "start": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.1.0",
+    "@lph/brief": "workspace:*",
+    "@lph/page": "workspace:*",
+    "@lph/tokens": "workspace:*",
+    "@lph/ui": "workspace:*",
+    "zod": "^4.6.7"
+  }
+}

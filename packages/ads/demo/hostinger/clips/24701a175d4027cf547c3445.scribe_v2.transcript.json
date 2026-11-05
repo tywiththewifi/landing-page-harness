@@ -1,0 +1,660 @@
+{
+  "language_code": "eng",
+  "language_probability": 1,
+  "text": "Tired of paying fees on every sale? Move your online store to Hostinger and keep what you earn with zero percent transaction fees. Hostinger Agent helps you migrate through chat every step of the way. It solves eighty-five percent of issues without a human. Choose plan today",
+  "words": [
+    {
+      "text": "Tired",
+      "start": 0.12,
+      "end": 0.42,
+      "type": "word",
+      "logprob": -0.00018620684277266265
+    },
+    {
+      "text": " ",
+      "start": 0.42,
+      "end": 0.46,
+      "type": "spacing",
+      "logprob": -8.344646857949556e-7
+    },
+    {
+      "text": "of",
+      "start": 0.46,
+      "end": 0.56,
+      "type": "word",
+      "logprob": -8.344646857949556e-7
+    },
+    {
+      "text": " ",
+      "start": 0.56,
+      "end": 0.62,
+      "type": "spacing",
+      "logprob": -0.0000020265558760002023
+    },
+    {
+      "text": "paying",
+      "start": 0.62,
+      "end": 0.84,
+      "type": "word",
+      "logprob": -0.0000020265558760002023
+    },
+    {
+      "text": " ",
+      "start": 0.84,
+      "end": 0.98,
+      "type": "spacing",
+      "logprob": -0.000004529942543740617
+    },
+    {
+      "text": "fees",
+      "start": 0.98,
+      "end": 1.26,
+      "type": "word",
+      "logprob": -0.000004529942543740617
+    },
+    {
+      "text": " ",
+      "start": 1.26,
+      "end": 1.3,
+      "type": "spacing",
+      "logprob": -7.152555099310121e-7
+    },
+    {
+      "text": "on",
+      "start": 1.3,
+      "end": 1.38,
+      "type": "word",
+      "logprob": -7.152555099310121e-7
+    },
+    {
+      "text": " ",
+      "start": 1.38,
+      "end": 1.4,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "every",
+      "start": 1.4,
+      "end": 1.56,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 1.56,
+      "end": 1.66,
+      "type": "spacing",
+      "logprob": -0.0000010728830375228426
+    },
+    {
+      "text": "sale?",
+      "start": 1.66,
+      "end": 1.92,
+      "type": "word",
+      "logprob": -0.000008010735746211139
+    },
+    {
+      "text": " ",
+      "start": 1.92,
+      "end": 1.92,
+      "type": "spacing",
+      "logprob": -0.00004410646579344757
+    },
+    {
+      "text": "Move",
+      "start": 2.6,
+      "end": 2.78,
+      "type": "word",
+      "logprob": -0.00004410646579344757
+    },
+    {
+      "text": " ",
+      "start": 2.78,
+      "end": 2.82,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "your",
+      "start": 2.82,
+      "end": 2.92,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 2.92,
+      "end": 3,
+      "type": "spacing",
+      "logprob": -0.0000014305104514278355
+    },
+    {
+      "text": "online",
+      "start": 3,
+      "end": 3.32,
+      "type": "word",
+      "logprob": -0.0000014305104514278355
+    },
+    {
+      "text": " ",
+      "start": 3.32,
+      "end": 3.44,
+      "type": "spacing",
+      "logprob": -7.152555099310121e-7
+    },
+    {
+      "text": "store",
+      "start": 3.44,
+      "end": 3.6,
+      "type": "word",
+      "logprob": -7.152555099310121e-7
+    },
+    {
+      "text": " ",
+      "start": 3.6,
+      "end": 3.64,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "to",
+      "start": 3.64,
+      "end": 3.72,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 3.72,
+      "end": 3.74,
+      "type": "spacing",
+      "logprob": -0.000163541772053577
+    },
+    {
+      "text": "Hostinger",
+      "start": 3.74,
+      "end": 4.22,
+      "type": "word",
+      "logprob": -0.00008003642303972608
+    },
+    {
+      "text": " ",
+      "start": 4.22,
+      "end": 4.24,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "and",
+      "start": 4.24,
+      "end": 4.32,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 4.32,
+      "end": 4.42,
+      "type": "spacing",
+      "logprob": -2.3841855067985307e-7
+    },
+    {
+      "text": "keep",
+      "start": 4.42,
+      "end": 4.58,
+      "type": "word",
+      "logprob": -2.3841855067985307e-7
+    },
+    {
+      "text": " ",
+      "start": 4.58,
+      "end": 4.6,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "what",
+      "start": 4.6,
+      "end": 4.72,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 4.72,
+      "end": 4.76,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "you",
+      "start": 4.76,
+      "end": 4.84,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 4.84,
+      "end": 4.9,
+      "type": "spacing",
+      "logprob": -3.576278118089249e-7
+    },
+    {
+      "text": "earn",
+      "start": 4.9,
+      "end": 5.12,
+      "type": "word",
+      "logprob": -3.576278118089249e-7
+    },
+    {
+      "text": " ",
+      "start": 5.12,
+      "end": 5.52,
+      "type": "spacing",
+      "logprob": -0.00014423283573705703
+    },
+    {
+      "text": "with",
+      "start": 5.52,
+      "end": 5.64,
+      "type": "word",
+      "logprob": -0.00014423283573705703
+    },
+    {
+      "text": " ",
+      "start": 5.64,
+      "end": 5.7,
+      "type": "spacing",
+      "logprob": -0.004641592036932707
+    },
+    {
+      "text": "zero",
+      "start": 5.7,
+      "end": 5.9,
+      "type": "word",
+      "logprob": -0.004641592036932707
+    },
+    {
+      "text": " ",
+      "start": 5.9,
+      "end": 6,
+      "type": "spacing",
+      "logprob": -0.00002109982233378105
+    },
+    {
+      "text": "percent",
+      "start": 6,
+      "end": 6.34,
+      "type": "word",
+      "logprob": -0.00002109982233378105
+    },
+    {
+      "text": " ",
+      "start": 6.34,
+      "end": 6.38,
+      "type": "spacing",
+      "logprob": -8.344646857949556e-7
+    },
+    {
+      "text": "transaction",
+      "start": 6.38,
+      "end": 6.92,
+      "type": "word",
+      "logprob": -8.344646857949556e-7
+    },
+    {
+      "text": " ",
+      "start": 6.92,
+      "end": 7.02,
+      "type": "spacing",
+      "logprob": -0.0000029802276912960224
+    },
+    {
+      "text": "fees.",
+      "start": 7.02,
+      "end": 7.28,
+      "type": "word",
+      "logprob": -0.0000024080240095258887
+    },
+    {
+      "text": " ",
+      "start": 7.28,
+      "end": 7.8,
+      "type": "spacing",
+      "logprob": -0.000020265373677830212
+    },
+    {
+      "text": "Hostinger",
+      "start": 7.8,
+      "end": 8.22,
+      "type": "word",
+      "logprob": -0.000009735333454348924
+    },
+    {
+      "text": " ",
+      "start": 8.22,
+      "end": 8.34,
+      "type": "spacing",
+      "logprob": -0.016184145584702492
+    },
+    {
+      "text": "Agent",
+      "start": 8.34,
+      "end": 8.6,
+      "type": "word",
+      "logprob": -0.016184145584702492
+    },
+    {
+      "text": " ",
+      "start": 8.6,
+      "end": 8.68,
+      "type": "spacing",
+      "logprob": -0.000003933898824470816
+    },
+    {
+      "text": "helps",
+      "start": 8.68,
+      "end": 8.86,
+      "type": "word",
+      "logprob": -0.000003933898824470816
+    },
+    {
+      "text": " ",
+      "start": 8.86,
+      "end": 8.9,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "you",
+      "start": 8.9,
+      "end": 9,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 9,
+      "end": 9.06,
+      "type": "spacing",
+      "logprob": -0.000006079655122448457
+    },
+    {
+      "text": "migrate",
+      "start": 9.06,
+      "end": 9.48,
+      "type": "word",
+      "logprob": -0.000006079655122448457
+    },
+    {
+      "text": " ",
+      "start": 9.48,
+      "end": 9.5,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "through",
+      "start": 9.5,
+      "end": 9.68,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 9.68,
+      "end": 9.72,
+      "type": "spacing",
+      "logprob": -0.0000016689286894688848
+    },
+    {
+      "text": "chat",
+      "start": 9.72,
+      "end": 10,
+      "type": "word",
+      "logprob": -0.0000016689286894688848
+    },
+    {
+      "text": " ",
+      "start": 10,
+      "end": 10.48,
+      "type": "spacing",
+      "logprob": -0.000018954096958623268
+    },
+    {
+      "text": "every",
+      "start": 10.48,
+      "end": 10.66,
+      "type": "word",
+      "logprob": -0.000018954096958623268
+    },
+    {
+      "text": " ",
+      "start": 10.66,
+      "end": 10.76,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "step",
+      "start": 10.76,
+      "end": 10.92,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 10.92,
+      "end": 10.96,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "of",
+      "start": 10.96,
+      "end": 11,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 11,
+      "end": 11.04,
+      "type": "spacing",
+      "logprob": -2.3841855067985307e-7
+    },
+    {
+      "text": "the",
+      "start": 11.04,
+      "end": 11.12,
+      "type": "word",
+      "logprob": -2.3841855067985307e-7
+    },
+    {
+      "text": " ",
+      "start": 11.12,
+      "end": 11.16,
+      "type": "spacing",
+      "logprob": -5.960462772236497e-7
+    },
+    {
+      "text": "way.",
+      "start": 11.16,
+      "end": 11.36,
+      "type": "word",
+      "logprob": -4.4703470791773725e-7
+    },
+    {
+      "text": " ",
+      "start": 11.36,
+      "end": 11.84,
+      "type": "spacing",
+      "logprob": -0.0000010728830375228426
+    },
+    {
+      "text": "It",
+      "start": 11.84,
+      "end": 11.94,
+      "type": "word",
+      "logprob": -0.0000010728830375228426
+    },
+    {
+      "text": " ",
+      "start": 11.94,
+      "end": 11.98,
+      "type": "spacing",
+      "logprob": -0.000003814689989667386
+    },
+    {
+      "text": "solves",
+      "start": 11.98,
+      "end": 12.4,
+      "type": "word",
+      "logprob": -0.000003814689989667386
+    },
+    {
+      "text": " ",
+      "start": 12.4,
+      "end": 12.46,
+      "type": "spacing",
+      "logprob": -0.00007056941103655845
+    },
+    {
+      "text": "eighty-five",
+      "start": 12.46,
+      "end": 12.9,
+      "type": "word",
+      "logprob": -0.00004274056775763959
+    },
+    {
+      "text": " ",
+      "start": 12.9,
+      "end": 12.98,
+      "type": "spacing",
+      "logprob": -0.00003302042750874534
+    },
+    {
+      "text": "percent",
+      "start": 12.98,
+      "end": 13.24,
+      "type": "word",
+      "logprob": -0.00003302042750874534
+    },
+    {
+      "text": " ",
+      "start": 13.24,
+      "end": 13.28,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "of",
+      "start": 13.28,
+      "end": 13.36,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 13.36,
+      "end": 13.42,
+      "type": "spacing",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": "issues",
+      "start": 13.42,
+      "end": 13.74,
+      "type": "word",
+      "logprob": -1.1920928244535389e-7
+    },
+    {
+      "text": " ",
+      "start": 13.74,
+      "end": 13.78,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "without",
+      "start": 13.78,
+      "end": 14.02,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 14.02,
+      "end": 14.06,
+      "type": "spacing",
+      "logprob": 0
+    },
+    {
+      "text": "a",
+      "start": 14.06,
+      "end": 14.08,
+      "type": "word",
+      "logprob": 0
+    },
+    {
+      "text": " ",
+      "start": 14.08,
+      "end": 14.14,
+      "type": "spacing",
+      "logprob": -2.3841855067985307e-7
+    },
+    {
+      "text": "human.",
+      "start": 14.14,
+      "end": 14.42,
+      "type": "word",
+      "logprob": -2.1855033930743653e-7
+    },
+    {
+      "text": " ",
+      "start": 14.42,
+      "end": 14.94,
+      "type": "spacing",
+      "logprob": -0.00003015949550899677
+    },
+    {
+      "text": "Choose",
+      "start": 14.94,
+      "end": 15.2,
+      "type": "word",
+      "logprob": -0.00003015949550899677
+    },
+    {
+      "text": " ",
+      "start": 15.2,
+      "end": 15.3,
+      "type": "spacing",
+      "logprob": -0.00038354191929101944
+    },
+    {
+      "text": "plan",
+      "start": 15.3,
+      "end": 15.62,
+      "type": "word",
+      "logprob": -0.00038354191929101944
+    },
+    {
+      "text": " ",
+      "start": 15.62,
+      "end": 15.66,
+      "type": "spacing",
+      "logprob": -5.960462772236497e-7
+    },
+    {
+      "text": "today",
+      "start": 15.66,
+      "end": 16,
+      "type": "word",
+      "logprob": -5.960462772236497e-7
+    }
+  ],
+  "transcription_id": "X03lYamVa1nOrhGrP4aw",
+  "audio_duration_secs": 16.346875
+}
