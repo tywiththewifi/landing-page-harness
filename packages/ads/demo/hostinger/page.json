@@ -1,0 +1,184 @@
+{
+  "title": "Launch an online store with AI",
+  "slug": "online-store-with-ai",
+  "lang": "en-US",
+  "seo": {
+    "title": "Build an online store with AI | Hostinger",
+    "metaDescription": "Launch your online store with AI: describe it, customize it with drag and drop, sell with 0% transaction fees and get help from Hostinger Agent."
+  },
+  "blocks": [
+    {
+      "id": "hero",
+      "tone": "default",
+      "type": "hero",
+      "eyebrow": "AI website builder",
+      "heading": "Launch your online store with AI, no coding needed",
+      "lead": "Describe what you sell and AI generates product titles, descriptions and images. Customize every detail with drag and drop, then go live with a click. From $2.49/mo.",
+      "primaryCta": {
+        "label": "Choose plan",
+        "href": "https://www.hostinger.com/website-builder"
+      },
+      "secondaryCta": {
+        "label": "Explore templates",
+        "href": "https://www.hostinger.com/website-builder"
+      }
+    },
+    {
+      "id": "stats",
+      "tone": "default",
+      "type": "stats",
+      "heading": "Sell more, keep more",
+      "items": [
+        {
+          "value": "0%",
+          "label": "transaction fees"
+        },
+        {
+          "value": "100+",
+          "label": "payment methods, no extra charges"
+        },
+        {
+          "value": "85%",
+          "label": "of issues solved by Hostinger Agent without a human"
+        },
+        {
+          "value": "1,000+",
+          "label": "app connections to grow your business"
+        }
+      ]
+    },
+    {
+      "id": "features",
+      "tone": "subtle",
+      "type": "features",
+      "eyebrow": "Build an online store",
+      "heading": "Everything your store needs is included",
+      "intro": "Hosting, domain name, SEO tools, email, marketing integrations, and more are included.",
+      "items": [
+        {
+          "title": "Product pages in seconds",
+          "body": "Describe what you sell, and AI generates product titles, descriptions and images."
+        },
+        {
+          "title": "Make it yours",
+          "body": "Start from a designer-made template or an AI first version, then customize every detail with the drag-and-drop editor."
+        },
+        {
+          "title": "Keep what you earn",
+          "body": "Sell any product type with 0% transaction fees and accept 100+ payment methods."
+        },
+        {
+          "title": "Be found everywhere",
+          "body": "Your content is automatically optimized for Google Search and AI search."
+        },
+        {
+          "title": "Bring customers back",
+          "body": "Create email campaigns with AI, re-engage inactive subscribers and see what's working."
+        },
+        {
+          "title": "An AI co-worker",
+          "body": "Hostinger Agent migrates, fixes, edits and manages your site through chat, free with every plan."
+        }
+      ],
+      "cardVariant": "default"
+    },
+    {
+      "id": "steps",
+      "tone": "default",
+      "type": "steps",
+      "heading": "From idea to first sale",
+      "intro": "Describe what you want to create, then keep prompting to shape it as it comes together.",
+      "items": [
+        {
+          "title": "Describe your store",
+          "body": "Tell the AI what you sell and get a first version in seconds."
+        },
+        {
+          "title": "Customize",
+          "body": "Add your logo, products and visuals, and adjust every detail with drag and drop."
+        },
+        {
+          "title": "Go live",
+          "body": "Publish with a click, connect Google Analytics and Meta Pixel, and start selling."
+        }
+      ]
+    },
+    {
+      "id": "faq",
+      "tone": "subtle",
+      "type": "faq",
+      "heading": "Online store FAQs",
+      "items": [
+        {
+          "question": "Do I need to know how to code to build an online store with Hostinger?",
+          "answer": "No. Describe what you sell and AI generates product titles, descriptions and images, then you customize every detail with the drag-and-drop editor. AI can do more of the technical work for you or guide you through it, so you get more done without technical expertise."
+        },
+        {
+          "question": "What does it cost to sell online with Hostinger?",
+          "answer": "Plans start from $2.49/mo, paid upfront, with a free domain for 1 year included with yearly plans. You sell with 0% transaction fees and accept 100+ payment methods with no extra charges, so you keep more of what you earn."
+        },
+        {
+          "question": "Can I move my existing store to Hostinger?",
+          "answer": "Yes. Tell Hostinger Agent you want to move your site to Hostinger and get help every step of the way. Hostinger Agent is included with every plan to migrate, fix, edit and manage your site through chat, and solves 85% of issues without a human."
+        },
+        {
+          "question": "Will my store show up in Google and AI search?",
+          "answer": "Your content is automatically optimized for Google Search and AI search. You can also connect Google Ads, Meta Pixel and Google Analytics to track traffic, and create ready-to-send email campaigns with Hostinger Reach."
+        }
+      ]
+    },
+    {
+      "id": "cta",
+      "tone": "brand",
+      "type": "cta",
+      "heading": "Your store, online. Now's the time.",
+      "body": "Plans include hosting, a free domain for 1 year on yearly plans, SEO tools and Hostinger Agent.",
+      "primaryCta": {
+        "label": "Choose plan",
+        "href": "https://www.hostinger.com/website-builder"
+      },
+      "secondaryCta": {
+        "label": "",
+        "href": ""
+      }
+    }
+  ],
+  "variants": [
+    {
+      "id": "first-time-sellers",
+      "personaId": "first-time-sellers",
+      "name": "First-time online sellers",
+      "slug": "first-time-sellers",
+      "overrides": {
+        "hero.eyebrow": "Start selling online",
+        "hero.heading": "Your first online store, built with AI in minutes",
+        "hero.lead": "No coding and no designer needed. Describe what you sell, customize it with drag and drop, and sell with 0% transaction fees. From $2.49/mo."
+      }
+    },
+    {
+      "id": "store-switchers",
+      "personaId": "store-switchers",
+      "name": "Store owners switching platforms",
+      "slug": "store-switchers",
+      "overrides": {
+        "hero.eyebrow": "Move your store",
+        "hero.heading": "Move your online store to Hostinger and keep what you earn",
+        "hero.lead": "Tell Hostinger Agent you want to move your site and get help every step of the way. Then sell with 0% transaction fees and 100+ payment methods."
+      }
+    }
+  ],
+  "id": "e749c2b3-96fc-4682-961a-6b3b8207b90c",
+  "brandId": "hostinger-com-ghc1j",
+  "briefId": "0833110a-a0ad-4507-97f4-314827ebc697",
+  "form": {
+    "connector": "none",
+    "webhookUrl": "",
+    "hubspotPortalId": "",
+    "hubspotFormId": ""
+  },
+  "createdAt": "2026-10-23T21:26:32.883Z",
+  "updatedAt": "2026-10-23T21:31:02.419Z",
+  "generator": {
+    "name": "template"
+  }
+}

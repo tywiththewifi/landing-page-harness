@@ -1,0 +1,202 @@
+{
+  "title": "Launch an online store with AI",
+  "summary": "A decision-stage page for small business owners who want to start selling online, or move an existing store, without hiring a developer. It leads with AI that builds the store from a description, 0% transaction fees and Hostinger Agent, and uses only prices and numbers from hostinger.com. Two versions speak to first-time sellers and to owners switching platforms.",
+  "objective": {
+    "statement": "Get small business owners to choose a website builder plan and launch their store.",
+    "kpi": {
+      "metric": "Plan purchases from the page",
+      "target": "Beat the conversion rate of the website builder page",
+      "timeframe": "First 60 days after launch"
+    }
+  },
+  "personas": [
+    {
+      "name": "First-time online sellers",
+      "role": "Small business owner",
+      "context": "They sell in person or on social media and want their own online store, but have never built a website.",
+      "pains": [
+        "No time to learn web design",
+        "Transaction fees eat into small margins",
+        "Not sure where to start"
+      ],
+      "motivations": [
+        "A first version in seconds",
+        "Keep more of what they earn",
+        "Help whenever something breaks"
+      ],
+      "objections": [
+        "I can't code",
+        "What will it really cost?",
+        "Will anyone find my store?"
+      ],
+      "id": "first-time-sellers"
+    },
+    {
+      "name": "Store owners switching platforms",
+      "role": "Owner of an existing online shop",
+      "context": "They run a store on another platform and are tired of fees, plugins and slow support.",
+      "pains": [
+        "Fees on every sale",
+        "Migration feels risky",
+        "Support that takes days"
+      ],
+      "motivations": [
+        "0% transaction fees",
+        "Help moving the site",
+        "AI that handles routine work"
+      ],
+      "objections": [
+        "Will migration break my store?",
+        "Can I keep my domain?",
+        "Is support any better?"
+      ],
+      "id": "store-switchers"
+    }
+  ],
+  "funnelStage": "decision",
+  "channels": [
+    {
+      "channel": "organic-search",
+      "role": "Rank for searches to build an online store with AI."
+    },
+    {
+      "channel": "answer-engines",
+      "role": "Answer how to start an online store in AI search."
+    },
+    {
+      "channel": "email",
+      "role": "Black Friday campaign to builder trial users."
+    }
+  ],
+  "keyMessages": [
+    {
+      "message": "Describe it, AI builds it",
+      "support": "Describe what you need to get a first version in seconds. Then customize every detail with the drag-and-drop editor to make it yours."
+    },
+    {
+      "message": "Keep what you earn",
+      "support": "Sell with 0% transaction fees and reach more customers across channels."
+    },
+    {
+      "message": "An AI co-worker, free with every plan",
+      "support": "Migrate, fix, edit, and manage your site through chat. 85% of issues solved without a human."
+    }
+  ],
+  "offer": {
+    "offer": "A website builder plan with hosting, a free domain for 1 year on yearly plans, SEO tools and email included.",
+    "primaryCta": "Choose plan",
+    "secondaryCta": "Explore templates"
+  },
+  "proofPoints": [
+    {
+      "claim": "From $2.49/mo",
+      "source": "site",
+      "evidence": "Get your idea online today from $2.49/mo."
+    },
+    {
+      "claim": "0% transaction fees and 100+ payment methods",
+      "source": "site",
+      "evidence": "Keep what you earn. Accept 100+ payment methods with no extra charges."
+    },
+    {
+      "claim": "85% of issues solved without a human",
+      "source": "site",
+      "evidence": "85% of issues solved without a human."
+    },
+    {
+      "claim": "1,000+ app connections and 150+ Skills",
+      "source": "site",
+      "evidence": "upgrade for 1,000+ app connections and 150+ ready-to-use Skills"
+    }
+  ],
+  "outline": [
+    {
+      "type": "hero",
+      "heading": "Launch your online store with AI, no coding needed",
+      "purpose": "Opening section with the page's one H1, a short lead and the primary call to action.",
+      "notes": "Describe it, AI builds it; price."
+    },
+    {
+      "type": "stats",
+      "heading": "Sell more, keep more",
+      "purpose": "Two to four headline numbers, each with a label. Only real, sourced numbers.",
+      "notes": "0% fees, 100+ payment methods, 85% issues solved, 1,000+ apps."
+    },
+    {
+      "type": "features",
+      "heading": "Everything your store needs is included",
+      "purpose": "Three to six benefit cards, each a short heading and one or two sentences.",
+      "notes": "AI product pages, editor, payments, SEO, marketing, Agent."
+    },
+    {
+      "type": "steps",
+      "heading": "From idea to first sale",
+      "purpose": "A numbered how-it-works sequence of three or four steps.",
+      "notes": "Describe, customize, go live."
+    },
+    {
+      "type": "faq",
+      "heading": "Online store FAQs",
+      "purpose": "Questions and short answers. Also marked up as FAQPage for answer engines.",
+      "notes": "Coding, cost, migration, search."
+    },
+    {
+      "type": "cta",
+      "heading": "Your store, online. Now's the time.",
+      "purpose": "A closing band that repeats the primary call to action.",
+      "notes": "Choose plan."
+    }
+  ],
+  "seo": {
+    "primaryKeyword": "online store with ai",
+    "secondaryKeywords": [
+      "ai website builder for online store",
+      "build an online store",
+      "ecommerce website builder"
+    ],
+    "searchIntent": "transactional",
+    "title": "Build an online store with AI | Hostinger",
+    "metaDescription": "Launch your online store with AI: describe it, customize it with drag and drop, sell with 0% transaction fees and get help from Hostinger Agent.",
+    "slug": "online-store-with-ai",
+    "questions": [
+      {
+        "question": "Do I need to know how to code to build an online store with Hostinger?",
+        "answer": "No. Describe what you sell and AI generates product titles, descriptions and images, then you customize every detail with the drag-and-drop editor. AI can do more of the technical work for you or guide you through it, so you get more done without technical expertise."
+      },
+      {
+        "question": "What does it cost to sell online with Hostinger?",
+        "answer": "Plans start from $2.49/mo, paid upfront, with a free domain for 1 year included with yearly plans. You sell with 0% transaction fees and accept 100+ payment methods with no extra charges, so you keep more of what you earn."
+      },
+      {
+        "question": "Can I move my existing store to Hostinger?",
+        "answer": "Yes. Tell Hostinger Agent you want to move your site to Hostinger and get help every step of the way. Hostinger Agent is included with every plan to migrate, fix, edit and manage your site through chat, and solves 85% of issues without a human."
+      },
+      {
+        "question": "Will my store show up in Google and AI search?",
+        "answer": "Your content is automatically optimized for Google Search and AI search. You can also connect Google Ads, Meta Pixel and Google Analytics to track traffic, and create ready-to-send email campaigns with Hostinger Reach."
+      }
+    ],
+    "schemaTypes": [
+      "FAQPage",
+      "Product"
+    ]
+  },
+  "assumptions": [
+    "Concept built from hostinger.com's public pages; not affiliated with Hostinger.",
+    "Prices are as shown on hostinger.com on 23 October 2026."
+  ],
+  "id": "0833110a-a0ad-4507-97f4-314827ebc697",
+  "brandId": "hostinger-com-ghc1j",
+  "prompt": "Landing page for small businesses launching their first online store with Hostinger's AI website builder",
+  "createdAt": "2026-10-23T21:26:32.852Z",
+  "updatedAt": "2026-10-23T21:31:02.405Z",
+  "generator": {
+    "name": "template"
+  },
+  "insights": {
+    "provider": "best-practices",
+    "keywords": [],
+    "questions": [],
+    "notes": []
+  }
+}

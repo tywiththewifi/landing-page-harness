@@ -154,6 +154,27 @@ importers:
         specifier: ^8.3.5
         version: 8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(sass@1.106.1)(tsx@4.23.15)
 
+  packages/ads:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^1.1.0
+        version: 1.1.0(zod@4.6.7)
+      '@lph/brief':
+        specifier: workspace:*
+        version: link:../brief
+      '@lph/page':
+        specifier: workspace:*
+        version: link:../page
+      '@lph/tokens':
+        specifier: workspace:*
+        version: link:../tokens
+      '@lph/ui':
+        specifier: workspace:*
+        version: link:../ui
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
   packages/brief:
     dependencies:
       '@anthropic-ai/sdk':

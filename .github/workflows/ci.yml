@@ -20,5 +20,7 @@ jobs:
         run: pnpm --filter @lph/extractor exec playwright install --with-deps chromium
       - run: pnpm typecheck
       - run: pnpm test
+      - name: Ad check evals
+        run: pnpm --silent --filter @lph/ads evals >> "$GITHUB_STEP_SUMMARY"
       - run: pnpm --filter @lph/studio build
       - run: pnpm --filter @lph/studio build:demo

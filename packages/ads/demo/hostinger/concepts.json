@@ -1,0 +1,32 @@
+{
+  "writer": {
+    "name": "claude",
+    "model": "claude-opus-5-5"
+  },
+  "concepts": [
+    {
+      "id": "no-code-store",
+      "angle": "General: build an online store with AI and no coding, with a low entry price and 0% transaction fees.",
+      "version": "",
+      "headline": "Launch your online store with AI, no coding needed",
+      "script": "Want to sell online but don't code? With Hostinger, you describe your store and AI builds a first version in seconds. Then customize every detail with drag and drop. Sell with 0% transaction fees. Plans start from $2.49 a month. Choose plan today.",
+      "cta": "Choose plan"
+    },
+    {
+      "id": "first-store-ai",
+      "angle": "First-time sellers: no web design skills needed, because AI creates the product pages for them.",
+      "version": "first-time-sellers",
+      "headline": "Your first online store, built with AI in minutes",
+      "script": "Selling in person or on social media? Your own online store is closer than you think. With Hostinger, describe what you sell, and AI generates product titles, descriptions, and images. No web design skills needed. Keep more with 0% transaction fees. Explore templates today.",
+      "cta": "Explore templates"
+    },
+    {
+      "id": "switch-keep-earnings",
+      "angle": "Store switchers: escape per-sale fees and make migration easy with Hostinger Agent's chat help.",
+      "version": "store-switchers",
+      "headline": "Move your online store to Hostinger and keep what you earn",
+      "script": "Tired of paying fees on every sale? Move your online store to Hostinger and keep what you earn, with 0% transaction fees. Hostinger Agent helps you migrate through chat, every step of the way. It solves 85% of issues without a human. Choose plan today.",
+      "cta": "Choose plan"
+    }
+  ]
+}
