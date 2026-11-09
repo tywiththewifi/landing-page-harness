@@ -102,6 +102,10 @@ See [docs/publish.md](docs/publish.md) for the checks, the budget, the risk rule
 
 [packages/ads](packages/ads) takes the brand kit, brief and landing page from the phases above and writes 15 to 20 second audio ads, one per page version. Each script is checked with the same grounding rules before it is voiced with ElevenLabs. Each clip is then transcribed and compared with its script, which catches a misread price or a mispronounced brand name. `pnpm ads` runs it on Hostinger. Ads are still out of scope for the studio itself.
 
+## Helm study (demo)
+
+[packages/helm-study](packages/helm-study) started from a bug: on stripe.com the brand import blended two design systems, because the site is partway through moving to Helm, its new one. The package measures that migration page by page and rebuilds Helm's token graph from the public CSS (734 tokens, three tiers, light and dark), with health checks. It then rebuilds Button and Link in React on generated tokens, and tests them against the live components with parity, visual-regression and axe tests. Unofficial; not affiliated with Stripe.
+
 ## Quick start
 
 ```bash
@@ -188,6 +192,8 @@ packages/
                 and lph-site, the CLI the site repo's CI runs
   ui/           Starter components and page blocks: framework-agnostic CSS classes plus React wrappers
   kit/          Writes the brand kit and renders preview.html
+  ads/          Demo: audio ad concepts, gated and voiced with ElevenLabs
+  helm-study/   Demo: stripe.com's Helm migration, token graph, and Button and Link tested against it
 fixtures/
   northloop/    A fictional B2B site used by the tests
 templates/

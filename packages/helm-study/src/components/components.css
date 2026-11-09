@@ -1,0 +1,157 @@
+/*
+ * Button, Link and HoverArrow. Every colour, radius and space comes from tokens.css;
+ * a test fails if a colour literal appears here. The values Helm writes straight into
+ * its rules (the optical padding and the motion curve) are named once at the top.
+ */
+
+:root {
+  --sl-font-family: "sohne-var", "Inter", "SF Pro Display", system-ui, sans-serif;
+  /* Helm's buttons sit a pixel lower than centre: text-box trims to the cap height,
+     so the bottom padding is one pixel taller to balance the descender space. */
+  --sl-button-pad-start: 15.5px;
+  --sl-button-pad-end: 16.5px;
+  --sl-button-pad-start-compact: 11.5px;
+  --sl-button-pad-end-compact: 12.5px;
+  --sl-button-border-width: 1px;
+  --sl-motion-duration: 0.3s;
+  --sl-motion-ease: cubic-bezier(0.25, 1, 0.5, 1);
+  --sl-arrow-travel: 6px;
+}
+
+@media (max-width: 639px) {
+  :root {
+    --sl-button-pad-start: 13.5px;
+    --sl-button-pad-end: 14.5px;
+  }
+}
+
+/* ---------- Button ---------- */
+
+.sl-button {
+  --_pad-start: var(--sl-button-pad-start);
+  --_pad-end: var(--sl-button-pad-end);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sl-button-gap);
+  width: fit-content;
+  padding-block: var(--_pad-start) var(--_pad-end);
+  padding-inline: var(--sl-button-pad-inline);
+  border: none;
+  border-radius: var(--sl-button-radius);
+  background-color: var(--sl-button-primary-bg);
+  color: var(--sl-button-primary-text);
+  font-family: var(--sl-font-family);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-decoration: none;
+  text-box: trim-both cap alphabetic;
+  cursor: pointer;
+  outline: 0 solid transparent;
+}
+
+.sl-button--compact {
+  --_pad-start: var(--sl-button-pad-start-compact);
+  --_pad-end: var(--sl-button-pad-end-compact);
+}
+
+.sl-button--primary:hover:where(:not(:disabled, [aria-disabled="true"])) {
+  background-color: var(--sl-button-primary-bg-hover);
+}
+
+.sl-button--secondary {
+  background-color: var(--sl-button-secondary-bg);
+  color: var(--sl-button-secondary-text);
+  border: var(--sl-button-border-width) solid var(--sl-button-secondary-border);
+  /* The border sits inside the same box, so the padding gives it back. */
+  padding-block: calc(var(--_pad-start) - var(--sl-button-border-width)) calc(var(--_pad-end) - var(--sl-button-border-width));
+}
+
+.sl-button--secondary:hover:where(:not(:disabled, [aria-disabled="true"])) {
+  background-color: var(--sl-button-secondary-bg-hover);
+  color: var(--sl-button-secondary-text-hover);
+  border-color: var(--sl-button-secondary-border-hover);
+}
+
+.sl-button:is(:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
+}
+.sl-button--primary:is(:disabled, [aria-disabled="true"]) {
+  background-color: var(--sl-button-primary-bg-disabled);
+  color: var(--sl-button-primary-text-disabled);
+}
+.sl-button--secondary:is(:disabled, [aria-disabled="true"]) {
+  color: var(--sl-button-secondary-text-disabled);
+  border-color: var(--sl-button-secondary-border-disabled);
+}
+
+.sl-button:focus-visible,
+.sl-link:focus-visible {
+  outline: 2px solid var(--sl-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- Link ---------- */
+
+.sl-link {
+  color: var(--sl-link-text);
+  font-weight: 400;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sl-link--inline {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.sl-link--callout {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sl-link-gap);
+}
+.sl-link:hover {
+  color: var(--sl-link-text-hover);
+}
+
+/* ---------- Hover arrow ---------- */
+
+.sl-hover-arrow {
+  flex: none;
+  overflow: visible;
+  width: 0.625em;
+  height: 0.625em;
+}
+.sl-hover-arrow__shaft {
+  opacity: 0;
+}
+.sl-hover-arrow__group {
+  transform: translateX(0);
+}
+:where(.sl-button, .sl-link):where(:hover, :focus-visible):not(:disabled, [aria-disabled="true"]) .sl-hover-arrow__shaft {
+  opacity: 1;
+}
+:where(.sl-button, .sl-link):where(:hover, :focus-visible):not(:disabled, [aria-disabled="true"]) .sl-hover-arrow__group {
+  transform: translateX(var(--sl-arrow-travel));
+}
+
+/* Motion only for people who haven't asked for less. */
+@media (prefers-reduced-motion: no-preference) {
+  .sl-button {
+    transition:
+      background-color var(--sl-motion-duration) var(--sl-motion-ease),
+      color var(--sl-motion-duration) var(--sl-motion-ease),
+      outline-color var(--sl-motion-duration) var(--sl-motion-ease),
+      border var(--sl-motion-duration) var(--sl-motion-ease);
+  }
+  .sl-link {
+    transition: color var(--sl-motion-duration) var(--sl-motion-ease);
+  }
+  .sl-hover-arrow__shaft {
+    transition: opacity var(--sl-motion-duration) var(--sl-motion-ease);
+  }
+  .sl-hover-arrow__group {
+    transition: transform var(--sl-motion-duration) var(--sl-motion-ease);
+  }
+}
