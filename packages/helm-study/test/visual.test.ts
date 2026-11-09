@@ -1,8 +1,13 @@
 /**
  * Visual regression: every story, at rest and (for the arrowed ones) on hover, is
- * screenshotted and compared pixel by pixel with the committed baseline. Inter is
- * inlined so text renders the same on any machine. A missing baseline is written and
- * the test passes; UPDATE_SCREENSHOTS=1 rewrites them all after an intended change.
+ * screenshotted and compared pixel by pixel with a committed baseline. Inter is inlined
+ * so text renders the same on any machine with the same browser.
+ *
+ * Baselines are kept per Chromium version, because two builds lay text out a fraction
+ * of a pixel apart and that alone changes the shot. A missing baseline is written; on
+ * CI that fails the test, so a new browser version can't pass without baselines being
+ * reviewed and committed (CI uploads the new shots as an artifact).
+ * UPDATE_SCREENSHOTS=1 rewrites them after an intended change.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -11,17 +16,27 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { STORIES } from "../src/stories.tsx";
 import { launch, openStory } from "./browser.tsx";
 
-const DIR = join(import.meta.dirname, "__screenshots__");
+const ROOT = join(import.meta.dirname, "__screenshots__");
+let DIR = ROOT;
 const UPDATE = process.env.UPDATE_SCREENSHOTS === "1";
 /** A pixel counts as changed when a channel moves by more than this (0-255)... */
 const CHANNEL = 40;
 /** ...and the shot fails when more than this share of pixels changed. Anti-aliasing differs a little between Chromium builds. */
 const SHARE = 0.01;
 
+/** Baselines written during the current test, which fail it on CI once every shot is taken. */
+let missing: string[] = [];
+const noneMissing = () => {
+  const names = missing;
+  missing = [];
+  if (names.length && process.env.CI) expect.fail(`No baseline in ${DIR} for ${names.join(", ")}: wrote them. Review and commit them.`);
+};
+
 let browser: Browser;
 let differ: Page;
 beforeAll(async () => {
   browser = await launch();
+  DIR = join(ROOT, `chromium-${browser.version()}`);
   differ = await (await browser.newContext()).newPage();
 });
 afterAll(async () => {
@@ -66,6 +81,7 @@ async function check(name: string, shot: Buffer) {
   if (UPDATE || !existsSync(file)) {
     mkdirSync(DIR, { recursive: true });
     writeFileSync(file, shot);
+    if (!UPDATE) missing.push(name);
     return;
   }
   const result = await diff(readFileSync(file), shot);
@@ -87,6 +103,7 @@ describe("visual regression", () => {
           await page.locator("#story > *").first().hover();
           await check(`${story.id}--hover`, await el.screenshot({ animations: "disabled" }));
         }
+        noneMissing();
       } finally {
         await page.context().close();
       }
@@ -100,6 +117,7 @@ describe("visual regression", () => {
       const outline = await page.$eval("#story button", (el) => getComputedStyle(el).outlineStyle + " " + getComputedStyle(el).outlineWidth);
       expect(outline).toBe("solid 2px");
       await check("button-native--focus", await page.locator("#story").screenshot({ animations: "disabled" }));
+      noneMissing();
     } finally {
       await page.context().close();
     }
