@@ -1,0 +1,150 @@
+{
+ "takenAt": "2026-11-09T17:59:38.813Z",
+ "source": "https://stripe.com",
+ "data": [
+  {
+   "label": "Button / primary",
+   "page": "/",
+   "selector": "main .hds-button.hds-button--primary:not(.hds-button--compact)",
+   "text": "Get started",
+   "rest": {
+    "backgroundColor": "rgb(83, 58, 253)",
+    "color": "rgb(255, 255, 255)",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(255, 255, 255)",
+    "borderTopLeftRadius": "4px",
+    "paddingTop": "15.5px",
+    "paddingRight": "24px",
+    "paddingBottom": "16.5px",
+    "paddingLeft": "24px",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "lineHeight": "16px",
+    "letterSpacing": "normal",
+    "columnGap": "8px",
+    "height": "48px",
+    "transitionDuration": "0.3s, 0.3s, 0.3s, 0.3s",
+    "transitionTimingFunction": "cubic-bezier(0.25, 1, 0.5, 1), cubic-bezier(0.25, 1, 0.5, 1), cubic-bezier(0.25, 1, 0.5, 1), cubic-bezier(0.25, 1, 0.5, 1)"
+   },
+   "hover": {
+    "backgroundColor": "rgb(64, 50, 200)"
+   },
+   "arrowTravel": 6
+  },
+  {
+   "label": "Button / primary / compact",
+   "page": "/",
+   "selector": ".hds-button.hds-button--primary.hds-button--compact",
+   "text": "Contact sales",
+   "rest": {
+    "backgroundColor": "rgb(83, 58, 253)",
+    "color": "rgb(255, 255, 255)",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(255, 255, 255)",
+    "borderTopLeftRadius": "4px",
+    "paddingTop": "11.5px",
+    "paddingRight": "20px",
+    "paddingBottom": "12.5px",
+    "paddingLeft": "20px",
+    "fontSize": "14px",
+    "fontWeight": "400",
+    "lineHeight": "14px",
+    "letterSpacing": "normal",
+    "columnGap": "8px",
+    "height": "40px",
+    "transitionDuration": "0.24s, 0.24s, 0.24s",
+    "transitionTimingFunction": "cubic-bezier(0.45, 0.05, 0.55, 0.95), cubic-bezier(0.45, 0.05, 0.55, 0.95), cubic-bezier(0.45, 0.05, 0.55, 0.95)"
+   },
+   "hover": {
+    "backgroundColor": "rgb(64, 50, 200)"
+   },
+   "arrowTravel": 6
+  },
+  {
+   "label": "Button / secondary",
+   "page": "/",
+   "selector": "main .hds-button.hds-button--secondary:not(.hds-button--compact):not([class*='hero-section'])",
+   "text": "View Stripe’s GitHub",
+   "rest": {
+    "backgroundColor": "rgba(255, 255, 255, 0)",
+    "color": "rgb(255, 255, 255)",
+    "borderTopWidth": "1px",
+    "borderTopColor": "rgba(72, 52, 219, 0.698)",
+    "borderTopLeftRadius": "4px",
+    "paddingTop": "14.5px",
+    "paddingRight": "24px",
+    "paddingBottom": "15.5px",
+    "paddingLeft": "24px",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "lineHeight": "16px",
+    "letterSpacing": "normal",
+    "columnGap": "8px",
+    "height": "48px",
+    "transitionDuration": "0.3s, 0.3s, 0.3s, 0.3s",
+    "transitionTimingFunction": "cubic-bezier(0.25, 1, 0.5, 1), cubic-bezier(0.25, 1, 0.5, 1), cubic-bezier(0.25, 1, 0.5, 1), cubic-bezier(0.25, 1, 0.5, 1)"
+   },
+   "hover": {
+    "borderTopColor": "rgb(93, 100, 254)"
+   }
+  },
+  {
+   "label": "Link / callout",
+   "page": "/",
+   "selector": "main .hds-link.hds-link--callout",
+   "text": "View services",
+   "rest": {
+    "backgroundColor": "rgba(0, 0, 0, 0)",
+    "color": "rgb(83, 58, 253)",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(83, 58, 253)",
+    "borderTopLeftRadius": "0px",
+    "paddingTop": "0px",
+    "paddingRight": "0px",
+    "paddingBottom": "0px",
+    "paddingLeft": "0px",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "lineHeight": "normal",
+    "letterSpacing": "normal",
+    "columnGap": "normal",
+    "height": "auto",
+    "transitionDuration": "0.3s",
+    "transitionTimingFunction": "cubic-bezier(0.25, 1, 0.5, 1)"
+   },
+   "hover": {
+    "color": "rgb(46, 43, 140)",
+    "borderTopColor": "rgb(46, 43, 140)"
+   },
+   "arrowTravel": 6
+  },
+  {
+   "label": "CtaButton / Button",
+   "page": "/payments",
+   "selector": ".CtaButton.variant--Button:not(.SiteHeader *)",
+   "text": "Start accepting payments",
+   "rest": {
+    "backgroundColor": "rgb(153, 102, 255)",
+    "color": "rgb(255, 255, 255)",
+    "borderTopWidth": "0px",
+    "borderTopColor": "rgb(255, 255, 255)",
+    "borderTopLeftRadius": "16.5px",
+    "paddingTop": "3px",
+    "paddingRight": "12px",
+    "paddingBottom": "6px",
+    "paddingLeft": "16px",
+    "fontSize": "15px",
+    "fontWeight": "425",
+    "lineHeight": "24px",
+    "letterSpacing": "0.2px",
+    "columnGap": "normal",
+    "height": "33px",
+    "transitionDuration": "0.15s",
+    "transitionTimingFunction": "cubic-bezier(0.215, 0.61, 0.355, 1)"
+   },
+   "hover": {
+    "backgroundColor": "rgb(10, 37, 64)"
+   }
+  }
+ ]
+}
