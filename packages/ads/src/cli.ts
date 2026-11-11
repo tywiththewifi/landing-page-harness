@@ -77,7 +77,9 @@ const uiCss = await readFile(createRequire(import.meta.url).resolve("@lph/ui/sty
 for (const v of renderVersions(page, brand, uiCss, { noindex: true })) {
   const file = join(out, "landing", `${v.path.replace(/^\//, "")}.html`);
   await mkdir(dirname(file), { recursive: true });
-  await writeFile(file, v.html);
+  // These pages wear a real brand's look, so each says plainly that it isn't theirs.
+  const banner = `<p role="note" style="margin:0;padding:10px 16px;background:#15171c;color:#fff;font:14px/1.4 system-ui,sans-serif;text-align:center">Concept made for a job application with Softlander. Not by or for ${brand.name}.</p>`;
+  await writeFile(file, v.html.replace(/<body[^>]*>/, (m) => m + banner));
 }
 const evals = runEvals({ brand, brief, page });
 const html = renderReport(run, { clipHref: (r, take) => `clips/${r.concept.id}${take === "first" ? "-take1" : ""}.mp3`, landingHref: (p) => `landing${p}.html`, evals });

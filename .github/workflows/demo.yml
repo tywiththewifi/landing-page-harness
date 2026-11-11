@@ -64,6 +64,8 @@ jobs:
           echo "VITE_IMPORT_API=$URL" >> "$GITHUB_ENV"
       - run: pnpm --filter @lph/studio build:demo
       - run: cp apps/studio/dist-demo/demo.html apps/studio/dist-demo/index.html
+      # The audio ad demo, replayed from the saved scripts and committed clips: no API keys needed.
+      - run: pnpm ads --concepts packages/ads/demo/hostinger/concepts.json --out apps/studio/dist-demo/ads
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
