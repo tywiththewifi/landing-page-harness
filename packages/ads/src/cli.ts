@@ -5,6 +5,8 @@
  *   pnpm ads                                  # the Hostinger demo, into runs/ads-hostinger
  *   pnpm ads --concepts runs/ads-hostinger/concepts.json   # re-check saved scripts, no model
  *   pnpm ads --inputs path/to/folder --out runs/ads-mine   # brand.json, brief.json, page.json
+ *                                                          # and ad-brief.json if present
+ *   pnpm ads --inputs path/to/folder --ad-brief path/to/ad-brief.json
  *
  * Needs ANTHROPIC_API_KEY to write scripts (unless --concepts) and ELEVENLABS_API_KEY to
  * voice any script that isn't already in the clip cache.
@@ -29,6 +31,7 @@ const { values } = parseArgs({
     inputs: { type: "string" },
     out: { type: "string", default: "runs/ads-hostinger" },
     concepts: { type: "string" },
+    "ad-brief": { type: "string" },
     "voice-id": { type: "string", default: "nPczCjzI2devNBz1zQrb" },
     "voice-name": { type: "string", default: "Brian" },
     "tts-model": { type: "string", default: "eleven_multilingual_v2" },
@@ -48,7 +51,14 @@ const clipsDir = values.clips ? resolve(cwd, values.clips) : join(inputsDir, "cl
 const log = (s: string) => console.log(s);
 
 const { brand, brief, page } = await loadInputs(inputsDir);
-const ab = adBrief.parse(AD_BRIEF);
+// The ad brief: --ad-brief, else ad-brief.json beside the inputs, else the Hostinger one (only for the Hostinger demo).
+const adBriefFile = values["ad-brief"] ? resolve(cwd, values["ad-brief"]) : join(inputsDir, "ad-brief.json");
+const adBriefJson = await readFile(adBriefFile, "utf8").catch(() => null);
+if (!adBriefJson && values.inputs) {
+  console.error(`No ad brief: pass --ad-brief or add ad-brief.json to ${inputsDir} ({"prompt": "...", "seconds": {"min": 15, "max": 20}, "avoid": []}).`);
+  process.exit(1);
+}
+const ab = adBrief.parse(adBriefJson ? JSON.parse(adBriefJson) : AD_BRIEF);
 
 let writer: ConceptWriter;
 if (values.concepts) {
