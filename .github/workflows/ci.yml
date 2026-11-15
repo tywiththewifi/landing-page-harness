@@ -20,6 +20,13 @@ jobs:
         run: pnpm --filter @lph/extractor exec playwright install --with-deps chromium
       - run: pnpm typecheck
       - run: pnpm test
+      - name: Upload new or changed visual-regression shots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-study-screenshots
+          path: packages/helm-study/test/__screenshots__/
+          if-no-files-found: ignore
       - name: Ad check evals
         run: pnpm --silent --filter @lph/ads evals >> "$GITHUB_STEP_SUMMARY"
       - run: pnpm --filter @lph/studio build

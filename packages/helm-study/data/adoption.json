@@ -1,0 +1,892 @@
+{
+ "takenAt": "2026-11-09T17:59:38.813Z",
+ "source": "https://stripe.com",
+ "data": [
+  {
+   "path": "/",
+   "helmElements": 568,
+   "legacyElements": 22,
+   "helmShare": 0.963,
+   "system": "helm",
+   "helmComponents": [
+    "hds-button",
+    "hds-button-group",
+    "hds-field",
+    "hds-field-error",
+    "hds-form",
+    "hds-heading",
+    "hds-icon",
+    "hds-icon-hover-arrow",
+    "hds-label",
+    "hds-language",
+    "hds-link",
+    "hds-navigation-menu",
+    "hds-text",
+    "hds-ui-button"
+   ],
+   "roles": {
+    "Button": {
+     "legacy": 0,
+     "helm": 53
+    },
+    "Hover arrow": {
+     "legacy": 0,
+     "helm": 61
+    },
+    "Navigation": {
+     "legacy": 0,
+     "helm": 20
+    },
+    "Text": {
+     "legacy": 0,
+     "helm": 170
+    },
+    "Link": {
+     "legacy": 0,
+     "helm": 149
+    }
+   }
+  },
+  {
+   "path": "/payments",
+   "helmElements": 0,
+   "legacyElements": 4239,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 50,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 171,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 212,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 200,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/billing",
+   "helmElements": 666,
+   "legacyElements": 21,
+   "helmShare": 0.969,
+   "system": "helm",
+   "helmComponents": [
+    "hds-accent",
+    "hds-accordion",
+    "hds-button",
+    "hds-button-group",
+    "hds-chippy",
+    "hds-details",
+    "hds-details-content",
+    "hds-field",
+    "hds-field-error",
+    "hds-form",
+    "hds-heading",
+    "hds-icon",
+    "hds-icon-hover-arrow",
+    "hds-label",
+    "hds-language",
+    "hds-link",
+    "hds-list",
+    "hds-navigation-menu",
+    "hds-resource-card",
+    "hds-stat",
+    "hds-stats-block",
+    "hds-summary",
+    "hds-tag",
+    "hds-text",
+    "hds-ui-button"
+   ],
+   "roles": {
+    "Button": {
+     "legacy": 0,
+     "helm": 28
+    },
+    "Hover arrow": {
+     "legacy": 0,
+     "helm": 29
+    },
+    "Navigation": {
+     "legacy": 0,
+     "helm": 20
+    },
+    "Text": {
+     "legacy": 0,
+     "helm": 195
+    },
+    "Link": {
+     "legacy": 0,
+     "helm": 156
+    }
+   }
+  },
+  {
+   "path": "/connect",
+   "helmElements": 0,
+   "legacyElements": 3763,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 39,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 138,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 215,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 219,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/radar",
+   "helmElements": 454,
+   "legacyElements": 28,
+   "helmShare": 0.942,
+   "system": "helm",
+   "helmComponents": [
+    "hds-accordion",
+    "hds-button",
+    "hds-button-group",
+    "hds-details",
+    "hds-details-content",
+    "hds-field",
+    "hds-field-error",
+    "hds-form",
+    "hds-heading",
+    "hds-icon",
+    "hds-icon-hover-arrow",
+    "hds-label",
+    "hds-language",
+    "hds-link",
+    "hds-navigation-menu",
+    "hds-resource-card",
+    "hds-stat",
+    "hds-stats-block",
+    "hds-summary",
+    "hds-tag",
+    "hds-text",
+    "hds-ui-button"
+   ],
+   "roles": {
+    "Button": {
+     "legacy": 0,
+     "helm": 21
+    },
+    "Hover arrow": {
+     "legacy": 0,
+     "helm": 23
+    },
+    "Navigation": {
+     "legacy": 0,
+     "helm": 20
+    },
+    "Text": {
+     "legacy": 0,
+     "helm": 136
+    },
+    "Link": {
+     "legacy": 0,
+     "helm": 136
+    }
+   }
+  },
+  {
+   "path": "/terminal",
+   "helmElements": 0,
+   "legacyElements": 3051,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 22,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 87,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 203,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 189,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/tax",
+   "helmElements": 0,
+   "legacyElements": 3893,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 26,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 84,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 201,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 213,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/atlas",
+   "helmElements": 0,
+   "legacyElements": 2385,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 10,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 36,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 72,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 182,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/climate",
+   "helmElements": 0,
+   "legacyElements": 2837,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 19,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 81,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 281,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 204,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/issuing",
+   "helmElements": 590,
+   "legacyElements": 21,
+   "helmShare": 0.966,
+   "system": "helm",
+   "helmComponents": [
+    "hds-accordion",
+    "hds-button",
+    "hds-button-group",
+    "hds-details",
+    "hds-details-content",
+    "hds-field",
+    "hds-field-error",
+    "hds-form",
+    "hds-heading",
+    "hds-icon",
+    "hds-icon-hover-arrow",
+    "hds-label",
+    "hds-language",
+    "hds-link",
+    "hds-list",
+    "hds-navigation-menu",
+    "hds-resource-card",
+    "hds-stat",
+    "hds-stats-block",
+    "hds-summary",
+    "hds-tag",
+    "hds-text",
+    "hds-ui-button"
+   ],
+   "roles": {
+    "Button": {
+     "legacy": 0,
+     "helm": 23
+    },
+    "Hover arrow": {
+     "legacy": 0,
+     "helm": 25
+    },
+    "Navigation": {
+     "legacy": 0,
+     "helm": 20
+    },
+    "Text": {
+     "legacy": 0,
+     "helm": 157
+    },
+    "Link": {
+     "legacy": 0,
+     "helm": 147
+    }
+   }
+  },
+  {
+   "path": "/treasury",
+   "helmElements": 518,
+   "legacyElements": 2,
+   "helmShare": 0.996,
+   "system": "helm",
+   "helmComponents": [
+    "hds-accordion",
+    "hds-button",
+    "hds-button-group",
+    "hds-chippy",
+    "hds-details",
+    "hds-details-content",
+    "hds-field",
+    "hds-field-error",
+    "hds-form",
+    "hds-heading",
+    "hds-icon",
+    "hds-icon-chevron-arrow-down",
+    "hds-icon-hover-arrow",
+    "hds-label",
+    "hds-language",
+    "hds-link",
+    "hds-list",
+    "hds-navigation-menu",
+    "hds-resource-card",
+    "hds-summary",
+    "hds-tag",
+    "hds-text",
+    "hds-ui-button"
+   ],
+   "roles": {
+    "Button": {
+     "legacy": 0,
+     "helm": 24
+    },
+    "Hover arrow": {
+     "legacy": 0,
+     "helm": 22
+    },
+    "Navigation": {
+     "legacy": 0,
+     "helm": 20
+    },
+    "Text": {
+     "legacy": 0,
+     "helm": 133
+    },
+    "Link": {
+     "legacy": 0,
+     "helm": 129
+    }
+   }
+  },
+  {
+   "path": "/capital",
+   "helmElements": 0,
+   "legacyElements": 2335,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 17,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 57,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 72,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 173,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/identity",
+   "helmElements": 0,
+   "legacyElements": 2647,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 18,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 60,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 104,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 189,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/invoicing",
+   "helmElements": 0,
+   "legacyElements": 3245,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 20,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 69,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 136,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 197,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/payments/checkout",
+   "helmElements": 0,
+   "legacyElements": 4926,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 22,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 81,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 120,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 215,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/payments/elements",
+   "helmElements": 0,
+   "legacyElements": 3411,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 22,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 72,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 129,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 189,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/payments/link",
+   "helmElements": 0,
+   "legacyElements": 2650,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 23,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 75,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 106,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 183,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/pricing",
+   "helmElements": 0,
+   "legacyElements": 4660,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 83,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 264,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 528,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 269,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/enterprise",
+   "helmElements": 0,
+   "legacyElements": 3173,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 33,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 141,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 92,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 227,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 265,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/startups",
+   "helmElements": 0,
+   "legacyElements": 3089,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 28,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 129,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 92,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 191,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 225,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/customers",
+   "helmElements": 0,
+   "legacyElements": 3639,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 14,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 162,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 188,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 199,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/about",
+   "helmElements": 80,
+   "legacyElements": 2,
+   "helmShare": 0.976,
+   "system": "helm",
+   "helmComponents": [
+    "hds-button",
+    "hds-button-group",
+    "hds-icon",
+    "hds-icon-hover-arrow",
+    "hds-language",
+    "hds-link",
+    "hds-navigation-menu",
+    "hds-text",
+    "hds-ui-button"
+   ],
+   "roles": {
+    "Button": {
+     "legacy": 0,
+     "helm": 13
+    },
+    "Hover arrow": {
+     "legacy": 0,
+     "helm": 5
+    },
+    "Navigation": {
+     "legacy": 0,
+     "helm": 20
+    },
+    "Text": {
+     "legacy": 0,
+     "helm": 15
+    },
+    "Link": {
+     "legacy": 0,
+     "helm": 17
+    }
+   }
+  },
+  {
+   "path": "/guides",
+   "helmElements": 0,
+   "legacyElements": 3391,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 18,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 210,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 63,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 320,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/newsroom",
+   "helmElements": 0,
+   "legacyElements": 2309,
+   "helmShare": 0,
+   "system": "legacy",
+   "helmComponents": [],
+   "roles": {
+    "Button": {
+     "legacy": 18,
+     "helm": 0
+    },
+    "Hover arrow": {
+     "legacy": 75,
+     "helm": 0
+    },
+    "Navigation": {
+     "legacy": 94,
+     "helm": 0
+    },
+    "Text": {
+     "legacy": 33,
+     "helm": 0
+    },
+    "Link": {
+     "legacy": 211,
+     "helm": 0
+    }
+   }
+  },
+  {
+   "path": "/contact/sales",
+   "helmElements": 34,
+   "legacyElements": 2,
+   "helmShare": 0.944,
+   "system": "helm",
+   "helmComponents": [
+    "hds-button",
+    "hds-field",
+    "hds-heading",
+    "hds-icon",
+    "hds-icon-hover-arrow",
+    "hds-input",
+    "hds-label",
+    "hds-link",
+    "hds-navigation-menu",
+    "hds-select",
+    "hds-select-value",
+    "hds-text",
+    "hds-textinput"
+   ],
+   "roles": {
+    "Button": {
+     "legacy": 0,
+     "helm": 2
+    },
+    "Hover arrow": {
+     "legacy": 0,
+     "helm": 3
+    },
+    "Navigation": {
+     "legacy": 0,
+     "helm": 2
+    },
+    "Text": {
+     "legacy": 0,
+     "helm": 6
+    },
+    "Link": {
+     "legacy": 0,
+     "helm": 3
+    }
+   }
+  }
+ ]
+}

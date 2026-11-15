@@ -1,0 +1,50 @@
+/* A tiny system with every case the token graph has to handle. */
+@property --x-tab-index { syntax: "<number>"; inherits: true; initial-value: 0; }
+
+.x-mode--light, :root {
+  --x-color-core-brand-600: #533afd;
+  --x-color-core-brand-700: #4032c8;
+  --x-color-core-brandDark-500: #5d64fe;
+  --x-color-core-neutral-0: #fff;
+  --x-color-core-neutral-990: #061b31;
+  --x-space-core-100: 8px;
+  --x-color-action-bg-solid: var(--x-color-core-brand-600);
+  --x-color-action-bg-solidHover: var(
+    --x-color-core-brand-700
+  );
+  --x-color-action-text-onSolid: var(--x-color-core-neutral-0);
+  --x-color-surface-bg-quiet: var(--x-color-core-neutral-0);
+  --x-color-button-primary-bg: var(--x-color-action-bg-solid);
+  --x-color-button-primary-bgHover: var(--x-color-action-bg-solidHover);
+  --x-color-button-primary-text: var(--x-color-action-text-onSolid);
+  /* Skips the semantic layer. */
+  --x-color-input-border: var(--x-color-core-brand-600);
+  /* Points the wrong way. */
+  --x-color-text-solid: var(--x-color-button-primary-text);
+  /* Nothing reads this. */
+  --x-color-core-unused: #123456;
+}
+
+.x-mode--dark {
+  --x-color-action-bg-solidHover: var(--x-color-core-brandDark-500);
+  --x-color-surface-bg-quiet: var(--x-color-core-neutral-990);
+}
+
+@layer base {
+  .x-tabs { --x-tabs-gap: var(--x-space-core-100); }
+}
+
+@media (max-width: 600px) {
+  :root { --x-color-core-brand-600: #000; }
+}
+
+.x-button {
+  background: var(--x-color-button-primary-bg);
+  color: var(--x-color-button-primary-text);
+  gap: var(--x-tabs-gap);
+  order: var(--x-tab-index);
+}
+.x-button:hover { background: var(--x-color-button-primary-bgHover); }
+.x-input { border-color: var(--x-color-input-border); color: var(--x-color-text-solid); }
+.x-phone { color: var(--x-color-text-subtle); }
+.x-grid { grid-template-columns: repeat(var(--x-grid-cols, 2), 1fr); }

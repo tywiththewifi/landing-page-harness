@@ -1,0 +1,24 @@
+{
+  "name": "@lph/helm-study",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "snapshot": "tsx src/cli.ts audit",
+    "build": "tsx src/cli.ts build"
+  },
+  "dependencies": {
+    "@lph/checks": "workspace:*",
+    "postcss": "8.5.31",
+    "playwright": "^1.64.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@fontsource/inter": "5.2.8"
+  }
+}

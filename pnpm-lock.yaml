@@ -235,6 +235,28 @@ importers:
 
   packages/forms: {}
 
+  packages/helm-study:
+    dependencies:
+      '@lph/checks':
+        specifier: workspace:*
+        version: link:../checks
+      playwright:
+        specifier: ^1.64.1
+        version: 1.64.1
+      postcss:
+        specifier: 8.5.31
+        version: 8.5.31
+      react:
+        specifier: ^19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: ^19.3.1
+        version: 19.3.1(react@19.3.1)
+    devDependencies:
+      '@fontsource/inter':
+        specifier: 5.2.8
+        version: 5.2.8
+
   packages/kit:
     dependencies:
       '@lph/design-md':
@@ -480,6 +502,9 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@fontsource/inter@5.2.8':
+    resolution: {integrity: sha512-P6r5WnJoKiNVV+zvW2xM13gNdFhAEpQ9dQJHt3naLvfg+LkF2ldgSLiF4T41lf1SQCM9QmkqPTn4TH568IRagg==}
 
   '@hono/node-server@2.1.5':
     resolution: {integrity: sha512-MgP/I06GdvsilDspMk/qmRzpk8LOUStP6jFAbSRi40W09DhoyUn+Mj7eyKICPqeYKybOjVFLVIAQzvu1bfIa7Q==}
@@ -1739,6 +1764,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.28.2':
     optional: true
+
+  '@fontsource/inter@5.2.8': {}
 
   '@hono/node-server@2.1.5(hono@4.13.13)':
     dependencies:
